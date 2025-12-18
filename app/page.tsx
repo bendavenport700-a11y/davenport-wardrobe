@@ -61,7 +61,7 @@ export default function Home() {
 
         {/* TEMP WAITLIST FORM */}
         <form
-          action="https://formspree.io/f/XXXXXXXX"
+          action="https://formspree.io/f/xqezkpza"
           method="POST"
           style={{ marginTop: "20px" }}
         >
