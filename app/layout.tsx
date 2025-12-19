@@ -1,4 +1,3 @@
-import "./globals.css";
 import Link from "next/link";
 
 export default function RootLayout({
@@ -8,17 +7,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>
+      <body style={{ margin: 0, fontFamily: "sans-serif" }}>
+        
         {/* NAV BAR */}
         <nav
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "24px 32px",
-            borderBottom: "1px solid #e5e5e5",
+            padding: "24px 40px",
+            borderBottom: "1px solid #eaeaea",
+            backgroundColor: "#fff",
           }}
         >
+          {/* LOGO */}
           <Link
             href="/"
             style={{
@@ -31,6 +33,7 @@ export default function RootLayout({
             Davenport Wardrobe
           </Link>
 
+          {/* LINKS */}
           <div style={{ display: "flex", gap: "24px" }}>
             <Link href="/" style={linkStyle}>Home</Link>
             <Link href="/faq" style={linkStyle}>FAQ</Link>
@@ -39,6 +42,7 @@ export default function RootLayout({
 
         {/* PAGE CONTENT */}
         <main>{children}</main>
+
       </body>
     </html>
   );
