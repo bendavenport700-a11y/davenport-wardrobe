@@ -1,11 +1,14 @@
 export default function FAQPage() {
   return (
-    <main style={{
-      maxWidth: "900px",
-      margin: "0 auto",
-      padding: "80px 24px",
-      fontFamily: "sans-serif"
-    }}>
+    <main
+      style={{
+        fontFamily: "sans-serif",
+        padding: "72px 24px",
+        maxWidth: "900px",
+        margin: "0 auto",
+        color: "#111",
+      }}
+    >
       <h1 style={{ fontSize: "3rem", marginBottom: "48px" }}>
         Frequently Asked Questions
       </h1>
@@ -21,17 +24,26 @@ export default function FAQPage() {
       </section>
 
       <section style={{ marginBottom: "40px" }}>
+        <h3>Is this a rental service?</h3>
+        <p>
+          Not in the traditional sense. Davenport focuses on access, flexibility,
+          and longevity rather than ownership. Garments gain value through use,
+          not novelty.
+        </p>
+      </section>
+
+      <section style={{ marginBottom: "40px" }}>
         <h3>Who is this for?</h3>
         <p>
-          Built for young men, including college students and growing adults,
-          who want access to better clothing without unnecessary ownership.
+          Built primarily for young men, including college students and growing
+          adults, who want better clothing without unnecessary ownership.
         </p>
       </section>
 
       <section style={{ marginBottom: "40px" }}>
         <h3>Will there be AI-powered styling?</h3>
         <p>
-          Yes. Advanced technology will help understand your preferences,
+          Yes. Advanced styling tools will help understand your preferences,
           sizing, and lifestyle to curate wardrobes that fit you personally.
         </p>
       </section>
@@ -39,8 +51,8 @@ export default function FAQPage() {
       <section>
         <h3>When are you launching?</h3>
         <p>
-          Davenport Wardrobe is currently in development. Join the waitlist to
-          receive early access and updates as we prepare to launch.
+          Davenport Wardrobe is currently in development. Join the waitlist for
+          early access and updates.
         </p>
       </section>
     </main>

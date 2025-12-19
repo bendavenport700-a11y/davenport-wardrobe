@@ -109,14 +109,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* WAITLIST – PRIMARY CTA */}
-      <section
-        style={{
-          padding: "120px 24px",
-          maxWidth: "960px",
-          margin: "0 auto",
-          textAlign: "center",
-        }}
+    {/* WAITLIST */}
+<section
+  id="waitlist"
+  style={{
+    padding: "48px",
+    border: "1px solid #e0e0e0",
+    borderRadius: "12px",
+    textAlign: "center",
+  }}
+>
       >
         <h2 style={{ fontSize: "2.5rem", marginBottom: "16px" }}>
           Join the waitlist
