@@ -1,116 +1,128 @@
 export default function Home() {
   return (
-    <main
-      style={{
-        fontFamily: "sans-serif",
-        padding: "72px 24px",
-        maxWidth: "960px",
-        margin: "0 auto",
-        color: "#111",
-      }}
-    >
-      {/* HERO */}
-      <section style={{ textAlign: "center", marginBottom: "96px" }}>
-        <h1 style={{ fontSize: "3.75rem", marginBottom: "20px" }}>
-          Davenport Wardrobe
-        </h1>
-        <p
-          style={{
-            fontSize: "1.35rem",
-            maxWidth: "720px",
-            margin: "0 auto",
-            lineHeight: "1.6",
-          }}
-        >
-          A modern wardrobe built for young men.
-          Access high-quality clothing when you need it.
-          Keep what you love. Return what you don’t.
-          Pricing adjusts as garments age.
-        </p>
-        <p style={{ marginTop: "16px", fontSize: "1.05rem", color: "#444" }}>
-          Delivered directly to your doorstep.
-        </p>
-      </section>
+    <main style={{ fontFamily: "system-ui, -apple-system, sans-serif", color: "#111" }}>
 
-      {/* FASHION WITHOUT EXCESS */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>Fashion without excess</h2>
-        <p style={{ fontSize: "1.15rem", maxWidth: "760px", lineHeight: "1.7" }}>
-          Davenport Wardrobe is designed to be fashionable, accessible,
-          efficient, and affordable, without the waste of traditional retail.
-          Every piece has a lifecycle. The more it’s worn, the more accessible it
-          becomes. Nothing sits unused. Nothing is overproduced.
-        </p>
-      </section>
-
-      {/* WARDROBE DELIVERY */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>A wardrobe, without the hassle</h2>
-        <p style={{ fontSize: "1.15rem", maxWidth: "760px", lineHeight: "1.7" }}>
-          Your wardrobe is sent straight to you.
-          No hauling clothes between dorms, apartments, or seasons.
-          No storing pieces you rarely wear.
-          When your needs change, your wardrobe changes with you.
-        </p>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>How it works</h2>
-        <ol style={{ fontSize: "1.1rem", lineHeight: "1.9" }}>
-          <li>Select clothing from a rotating wardrobe</li>
-          <li>Receive it directly at your doorstep</li>
-          <li>Wear it on your terms</li>
-          <li>Return it, continue using it, or purchase it at a reduced price</li>
-        </ol>
-      </section>
-
-      {/* VARIETY */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>Variety, intentionally curated</h2>
-        <p style={{ fontSize: "1.15rem", maxWidth: "760px", lineHeight: "1.7" }}>
-          Our wardrobe includes brand-new pieces, lightly worn staples, and
-          older, broken-in favorites.
-          This includes modern essentials, vintage items, and unique finds that
-          get better with wear.
-          As garments age, pricing adjusts accordingly.
-        </p>
-      </section>
-
-      {/* AI STYLING */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>Styled for you</h2>
-        <p style={{ fontSize: "1.15rem", maxWidth: "760px", lineHeight: "1.7" }}>
-          Davenport Wardrobe will use advanced AI to understand your fit,
-          preferences, and lifestyle.
-          This helps surface styles that actually work for you,
-          without wasted time or unnecessary purchases.
-        </p>
-      </section>
-
-      {/* SUSTAINABILITY */}
-      <section style={{ marginBottom: "96px" }}>
-        <h2 style={{ marginBottom: "16px" }}>Sustainability, built in</h2>
-        <p style={{ fontSize: "1.15rem", maxWidth: "760px", lineHeight: "1.7" }}>
-          Sustainability is not an add-on.
-          By extending the life of every garment,
-          Davenport Wardrobe reduces overproduction,
-          unnecessary consumption, and textile waste.
-          Each piece is designed to be worn, reused, and valued over time.
-        </p>
-      </section>
-
-      {/* WAITLIST */}
+      {/* HERO – VISION */}
       <section
         style={{
-          padding: "48px",
-          border: "1px solid #e0e0e0",
-          borderRadius: "12px",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "0 24px",
+          background: "linear-gradient(180deg, #0d0d0d, #111)",
+          color: "white",
           textAlign: "center",
         }}
       >
-        <h2 style={{ marginBottom: "12px" }}>Join the waitlist</h2>
-        <p style={{ marginBottom: "28px" }}>
+        <div style={{ maxWidth: "860px" }}>
+          <h1
+            style={{
+              fontSize: "3.75rem",
+              letterSpacing: "-0.03em",
+              marginBottom: "24px",
+            }}
+          >
+            A smarter way to dress
+          </h1>
+
+          <p
+            style={{
+              fontSize: "1.35rem",
+              lineHeight: "1.6",
+              opacity: 0.9,
+              maxWidth: "760px",
+              margin: "0 auto",
+            }}
+          >
+            Premium wardrobes delivered to your door.
+            Flexible, sustainable, and built for how young men actually live.
+          </p>
+
+          <p style={{ marginTop: "20px", fontSize: "1rem", opacity: 0.75 }}>
+            Access over ownership. Style without excess.
+          </p>
+        </div>
+      </section>
+
+      {/* WHAT IT IS */}
+      <section style={{ padding: "120px 24px", maxWidth: "960px", margin: "0 auto" }}>
+        <h2 style={{ marginBottom: "24px", fontSize: "2.5rem" }}>
+          What is Davenport Wardrobe?
+        </h2>
+
+        <p style={{ fontSize: "1.2rem", lineHeight: "1.7", maxWidth: "820px" }}>
+          Davenport Wardrobe is a modern clothing access platform for young men.
+          Instead of buying clothes that quickly go out of style, don’t fit
+          anymore, or sit unused, members receive curated wardrobes that evolve
+          with their lifestyle.
+        </p>
+      </section>
+
+      {/* IMAGE + EXPLANATION */}
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "64px",
+          alignItems: "center",
+          padding: "120px 24px",
+          maxWidth: "1200px",
+          margin: "0 auto",
+        }}
+      >
+        {/* IMAGE PLACEHOLDER */}
+        <div
+          style={{
+            height: "420px",
+            borderRadius: "20px",
+            background:
+              "linear-gradient(135deg, #1a1a1a, #2a2a2a)",
+          }}
+        >
+          {/* Replace this div with <img /> later */}
+        </div>
+
+        <div>
+          <h2 style={{ marginBottom: "20px" }}>Designed around real life</h2>
+          <p style={{ fontSize: "1.15rem", lineHeight: "1.7" }}>
+            Your wardrobe is delivered directly to your doorstep.
+            No hauling clothes between dorms, apartments, or seasons.
+            When your needs change, your wardrobe changes with you.
+          </p>
+        </div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ background: "#f6f6f6", padding: "120px 24px" }}>
+        <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+          <h2 style={{ marginBottom: "32px", fontSize: "2.5rem" }}>
+            How it works
+          </h2>
+
+          <ol style={{ fontSize: "1.15rem", lineHeight: "2" }}>
+            <li>Access a rotating wardrobe of curated clothing</li>
+            <li>Receive it directly at your doorstep</li>
+            <li>Wear pieces on your terms</li>
+            <li>Return them, continue using them, or purchase at adjusted prices</li>
+          </ol>
+        </div>
+      </section>
+
+      {/* WAITLIST – PRIMARY CTA */}
+      <section
+        style={{
+          padding: "120px 24px",
+          maxWidth: "960px",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ fontSize: "2.5rem", marginBottom: "16px" }}>
+          Join the waitlist
+        </h2>
+
+        <p style={{ color: "#555", marginBottom: "40px" }}>
           Early access when Davenport Wardrobe launches.
         </p>
 
@@ -126,14 +138,14 @@ export default function Home() {
             style={{
               padding: "14px",
               width: "260px",
-              marginRight: "12px",
               fontSize: "1rem",
+              marginRight: "12px",
             }}
           />
           <button
             type="submit"
             style={{
-              padding: "14px 24px",
+              padding: "14px 28px",
               fontSize: "1rem",
               cursor: "pointer",
             }}
@@ -143,17 +155,37 @@ export default function Home() {
         </form>
       </section>
 
+      {/* DEEP DIVE */}
+      <section style={{ padding: "120px 24px", maxWidth: "960px", margin: "0 auto" }}>
+        <h2 style={{ marginBottom: "24px" }}>
+          Built for sustainability and longevity
+        </h2>
+
+        <p style={{ fontSize: "1.15rem", lineHeight: "1.7" }}>
+          Every garment has a lifecycle. As pieces are worn, their cost becomes
+          more accessible. This reduces waste, discourages overproduction, and
+          keeps quality clothing in circulation longer.
+        </p>
+
+        <p style={{ fontSize: "1.15rem", lineHeight: "1.7", marginTop: "24px" }}>
+          Over time, Davenport Wardrobe will use intelligent styling tools to
+          understand your preferences, sizing, and lifestyle so each wardrobe
+          feels curated specifically for you.
+        </p>
+      </section>
+
       {/* FOOTER */}
       <footer
         style={{
           textAlign: "center",
-          marginTop: "96px",
+          padding: "64px 24px",
           color: "#777",
           fontSize: "0.95rem",
         }}
       >
         © {new Date().getFullYear()} Davenport Wardrobe
       </footer>
+
     </main>
   );
 }

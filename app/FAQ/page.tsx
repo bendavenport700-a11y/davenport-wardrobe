@@ -1,14 +1,11 @@
 export default function FAQPage() {
   return (
-    <main
-      style={{
-        fontFamily: "sans-serif",
-        padding: "80px 24px",
-        maxWidth: "900px",
-        margin: "0 auto",
-        color: "#111",
-      }}
-    >
+    <main style={{
+      maxWidth: "900px",
+      margin: "0 auto",
+      padding: "80px 24px",
+      fontFamily: "sans-serif"
+    }}>
       <h1 style={{ fontSize: "3rem", marginBottom: "48px" }}>
         Frequently Asked Questions
       </h1>
@@ -26,9 +23,8 @@ export default function FAQPage() {
       <section style={{ marginBottom: "40px" }}>
         <h3>Who is this for?</h3>
         <p>
-          Davenport Wardrobe is built for young men, including college students
-          and growing adults, who want access to better clothing without
-          unnecessary ownership.
+          Built for young men, including college students and growing adults,
+          who want access to better clothing without unnecessary ownership.
         </p>
       </section>
 
