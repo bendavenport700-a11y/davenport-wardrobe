@@ -11,15 +11,22 @@ export default function RootLayout({
         
         {/* NAV BAR */}
         <nav
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            padding: "24px 40px",
-            borderBottom: "1px solid #eaeaea",
-            backgroundColor: "#fff",
-          }}
-        >
+  style={{
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 1000,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    backdropFilter: "blur(8px)",
+    borderBottom: "1px solid #eaeaea",
+    padding: "24px 40px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  }}
+>
+
           {/* LOGO */}
           <Link
             href="/"
