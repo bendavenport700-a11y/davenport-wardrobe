@@ -119,7 +119,6 @@ export default function Home() {
     textAlign: "center",
   }}
 >
-      >
         <h2 style={{ fontSize: "2.5rem", marginBottom: "16px" }}>
           Join the waitlist
         </h2>
