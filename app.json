@@ -16,7 +16,10 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.davenportwardrobe.app",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Camera access is used to scan payment card details for faster checkout.",
+        "NSPhotoLibraryUsageDescription": "Photo library access is not used by this app.",
+        "NSMicrophoneUsageDescription": "Microphone access is not used by this app."
       }
     },
     "android": {
