@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { supabase } from '@/lib/supabase'
@@ -34,9 +35,9 @@ export default function ForgotPasswordScreen() {
 
   if (sent) {
     return (
-      <View style={{ flex: 1, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
-          <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-          <Text style={{ color: colors.white, fontFamily: 'Inter-Medium', fontSize: 28 }}>✓</Text>
+      <View style={{ flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+          <Ionicons name="checkmark" size={32} color={colors.white} />
         </View>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.navy, textAlign: 'center', marginBottom: 12 }}>
           Check your email.

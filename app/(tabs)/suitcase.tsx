@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { useSuitcaseStore, useSuitcaseHydrated } from '@/store/suitcaseStore'
 import { useAuthStore } from '@/store/authStore'
+import { useSuitcaseRemove } from '@/hooks/useSuitcaseRemove'
 import { multiPieceDiscount } from '@/utils/pricing'
 import { SuitcaseItemRow } from '@/components/suitcase/SuitcaseItemRow'
 import { SuitcaseSummary } from '@/components/suitcase/SuitcaseSummary'
@@ -24,7 +25,8 @@ function nextDiscountTier(count: number): { add: number; pct: number } | null {
 }
 
 export default function SuitcaseScreen() {
-  const { items, removeItem, monthlyTotalCents } = useSuitcaseStore()
+  const { items, monthlyTotalCents } = useSuitcaseStore()
+  const removeItem = useSuitcaseRemove()
   const hydrated = useSuitcaseHydrated()
   const { session, profile } = useAuthStore()
   const queryClient = useQueryClient()

@@ -7,10 +7,11 @@ import type { Piece } from '@/lib/types'
 async function getPieces(filter: string) {
   noStore()
   let q = supabaseAdmin.from('pieces').select('*').order('created_at', { ascending: false })
-  if (filter === 'available')   q = q.eq('is_available', true).eq('is_draft', false)
+  if (filter === 'available')   q = q.eq('is_available', true).eq('is_draft', false).is('retired_at', null)
+  if (filter === 'retired')     q = q.not('retired_at', 'is', null)
   if (filter === 'draft')       q = q.eq('is_draft', true)
   if (filter === 'featured')    q = q.eq('is_featured', true)
-  if (filter === 'unavailable') q = q.eq('is_available', false).eq('is_draft', false)
+  if (filter === 'unavailable') q = q.eq('is_available', false).eq('is_draft', false).is('retired_at', null)
   const { data } = await q
   return (data ?? []) as Piece[]
 }
@@ -26,6 +27,7 @@ export default async function PiecesPage({
   const filters = [
     { key: 'available',   label: 'Available' },
     { key: 'unavailable', label: 'Rented Out' },
+    { key: 'retired',     label: 'Retired' },
     { key: 'draft',       label: 'Drafts' },
     { key: 'featured',    label: 'Featured' },
   ]

@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useStripe } from '@/lib/stripe'
 import { callEdgeFunction } from '@/lib/supabase'
 import { useSuitcaseStore, useSuitcaseHydrated } from '@/store/suitcaseStore'
+import { useSuitcaseRemove } from '@/hooks/useSuitcaseRemove'
 import { useAuthStore } from '@/store/authStore'
 import { SuitcaseItemRow } from '@/components/suitcase/SuitcaseItemRow'
 import { SuitcaseSummary } from '@/components/suitcase/SuitcaseSummary'
@@ -26,7 +27,8 @@ interface SetupIntentResponse {
 }
 
 export default function CheckoutScreen() {
-  const { items, removeItem, monthlyTotalCents, clearSuitcase } = useSuitcaseStore()
+  const { items, monthlyTotalCents, clearSuitcase } = useSuitcaseStore()
+  const removeItem = useSuitcaseRemove()
   const hydrated = useSuitcaseHydrated()
   const { session, profile } = useAuthStore()
   const insets = useSafeAreaInsets()

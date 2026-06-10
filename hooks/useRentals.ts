@@ -12,6 +12,7 @@ export function useActiveRentals(userId: string | undefined) {
       if (error) throw error
       return data
     },
+    staleTime: 30_000,
   })
 }
 

@@ -1,6 +1,6 @@
 import { ScrollView, View, Text, Pressable } from 'react-native'
 import { router } from 'expo-router'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
@@ -32,6 +32,45 @@ export default function HomeScreen() {
   const firstWardrobe = wardrobes?.[0]
 
   const [welcomeDismissed, setWelcomeDismissed] = useState(true)
+
+  // Auto-scrolling refs + state
+  const wardrobeScrollRef  = useRef<ScrollView>(null)
+  const whyRentScrollRef   = useRef<ScrollView>(null)
+  const [wardrobeIdx, setWardrobeIdx]   = useState(0)
+  const [whyRentIdx, setWhyRentIdx]     = useState(0)
+  const wardrobeUserScrolling = useRef(false)
+  const whyRentUserScrolling  = useRef(false)
+  const WARDROBE_ITEM_W = 232   // 220 card + 12 gap
+  const WHY_RENT_ITEM_W = 190   // 180 card + 10 gap
+  const WHY_RENT_COUNT  = 4
+
+  // Wardrobes: auto-advance every 3s, pause while user is dragging
+  useEffect(() => {
+    const count = wardrobes?.length ?? 0
+    if (count <= 1) return
+    const t = setInterval(() => {
+      if (wardrobeUserScrolling.current) return
+      setWardrobeIdx(prev => {
+        const next = (prev + 1) % count
+        wardrobeScrollRef.current?.scrollTo({ x: next * WARDROBE_ITEM_W, animated: true })
+        return next
+      })
+    }, 3000)
+    return () => clearInterval(t)
+  }, [wardrobes?.length])
+
+  // Why Rent: auto-advance every 3.5s
+  useEffect(() => {
+    const t = setInterval(() => {
+      if (whyRentUserScrolling.current) return
+      setWhyRentIdx(prev => {
+        const next = (prev + 1) % WHY_RENT_COUNT
+        whyRentScrollRef.current?.scrollTo({ x: next * WHY_RENT_ITEM_W, animated: true })
+        return next
+      })
+    }, 3500)
+    return () => clearInterval(t)
+  }, [])
 
   useEffect(() => {
     if (!session || (profile?.active_rental_count ?? 0) > 0) return
@@ -122,7 +161,12 @@ export default function HomeScreen() {
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, paddingHorizontal: layout.screenPadding, marginBottom: 14 }}>
           The Wardrobes
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+        <ScrollView
+          ref={wardrobeScrollRef}
+          horizontal showsHorizontalScrollIndicator={false}
+          onScrollBeginDrag={() => { wardrobeUserScrolling.current = true }}
+          onScrollEndDrag={() => { setTimeout(() => { wardrobeUserScrolling.current = false }, 2000) }}
+          onMomentumScrollEnd={e => setWardrobeIdx(Math.round(e.nativeEvent.contentOffset.x / WARDROBE_ITEM_W))}
           contentContainerStyle={{ paddingHorizontal: layout.screenPadding, gap: 12 }}>
           {wardrobesError ? (
             <Pressable onPress={() => queryClient.invalidateQueries({ queryKey: ['wardrobes'] })}
@@ -148,6 +192,18 @@ export default function HomeScreen() {
               ))
           }
         </ScrollView>
+        {/* Dots */}
+        {(wardrobes?.length ?? 0) > 1 && (
+          <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 10 }}>
+            {wardrobes!.map((_, i) => (
+              <View key={i} style={{
+                height: 5, borderRadius: 2.5,
+                width: i === wardrobeIdx ? 16 : 5,
+                backgroundColor: i === wardrobeIdx ? colors.navy : colors.sand,
+              }} />
+            ))}
+          </View>
+        )}
       </View>
 
       {/* Saved Wardrobes — only show if user has saved at least one */}
@@ -205,7 +261,12 @@ export default function HomeScreen() {
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, marginBottom: 16, paddingHorizontal: layout.screenPadding }}>
           Why rent instead of buy?
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}
+        <ScrollView
+          ref={whyRentScrollRef}
+          horizontal showsHorizontalScrollIndicator={false}
+          onScrollBeginDrag={() => { whyRentUserScrolling.current = true }}
+          onScrollEndDrag={() => { setTimeout(() => { whyRentUserScrolling.current = false }, 2000) }}
+          onMomentumScrollEnd={e => setWhyRentIdx(Math.round(e.nativeEvent.contentOffset.x / WHY_RENT_ITEM_W))}
           contentContainerStyle={{ paddingHorizontal: layout.screenPadding, gap: 10 }}>
           {([
             { icon: 'swap-horizontal-outline', heading: 'Style changes.\nWardrobe should too.', body: "Never stuck with something that stopped fitting your life." },
@@ -234,6 +295,16 @@ export default function HomeScreen() {
             </View>
           ))}
         </ScrollView>
+        {/* Dots */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 5, marginTop: 14 }}>
+          {[0, 1, 2, 3].map(i => (
+            <View key={i} style={{
+              height: 5, borderRadius: 2.5,
+              width: i === whyRentIdx ? 16 : 5,
+              backgroundColor: i === whyRentIdx ? colors.navy : colors.sand,
+            }} />
+          ))}
+        </View>
       </View>
 
       {/* Guest CTA */}

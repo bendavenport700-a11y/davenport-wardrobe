@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useAuthStore } from '@/store/authStore'
@@ -191,7 +192,7 @@ export default function CompleteProfileScreen() {
                 alignItems: 'center', justifyContent: 'center', marginTop: 2,
               }}
             >
-              {termsAccepted && <Text style={{ color: colors.cream, fontSize: 13, fontFamily: 'Inter-Medium' }}>✓</Text>}
+              {termsAccepted && <Ionicons name="checkmark" size={14} color={colors.cream} />}
             </Pressable>
             <Text style={{ flex: 1, fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, lineHeight: 18 }}>
               I agree to the{' '}

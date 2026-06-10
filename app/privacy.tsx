@@ -35,7 +35,7 @@ We retain your account data for as long as your account is active. When you dele
 You may at any time:
 • Request a copy of your data — email privacy@davenport.rentals
 • Request correction of inaccurate data
-• Delete your account in-app (Settings → Account → Delete Account)
+• Delete your account in-app (Account tab → Delete Account at the bottom)
 
 6. SECURITY
 Your data is encrypted in transit and at rest. Payment information is handled exclusively by Stripe and never stored on Davenport servers.

@@ -37,10 +37,9 @@ export function useSyncServerSuitcase(userId: string | undefined) {
 
   useEffect(() => {
     if (!userId) return
-    // Read current items via getState() so we don't make items a reactive dependency
-    // (which would re-run this effect every time items change, causing an infinite loop)
-    if (useSuitcaseStore.getState().items.length > 0) return
-
+    // Pull server items and merge into local store.
+    // addItem is idempotent (deduplicates by piece+size), so this is safe even if
+    // local already has items — it only adds things that aren't there yet.
     supabase
       .from('suitcase_items')
       .select('*, piece:pieces(*)')

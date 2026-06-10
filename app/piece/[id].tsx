@@ -238,7 +238,7 @@ export default function PieceDetailScreen() {
         {/* Add to Suitcase */}
         {piece.is_available && session && (
           alreadyInSuitcase ? (
-            <Button label="In Suitcase ✓ — View →" variant="secondary" onPress={() => router.push('/(tabs)/suitcase' as any)} />
+            <Button label="Added to Suitcase — View" variant="secondary" onPress={() => router.push('/(tabs)/suitcase' as any)} />
           ) : (
             <Button
               label={selectedSize ? `Add to Suitcase — ${formatCents(piece.rental_fee)}/mo` : 'Select a Size First'}

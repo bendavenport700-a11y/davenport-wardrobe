@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { View, Text, TextInput, KeyboardAvoidingView, Platform, Pressable, ActivityIndicator } from 'react-native'
+import { View, Text, TextInput, KeyboardAvoidingView, Platform, Pressable } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { colors } from '@/constants/colors'
@@ -28,7 +29,7 @@ export default function ResetPasswordScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
         <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: colors.white, fontFamily: 'Inter-Medium', fontSize: 28 }}>✓</Text>
+          <Ionicons name="checkmark" size={32} color={colors.white} />
         </View>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.navy, textAlign: 'center' }}>
           Password updated.

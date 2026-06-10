@@ -53,7 +53,7 @@ export function WebNavbar() {
           return (
             <Pressable
               key={segment}
-              onPress={() => router.push(href as any)}
+              onPress={() => router.replace(href as any)}
               accessibilityLabel={`Go to ${label}`}
               accessibilityRole="link"
             >

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { View, Text, TextInput, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native'
 import { router } from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { supabase } from '@/lib/supabase'
@@ -127,7 +128,7 @@ export default function SignupScreen() {
                   backgroundColor: field.value ? colors.navy : 'transparent',
                   alignItems: 'center', justifyContent: 'center', marginTop: 2,
                 }}>
-                  {field.value && <Text style={{ color: colors.cream, fontSize: 12 }}>✓</Text>}
+                  {field.value && <Ionicons name="checkmark" size={13} color={colors.cream} />}
                 </View>
                 <Text style={{ flex: 1, fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, lineHeight: 20 }}>
                   I agree to the{' '}

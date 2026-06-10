@@ -1,4 +1,5 @@
 import { View, Text } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@/constants/colors'
 import { formatCents } from '@/utils/format'
 
@@ -15,7 +16,7 @@ export function DepositExplainer({ depositCents, hasDepositOnFile }: DepositExpl
         flexDirection: 'row', gap: 10, alignItems: 'center',
       }}>
         <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ color: colors.white, fontFamily: 'Inter-Medium', fontSize: 14 }}>✓</Text>
+          <Ionicons name="checkmark" size={16} color={colors.white} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.success }}>
