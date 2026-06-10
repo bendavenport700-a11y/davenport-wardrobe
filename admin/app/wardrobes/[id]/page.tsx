@@ -80,7 +80,6 @@ export default async function WardrobeDetailPage({ params }: { params: { id: str
                     name="wardrobe_id"
                     defaultValue={piece.wardrobe_id ?? ''}
                     className="text-xs border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-navy/30 max-w-[140px]"
-                    onChange={() => {}}
                   >
                     <option value="">— No wardrobe —</option>
                     {allWardrobes.map(w => (

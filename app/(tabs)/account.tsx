@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { Image } from 'expo-image'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -156,15 +156,33 @@ export default function AccountScreen() {
               </Pressable>
             </View>
           ) : activeRentals.length === 0 ? (
-            <View style={{ backgroundColor: colors.white, borderRadius: 14, padding: 24, alignItems: 'center', gap: 12 }}>
-              <Text style={{ fontFamily: 'Inter-Regular', fontSize: 15, color: colors.slate, textAlign: 'center' }}>
-                No active rentals yet.
-              </Text>
+            <View style={{ backgroundColor: colors.white, borderRadius: 14, padding: 24, gap: 14 }}>
+              <View style={{ gap: 6 }}>
+                <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.navy }}>
+                  Your wardrobe, waiting.
+                </Text>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, lineHeight: 21 }}>
+                  Once you rent, everything lives here — your pieces, billing dates, and the option to buy anything you love at a lower price.
+                </Text>
+              </View>
+              <View style={{ gap: 8 }}>
+                {[
+                  { icon: 'cube-outline' as const, text: 'Ships in 2–3 business days' },
+                  { icon: 'calendar-outline' as const, text: 'Billed monthly on the 1st' },
+                  { icon: 'pricetag-outline' as const, text: 'Buyout price drops every month you rent' },
+                  { icon: 'arrow-undo-outline' as const, text: 'Return anytime after 30 days' },
+                ].map(item => (
+                  <View key={item.text} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                    <Ionicons name={item.icon} size={16} color={colors.slate} />
+                    <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate }}>{item.text}</Text>
+                  </View>
+                ))}
+              </View>
               <Pressable
                 onPress={() => router.push('/(tabs)/pieces' as any)}
-                style={{ backgroundColor: colors.navy, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20 }}
+                style={{ backgroundColor: colors.navy, borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
               >
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.cream }}>Browse Pieces</Text>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.cream }}>Build Your Suitcase →</Text>
               </Pressable>
             </View>
           ) : (
@@ -217,28 +235,37 @@ export default function AccountScreen() {
                     <Badge label={statusLabel(rental.status)} color={statusColor(rental.status)} />
                   </Pressable>
 
+                  {/* In-transit status strip */}
+                  {['pending','sourcing','shipped'].includes(rental.status) && (
+                    <View style={{ borderTopWidth: 1, borderTopColor: colors.gray100, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Ionicons name={rental.status === 'shipped' ? 'airplane-outline' : 'cube-outline'} size={14} color={colors.slate} />
+                      <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, flex: 1, lineHeight: 17 }}>
+                        {rental.status === 'pending'  ? "Order confirmed — we're sourcing your piece now." :
+                         rental.status === 'sourcing' ? "Sourcing from the retailer. Ships within 2–3 business days." :
+                         rental.tracking_number ? `${rental.carrier ? rental.carrier + ': ' : ''}${rental.tracking_number}` :
+                         "On its way. You'll get tracking info via email shortly."}
+                      </Text>
+                    </View>
+                  )}
+
                   {/* Buyout CTA */}
                   {canBuyout && (
                     <View style={{ borderTopWidth: 1, borderTopColor: colors.gray100, paddingHorizontal: 14, paddingVertical: 12 }}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                         <View style={{ flex: 1, gap: 2 }}>
                           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
-                            Buy outright — {formatCents(buyoutPrice)}
+                            Buy it — {formatCents(buyoutPrice)}
                           </Text>
                           {isLoyalty ? (
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                               <Ionicons name="star" size={11} color={colors.success} />
                               <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.success }}>
-                                Loyalty discount (5% off · {months}+ months)
+                                Loyalty price (5% off · {months}+ months)
                               </Text>
                             </View>
-                          ) : months >= 3 ? (
-                            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.slate }}>
-                              Still loving it? Own it instead.
-                            </Text>
                           ) : (
                             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.slate }}>
-                              Price drops each rental month.
+                              {months >= 3 ? "Keep it forever. Monthly billing stops." : "Price drops every month you rent."}
                             </Text>
                           )}
                         </View>
@@ -261,6 +288,19 @@ export default function AccountScreen() {
                         </Pressable>
                       </View>
                     </View>
+                  )}
+
+                  {/* Return hint — shown when delivered and not bought out */}
+                  {rental.status === 'delivered' && !rental.bought_out && (
+                    <Pressable
+                      onPress={() => Linking.openURL('mailto:returns@davenport.rentals?subject=Return Request')}
+                      style={{ borderTopWidth: 1, borderTopColor: colors.gray100, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                    >
+                      <Ionicons name="arrow-undo-outline" size={13} color={colors.slate} />
+                      <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate }}>
+                        Want to return it? Email returns@davenport.rentals
+                      </Text>
+                    </Pressable>
                   )}
                 </View>
               )

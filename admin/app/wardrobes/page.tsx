@@ -2,6 +2,7 @@ import { unstable_noStore as noStore } from 'next/cache'
 import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
 import { updateWardrobe, createWardrobe, deleteWardrobe } from '@/lib/actions'
+import { ConfirmButton } from '@/components/ConfirmButton'
 import { revalidatePath } from 'next/cache'
 import type { Wardrobe } from '@/lib/types'
 
@@ -137,16 +138,16 @@ export default async function WardrobesPage() {
               >
                 Save
               </button>
-              <button
-                formAction={async () => {
+              <ConfirmButton
+                message={`Delete "${w.name}"? All pieces will be unassigned from this wardrobe.`}
+                action={async () => {
                   'use server'
                   await deleteWardrobe(w.id)
                 }}
-                onClick={() => confirm(`Delete "${w.name}"? All pieces will be unassigned.`)}
                 className="text-red-500 hover:text-red-700 text-sm px-3 py-2 rounded-lg hover:bg-red-50 transition-colors border border-red-200"
               >
                 Delete
-              </button>
+              </ConfirmButton>
             </div>
           </form>
         ))}
