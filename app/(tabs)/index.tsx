@@ -1,4 +1,4 @@
-import { ScrollView, View, Text, Pressable } from 'react-native'
+import { ScrollView, View, Text, Pressable, Linking } from 'react-native'
 import { router } from 'expo-router'
 import { useState, useEffect, useRef } from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -121,6 +121,19 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Live inventory strip */}
+      <View style={{
+        backgroundColor: colors.navy + '0A',
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+        paddingVertical: 10, gap: 8,
+        borderBottomWidth: 1, borderBottomColor: colors.sand + '60',
+      }}>
+        <View style={{ width: 7, height: 7, borderRadius: 3.5, backgroundColor: colors.success }} />
+        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate }}>
+          New pieces added every week — inventory is live and growing
+        </Text>
+      </View>
+
       <HowItWorksStrip />
 
       {/* Welcome banner — new signed-in users, 0 rentals, within first 7 days */}
@@ -137,30 +150,35 @@ export default function HomeScreen() {
         }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.cream, marginBottom: 4 }}>
-              Welcome to Davenport
+              {profile?.full_name ? `Welcome, ${profile.full_name.split(' ')[0]}.` : 'Welcome to Davenport.'}
             </Text>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.sand, lineHeight: 20 }}>
-              Build your suitcase, rent by the month, and buy what you love. No commitments.
+              Add pieces to your suitcase, rent monthly, and buy anything you love at a lower price. No risk, no commitment.
             </Text>
             <Pressable
               onPress={() => router.push('/(tabs)/pieces')}
               style={{ marginTop: 12, alignSelf: 'flex-start', backgroundColor: colors.cream, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 }}>
               <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>
-                Browse All Pieces →
+                Start browsing →
               </Text>
             </Pressable>
           </View>
-          <Pressable onPress={dismissWelcome} style={{ padding: 4 }}>
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 20, color: colors.sand, lineHeight: 20 }}>×</Text>
+          <Pressable onPress={dismissWelcome} style={{ padding: 4 }} accessibilityLabel="Dismiss welcome banner">
+            <Ionicons name="close" size={18} color={colors.sand} />
           </Pressable>
         </Animated.View>
       )}
 
       {/* Wardrobes */}
       <View style={{ paddingTop: 20, paddingBottom: 20 }}>
-        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, paddingHorizontal: layout.screenPadding, marginBottom: 14 }}>
-          The Wardrobes
-        </Text>
+        <View style={{ paddingHorizontal: layout.screenPadding, marginBottom: 14, gap: 2 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy }}>
+            The Wardrobes
+          </Text>
+          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate }}>
+            Curated collections built around how you actually live.
+          </Text>
+        </View>
         <ScrollView
           ref={wardrobeScrollRef}
           horizontal showsHorizontalScrollIndicator={false}
@@ -204,6 +222,28 @@ export default function HomeScreen() {
             ))}
           </View>
         )}
+
+        {/* Coming soon teaser */}
+        <View style={{
+          marginHorizontal: layout.screenPadding, marginTop: 16,
+          backgroundColor: colors.navy, borderRadius: 14, padding: 16,
+          flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <View style={{ gap: 3 }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.sand, textTransform: 'uppercase', letterSpacing: 1 }}>
+              Coming soon
+            </Text>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.cream }}>
+              Women's styles
+            </Text>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.cream + 'BB', lineHeight: 17 }}>
+              Workwear, casual, and occasion pieces for her.
+            </Text>
+          </View>
+          <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.cream + '15', alignItems: 'center', justifyContent: 'center' }}>
+            <Ionicons name="sparkles-outline" size={22} color={colors.sand} />
+          </View>
+        </View>
       </View>
 
       {/* Saved Wardrobes — only show if user has saved at least one */}
@@ -307,24 +347,56 @@ export default function HomeScreen() {
         </View>
       </View>
 
+      {/* Request inventory / feedback */}
+      <View style={{ marginHorizontal: layout.screenPadding, marginBottom: 28 }}>
+        <View style={{
+          backgroundColor: colors.white, borderRadius: 16,
+          padding: 20, borderWidth: 1, borderColor: colors.sand, gap: 12,
+        }}>
+          <View style={{ gap: 4 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.navy }}>
+              Don't see what you're looking for?
+            </Text>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, lineHeight: 20 }}>
+              We're taking requests. Tell us your favorite brands, ask about specific pieces, or just say hi.
+              We read every message.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => Linking.openURL('mailto:support@davenport.rentals?subject=Inventory Request')}
+            accessibilityRole="button"
+            accessibilityLabel="Send an inventory request"
+            style={{
+              backgroundColor: colors.navy, borderRadius: 10,
+              paddingVertical: 12, alignItems: 'center', flexDirection: 'row',
+              justifyContent: 'center', gap: 8,
+            }}>
+            <Ionicons name="mail-outline" size={16} color={colors.cream} />
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.cream }}>
+              Send a request
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+
       {/* Guest CTA */}
       {!session && (
         <View style={{ padding: layout.screenPadding, paddingBottom: 40, gap: 12 }}>
           <View style={{ gap: 6, marginBottom: 12 }}>
             <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, textAlign: 'center' }}>
-              No commitment. No guessing.
+              Your wardrobe, on your terms.
             </Text>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, textAlign: 'center', lineHeight: 21 }}>
-              Rent a piece, wear it, and decide if you want to keep it. Buy at a lower price — or send it back.
+              Try pieces for a month. Buy what you love at a lower price. Return the rest — no questions asked.
             </Text>
           </View>
           <Pressable
             onPress={() => router.push('/(auth)/signup')}
-            accessibilityLabel="Start renting from $12 per month"
+            accessibilityLabel="Create a free account"
             accessibilityRole="button"
             style={{ backgroundColor: colors.navy, borderRadius: 12, padding: 18, alignItems: 'center' }}>
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.cream }}>
-              Browse the Wardrobe →
+              Create a Free Account →
             </Text>
           </Pressable>
           <Pressable

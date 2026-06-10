@@ -1,6 +1,7 @@
 import { unstable_noStore as noStore } from 'next/cache'
+import Link from 'next/link'
 import { supabaseAdmin } from '@/lib/supabase'
-import { updateWardrobe, createWardrobe } from '@/lib/actions'
+import { updateWardrobe, createWardrobe, deleteWardrobe } from '@/lib/actions'
 import { revalidatePath } from 'next/cache'
 import type { Wardrobe } from '@/lib/types'
 
@@ -78,7 +79,13 @@ export default async function WardrobesPage() {
                 <span className="font-semibold text-navy">{w.name}</span>
                 <span className="text-gray-400 text-xs font-mono">/{w.slug}</span>
               </div>
-              <span className="text-xs text-gray-400">Sort: {w.sort_order}</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">Sort: {w.sort_order}</span>
+                <Link href={`/wardrobes/${w.id}`}
+                  className="text-xs text-navy/60 hover:text-navy font-medium transition-colors">
+                  View pieces →
+                </Link>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -114,21 +121,33 @@ export default async function WardrobesPage() {
               </div>
             </div>
 
-            <button
-              formAction={async (fd: FormData) => {
-                'use server'
-                await updateWardrobe(w.id, {
-                  name:            fd.get('name') as string,
-                  description:     fd.get('description') as string || undefined,
-                  cover_image_url: fd.get('cover_image_url') as string || undefined,
-                  is_active:       fd.get('is_active') === 'on',
-                  sort_order:      parseInt(fd.get('sort_order') as string) || w.sort_order,
-                })
-              }}
-              className="bg-navy text-white text-sm px-4 py-2 rounded-lg hover:bg-navy/90 transition-colors"
-            >
-              Save
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                formAction={async (fd: FormData) => {
+                  'use server'
+                  await updateWardrobe(w.id, {
+                    name:            fd.get('name') as string,
+                    description:     fd.get('description') as string || undefined,
+                    cover_image_url: fd.get('cover_image_url') as string || undefined,
+                    is_active:       fd.get('is_active') === 'on',
+                    sort_order:      parseInt(fd.get('sort_order') as string) || w.sort_order,
+                  })
+                }}
+                className="bg-navy text-white text-sm px-4 py-2 rounded-lg hover:bg-navy/90 transition-colors"
+              >
+                Save
+              </button>
+              <button
+                formAction={async () => {
+                  'use server'
+                  await deleteWardrobe(w.id)
+                }}
+                onClick={() => confirm(`Delete "${w.name}"? All pieces will be unassigned.`)}
+                className="text-red-500 hover:text-red-700 text-sm px-3 py-2 rounded-lg hover:bg-red-50 transition-colors border border-red-200"
+              >
+                Delete
+              </button>
+            </div>
           </form>
         ))}
       </div>

@@ -123,3 +123,21 @@ export async function createWardrobe(input: {
   revalidatePath('/wardrobes')
   return { id: data.id }
 }
+
+export async function deleteWardrobe(id: string): Promise<{ error?: string }> {
+  // Unassign all pieces from this wardrobe before deleting
+  await supabaseAdmin.from('pieces').update({ wardrobe_id: null }).eq('wardrobe_id', id)
+  const { error } = await supabaseAdmin.from('wardrobes').delete().eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath('/wardrobes')
+  revalidatePath('/pieces')
+  return {}
+}
+
+export async function setPieceWardrobe(pieceId: string, wardrobeId: string | null): Promise<{ error?: string }> {
+  const { error } = await supabaseAdmin.from('pieces').update({ wardrobe_id: wardrobeId }).eq('id', pieceId)
+  if (error) return { error: error.message }
+  revalidatePath('/wardrobes')
+  revalidatePath('/pieces')
+  return {}
+}

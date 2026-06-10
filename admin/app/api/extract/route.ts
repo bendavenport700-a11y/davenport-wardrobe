@@ -12,7 +12,13 @@ Given a retailer product URL and optional page content, extract structured produ
   "description": "1-2 sentence description for a rental listing. Focus on fit, fabric, occasions.",
   "category": one of: "shirt"|"polo"|"t-shirt"|"henley"|"sweater"|"hoodie"|"sweatshirt"|"cardigan"|"vest"|"pants"|"chinos"|"trousers"|"denim"|"joggers"|"shorts"|"outerwear"|"jacket"|"blazer"|"coat"|"bomber"|"fleece"|"shoes"|"accessories",
   "color": one of: "Navy"|"White"|"Black"|"Grey"|"Olive"|"Khaki"|"Tan"|"Brown"|"Blue"|"Light Blue"|"Green"|"Burgundy"|"Red"|"Pink"|"Orange"|"Yellow"|"Purple"|"Cream"|"Charcoal"|"Multi"|"Pattern",
-  "sizes_available": array of sizes — use XS/S/M/L/XL/XXL for shirts/polos/tops/outerwear, 28-42 for pants/chinos/trousers/denim, 28-38 for shorts, 7-12 for shoes, ["One Size"] for accessories,
+  "sizes_available": array of sizes. Rules:
+    - Tops (shirt/polo/t-shirt/henley/sweater/hoodie/sweatshirt/cardigan/vest/outerwear/jacket/blazer/coat/bomber/fleece): XS/S/M/L/XL/XXL
+    - Bottoms (pants/chinos/trousers/denim/joggers): waist sizes 28-42
+    - Shorts: if athletic/performance/running/swim shorts (e.g. Vuori, Lululemon, Nike) use XS/S/M/L/XL/XXL; if chino/dress/casual shorts use waist 28-38
+    - Shoes: 7 through 12 (including half sizes)
+    - Accessories: ["One Size"]
+    Detect from page content which sizing system the product uses. Include all sizes shown as available on the page.
   "cost_price_estimate_cents": estimated retail price in cents,
   "images": array of image URLs from the product page (up to 4),
   "source_retailer": retailer name (e.g. "Vuori", "Bonobos", "J.Crew")

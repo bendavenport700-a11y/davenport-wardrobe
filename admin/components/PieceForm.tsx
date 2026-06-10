@@ -6,13 +6,15 @@ import { createPiece, updatePiece } from '@/lib/actions'
 import { CATEGORIES, COLORS } from '@/lib/types'
 import type { Piece, Wardrobe, PieceCategory, PieceColor } from '@/lib/types'
 
-const TOPS    = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const BOTTOMS = ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
+const TOPS        = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const BOTTOMS     = ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
+// Shorts use both systems — athletic brands (Vuori, Nike) use XS-XXL, chino shorts use waist sizes
+const SHORTS_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '29', '30', '31', '32', '33', '34', '36', '38']
 const SIZE_SETS: Record<string, string[]> = {
   shirt: TOPS, polo: TOPS, 't-shirt': TOPS, henley: TOPS,
   sweater: TOPS, hoodie: TOPS, sweatshirt: TOPS, cardigan: TOPS, vest: TOPS,
   pants: BOTTOMS, chinos: BOTTOMS, trousers: BOTTOMS, denim: BOTTOMS, joggers: BOTTOMS,
-  shorts: ['28', '29', '30', '31', '32', '33', '34', '36', '38'],
+  shorts: SHORTS_SIZES,
   outerwear: TOPS, jacket: TOPS, blazer: TOPS, coat: TOPS, bomber: TOPS, fleece: TOPS,
   shoes: ['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12'],
   accessories: ['One Size'],
