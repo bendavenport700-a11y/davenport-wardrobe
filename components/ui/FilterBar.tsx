@@ -3,8 +3,6 @@ import { PIECE_COLORS, COLOR_HEX } from '@/constants/inventory'
 import { colors } from '@/constants/colors'
 import type { PieceCategory, PieceColor } from '@/types'
 
-// Category groups for browsing — coarse-grained so the filter bar stays scannable
-// as inventory grows. Each group maps to the raw DB categories it covers.
 export const CATEGORY_GROUPS = [
   { label: 'All',        categories: null },
   { label: 'Tops',       categories: ['shirt', 'polo', 't-shirt', 'henley', 'sweater', 'hoodie', 'sweatshirt', 'cardigan', 'vest'] as PieceCategory[] },
@@ -15,23 +13,20 @@ export const CATEGORY_GROUPS = [
   { label: 'Accessories',categories: ['accessories'] as PieceCategory[] },
 ]
 
-// Map a group label back to category list for query filtering
 export function categoryGroupToList(group: string | null): PieceCategory[] | null {
   if (!group) return null
-  const found = CATEGORY_GROUPS.find(g => g.label === group)
-  return found?.categories ?? null
+  return CATEGORY_GROUPS.find(g => g.label === group)?.categories ?? null
 }
 
-// Context-aware sizes based on selected category group
 function sizesForGroup(group: string | null | undefined): string[] {
   switch (group) {
     case 'Tops':
-    case 'Outerwear':     return ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-    case 'Bottoms':       return ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
-    case 'Shorts':        return ['28', '29', '30', '31', '32', '33', '34', '36', '38']
-    case 'Shoes':         return ['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12']
-    case 'Accessories':   return ['One Size']
-    default:              return ['XS', 'S', 'M', 'L', 'XL', 'XXL', '30', '32', '34', '36']
+    case 'Outerwear':   return ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+    case 'Bottoms':     return ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
+    case 'Shorts':      return ['28', '29', '30', '31', '32', '33', '34', '36', '38']
+    case 'Shoes':       return ['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12']
+    case 'Accessories': return ['One Size']
+    default:            return ['XS', 'S', 'M', 'L', 'XL', 'XXL', '30', '32', '34', '36']
   }
 }
 
@@ -45,58 +40,54 @@ interface FilterBarProps {
 }
 
 export function FilterBar({
-  selectedGroup,
-  selectedColor,
-  selectedSize,
-  onGroupChange,
-  onColorChange,
-  onSizeChange,
+  selectedGroup, selectedColor, selectedSize,
+  onGroupChange, onColorChange, onSizeChange,
 }: FilterBarProps) {
   const availableSizes = sizesForGroup(selectedGroup)
+
   return (
-    <View style={{ gap: 6 }}>
-      {/* Category group pills */}
+    <View style={{ gap: 8 }}>
+
+      {/* Category pills */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+        contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
         {CATEGORY_GROUPS.map(({ label }) => {
-          const isSelected = label === 'All' ? !selectedGroup : selectedGroup === label
+          const active = label === 'All' ? !selectedGroup : selectedGroup === label
           return (
             <Pressable
               key={label}
               onPress={() => {
-                const newGroup = label === 'All' ? null : label
-                onGroupChange(newGroup)
-                // Reset size when category changes — old size may not exist in new category
+                onGroupChange(label === 'All' ? null : label)
                 if (onSizeChange) onSizeChange(null)
               }}
-              accessibilityState={{ selected: isSelected }}
+              accessibilityState={{ selected: active }}
               style={{
-                paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-                backgroundColor: isSelected ? colors.navy : colors.white,
-                borderWidth: 1, borderColor: isSelected ? colors.navy : colors.sand,
+                paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20,
+                backgroundColor: active ? colors.navy : colors.white,
+                borderWidth: 1, borderColor: active ? colors.navy : colors.sand,
               }}>
               <Text style={{
                 fontFamily: 'Inter-Medium', fontSize: 13,
-                color: isSelected ? colors.cream : colors.slate,
+                color: active ? colors.cream : colors.slate,
               }}>{label}</Text>
             </Pressable>
           )
         })}
       </ScrollView>
 
-      {/* Size pills — only shown when a handler is provided and sizes exist */}
-      {onSizeChange && availableSizes && availableSizes.length > 0 && (
+      {/* Size pills — only when a category is selected and handler provided */}
+      {onSizeChange && selectedGroup && availableSizes.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+          contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
           <Pressable
             onPress={() => onSizeChange(null)}
             style={{
-              paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+              paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
               backgroundColor: !selectedSize ? colors.navy : colors.white,
               borderWidth: 1, borderColor: !selectedSize ? colors.navy : colors.sand,
             }}>
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: !selectedSize ? colors.cream : colors.slate }}>
-              All Sizes
+              All
             </Text>
           </Pressable>
           {availableSizes.map(size => (
@@ -105,7 +96,7 @@ export function FilterBar({
               onPress={() => onSizeChange(selectedSize === size ? null : size)}
               accessibilityState={{ selected: selectedSize === size }}
               style={{
-                paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
+                paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20,
                 borderWidth: 1.5,
                 borderColor: selectedSize === size ? colors.navy : colors.sand,
                 backgroundColor: selectedSize === size ? colors.navy : colors.white,
@@ -118,42 +109,42 @@ export function FilterBar({
         </ScrollView>
       )}
 
-      {/* Color dots */}
+      {/* Color dots — no text labels, just circles */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+        contentContainerStyle={{ gap: 8, paddingVertical: 4, alignItems: 'center' }}>
+        {/* "All colors" clear button */}
         <Pressable
           onPress={() => onColorChange(null)}
           style={{
-            paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20,
-            backgroundColor: !selectedColor ? colors.navy : colors.white,
-            borderWidth: 1, borderColor: !selectedColor ? colors.navy : colors.sand,
+            width: 28, height: 28, borderRadius: 14,
+            backgroundColor: !selectedColor ? colors.navy : colors.gray200,
+            alignItems: 'center', justifyContent: 'center',
           }}>
-          <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: !selectedColor ? colors.cream : colors.slate }}>
-            All Colors
+          <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: !selectedColor ? colors.cream : colors.slate }}>
+            All
           </Text>
         </Pressable>
-        {PIECE_COLORS.map(color => (
-          <Pressable
-            key={color}
-            onPress={() => onColorChange(selectedColor === color ? null : color)}
-            accessibilityLabel={color}
-            accessibilityState={{ selected: selectedColor === color }}
-            style={{
-              flexDirection: 'row', alignItems: 'center', gap: 6,
-              paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
-              borderWidth: 1.5,
-              borderColor: selectedColor === color ? colors.navy : colors.sand,
-              backgroundColor: selectedColor === color ? colors.navy + '15' : colors.white,
-            }}>
-            <View style={{
-              width: 12, height: 12, borderRadius: 6,
-              backgroundColor: COLOR_HEX[color] ?? '#888',
-              borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.2)',
-            }} />
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.navy }}>{color}</Text>
-          </Pressable>
-        ))}
+
+        {PIECE_COLORS.map(color => {
+          const active = selectedColor === color
+          return (
+            <Pressable
+              key={color}
+              onPress={() => onColorChange(active ? null : color)}
+              accessibilityLabel={color}
+              accessibilityState={{ selected: active }}
+              style={{
+                width: active ? 32 : 28, height: active ? 32 : 28,
+                borderRadius: active ? 16 : 14,
+                backgroundColor: COLOR_HEX[color] ?? '#888',
+                borderWidth: active ? 2.5 : 1,
+                borderColor: active ? colors.navy : 'rgba(0,0,0,0.12)',
+              }}
+            />
+          )
+        })}
       </ScrollView>
+
     </View>
   )
 }

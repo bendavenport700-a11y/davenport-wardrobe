@@ -4,6 +4,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useLocalSearchParams, router } from 'expo-router'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { Image } from 'expo-image'
+import { Ionicons } from '@expo/vector-icons'
+import { useQuery } from '@tanstack/react-query'
 import { usePiece } from '@/hooks/usePiece'
 import { usePieces } from '@/hooks/usePieces'
 import { useAuthStore } from '@/store/authStore'
@@ -16,6 +18,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { formatCents, wearCountLabel, conditionLabel } from '@/utils/format'
 import { SIZES_BY_CATEGORY } from '@/constants/inventory'
+import { supabase } from '@/lib/supabase'
 import { colors } from '@/constants/colors'
 import { layout, DEFAULT_BLURHASH } from '@/constants/layout'
 
@@ -31,6 +34,17 @@ export default function PieceDetailScreen() {
     category: piece?.category, availableOnly: true, pageSize: 4,
   })
   const similarPieces = (similarData?.pages.flat() ?? []).filter(p => p.id !== id).slice(0, 4)
+
+  const { data: wardrobe } = useQuery({
+    queryKey: ['wardrobe-for-piece', piece?.wardrobe_id],
+    enabled: !!piece?.wardrobe_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('wardrobes').select('id, name').eq('id', piece!.wardrobe_id!).single()
+      return data
+    },
+    staleTime: 5 * 60_000,
+  })
 
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
   const [imageIdx, setImageIdx] = useState(0)
@@ -123,6 +137,28 @@ export default function PieceDetailScreen() {
             <Badge label={conditionLabel(piece.condition)} color={colors.success} />
           </View>
         </View>
+
+        {/* Wardrobe link — shown if this piece belongs to a curated wardrobe */}
+        {wardrobe && (
+          <Pressable
+            onPress={() => router.push({ pathname: '/wardrobe/[id]', params: { id: wardrobe.id } } as any)}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${wardrobe.name} wardrobe`}
+            style={{
+              flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+              backgroundColor: colors.navy + '08', borderRadius: 12, padding: 12,
+            }}>
+            <View style={{ gap: 1 }}>
+              <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.slate, textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                Part of
+              </Text>
+              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>
+                {wardrobe.name}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.navy} />
+          </Pressable>
+        )}
 
         {/* Hygiene trust signal */}
         <View style={{ backgroundColor: colors.navy + '08', borderRadius: 12, padding: 12 }}>

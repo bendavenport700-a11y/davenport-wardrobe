@@ -1,0 +1,25 @@
+{
+  "name": "davenport-wardrobe",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@clerk/nextjs": "^5.0.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@stripe/stripe-js": "^9.4.0",
+    "next": "14.2.3",
+    "react": "^18",
+    "react-dom": "^18",
+    "stripe": "^22.1.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0"
+  }
+}

@@ -8,8 +8,10 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/authStore'
 import { useProtectedRoute } from '@/hooks/useProtectedRoute'
 import { useSyncServerSuitcase } from '@/hooks/useProfile'
+import { useMinimumVersion } from '@/hooks/useMinimumVersion'
 import { useSuitcaseStore } from '@/store/suitcaseStore'
 import { StripeWrapper } from '@/lib/StripeWrapper'
+import { ForceUpdateModal } from '@/components/ui/ForceUpdateModal'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -18,7 +20,8 @@ const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, sta
 function NavigationGuard() {
   useProtectedRoute()
   useSyncServerSuitcase(useAuthStore(s => s.session)?.user.id)
-  return null
+  const needsUpdate = useMinimumVersion()
+  return <ForceUpdateModal visible={needsUpdate} />
 }
 
 export default function RootLayout() {

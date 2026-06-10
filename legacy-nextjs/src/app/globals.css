@@ -1,0 +1,12 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #faf9f7; -webkit-font-smoothing: antialiased; }
+button:focus, input:focus { outline: none; }
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.33%); }
+}
