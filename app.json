@@ -2,7 +2,7 @@
   "expo": {
     "name": "Davenport",
     "slug": "davenport-wardrobe",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "davenport",
@@ -15,10 +15,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.davenportwardrobe.app",
+      "buildNumber": "1",
       "minimumOsVersion": "16.0",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Camera access is used to scan payment card details for faster checkout."
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": ["Default"]
       }
     },
     "android": {
@@ -43,7 +47,9 @@
           "enableGooglePay": true
         }
       ],
-      "expo-image"
+      "expo-image",
+      "expo-web-browser",
+      "expo-apple-authentication"
     ],
     "newArchEnabled": true,
     "experiments": {
