@@ -1,16 +1,13 @@
-import { Platform, View, Pressable, Animated, StyleSheet, useWindowDimensions } from 'react-native'
-import { useRef, useEffect } from 'react'
+import { Platform, View, Pressable, StyleSheet, useWindowDimensions } from 'react-native'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/constants/colors'
 import { useSuitcaseStore, useSuitcaseHydrated } from '@/store/suitcaseStore'
-import { useTabBarStore } from '@/store/tabBarStore'
 import { WebNavbar } from '@/components/nav/WebNavbar'
 
-const MARGIN  = 16
-const PILL_H  = 62
-const SLIDE   = 22    // how far (pt) the pill slides down when collapsed
+const MARGIN = 16
+const PILL_H = 62
 
 function PillBackground() {
   return (
@@ -27,25 +24,11 @@ function PillBackground() {
 }
 
 export default function TabLayout() {
-  const insets     = useSafeAreaInsets()
-  const { width }  = useWindowDimensions()
-  const isWide     = Platform.OS === 'web' && width >= 768
-  const itemCount  = useSuitcaseStore(s => s.items.length)
-  const hydrated   = useSuitcaseHydrated()
-  const scrolledDown = useTabBarStore(s => s.scrolledDown)
-
-  // translateY is native-driver safe — avoids conflict with RN's own tab bar
-  // visibility animation which also uses useNativeDriver: true on the same View.
-  const slideAnim = useRef(new Animated.Value(0)).current
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: scrolledDown ? SLIDE : 0,
-      useNativeDriver: true,
-      tension: 70,
-      friction: 14,
-    }).start()
-  }, [scrolledDown])
+  const insets    = useSafeAreaInsets()
+  const { width } = useWindowDimensions()
+  const isWide    = Platform.OS === 'web' && width >= 768
+  const itemCount = useSuitcaseStore(s => s.items.length)
+  const hydrated  = useSuitcaseHydrated()
 
   if (isWide) {
     return (
@@ -85,7 +68,6 @@ export default function TabLayout() {
             shadowOffset: { width: 0, height: 8 },
             shadowOpacity: 0.30,
             shadowRadius: 24,
-            transform: [{ translateY: slideAnim }],
           },
           tabBarLabelStyle: {
             fontFamily: 'Inter-Medium',
