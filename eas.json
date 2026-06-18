@@ -17,7 +17,12 @@
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_APP_ENV": "production"
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "EXPO_PUBLIC_HANDLING_FEE_CENTS": "1400",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://rjplmjtydknascuqvyzq.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJqcGxtanR5ZGtuYXNjdXF2eXpxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MzEzNjQsImV4cCI6MjA4ODMwNzM2NH0.DEmfHJeEdhtKVf13_XTGu1fAvVTCZkshPxXK4fg_PSs",
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51TW13QLVA7VNQC72G3kxKXKbuskhbPdDeerOmsfB0lqy1GUyBLt1zO5Wp85zUmKopJJrr2bJWTZBKbDEHzWyObaE00OhkZpQhn",
+        "EXPO_PUBLIC_DEPOSIT_AMOUNT_CENTS": "7500"
       }
     }
   },
