@@ -44,7 +44,7 @@ export default function CheckoutConfirmationScreen() {
       ?? 'my new wardrobe'
     try {
       await Share.share({
-        message: `Just rented ${names} from Davenport Wardrobe\nRent premium pieces monthly — return or own them. No commitment.\nhttps://davenport.rentals?utm_source=share&utm_medium=app`,
+        message: `Just rented ${names} from Davenport Wardrobe\nRent premium pieces monthly. Return or own them. No commitment.\nhttps://davenport.rentals?utm_source=share&utm_medium=app`,
         url: 'https://davenport.rentals?utm_source=share&utm_medium=app',
       })
     } catch {
@@ -89,15 +89,15 @@ export default function CheckoutConfirmationScreen() {
         <Animated.View entering={FadeInDown.delay(400).springify()} style={{ alignItems: 'center', gap: 8 }}>
           <Text style={{
             fontFamily: 'PlayfairDisplay-Bold', fontSize: 30,
-            color: colors.navy, textAlign: 'center',
+            color: colors.navy, textAlign: 'center', letterSpacing: 0.2,
           }}>
             Your suitcase{'\n'}is on its way.
           </Text>
           <Text style={{
             fontFamily: 'Inter-Regular', fontSize: 16,
-            color: colors.slate, textAlign: 'center',
+            color: colors.slate, textAlign: 'center', lineHeight: 24,
           }}>
-            Ships within 2–3 business days.
+            Ships in 1–2 weeks.
           </Text>
           {order_id && (
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.gray400, marginTop: 4 }}>
@@ -111,17 +111,18 @@ export default function CheckoutConfirmationScreen() {
           <Animated.View
             entering={FadeInDown.delay(600).springify()}
             style={{
-              backgroundColor: colors.white, borderRadius: 14,
-              padding: 16, width: '100%', gap: 8,
+              backgroundColor: colors.white, borderRadius: 16,
+              padding: 18, width: '100%', gap: 8,
+              borderWidth: 1, borderColor: colors.sand + '80',
             }}
           >
-            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 4 }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 4, letterSpacing: 0.1 }}>
               Order Summary
             </Text>
             {(order.rentals as RentalWithPiece[]).map((rental) => (
               <View key={rental.id} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
                 <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, flex: 1 }} numberOfLines={1}>
-                  {rental.piece?.brand} {rental.piece?.name} · Size {rental.size}
+                  {[rental.piece?.brand, rental.piece?.name].filter(Boolean).join(' ') || 'Piece'} · Size {rental.size}
                 </Text>
                 <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
                   {formatCents(rental.rental_fee_cents)}/mo
@@ -149,7 +150,7 @@ export default function CheckoutConfirmationScreen() {
                 paddingVertical: 16, alignItems: 'center',
               }}
             >
-              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.cream }}>
+              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.cream, letterSpacing: 0.2 }}>
                 Track Your Order →
               </Text>
             </Pressable>
@@ -162,16 +163,16 @@ export default function CheckoutConfirmationScreen() {
               paddingVertical: 16, alignItems: 'center',
             }}
           >
-            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.navy }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.navy, letterSpacing: 0.2 }}>
               Share My Look ↗
             </Text>
           </Pressable>
 
           <Pressable
-            onPress={() => router.replace('/(tabs)/' as any)}
+            onPress={() => router.replace('/(tabs)/pieces' as any)}
             style={{ paddingVertical: 12, alignItems: 'center' }}
           >
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate }}>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, letterSpacing: 0.1 }}>
               Keep Browsing
             </Text>
           </Pressable>

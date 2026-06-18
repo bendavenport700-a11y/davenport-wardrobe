@@ -34,12 +34,13 @@ export function useUpdateProfile() {
 
 export function useSyncServerSuitcase(userId: string | undefined) {
   const { addItem } = useSuitcaseStore()
+  const hasHydrated = useSuitcaseStore(s => s._hasHydrated)
 
   useEffect(() => {
-    if (!userId) return
-    // Pull server items and merge into local store.
-    // addItem is idempotent (deduplicates by piece+size), so this is safe even if
-    // local already has items — it only adds things that aren't there yet.
+    // Wait for AsyncStorage hydration to complete before adding server items.
+    // If we call addItem() before hydration finishes, the incoming AsyncStorage
+    // state will overwrite the server items when the store rehydrates.
+    if (!userId || !hasHydrated) return
     supabase
       .from('suitcase_items')
       .select('*, piece:pieces(*)')
@@ -50,5 +51,5 @@ export function useSyncServerSuitcase(userId: string | undefined) {
           if (row.piece) addItem(row.piece as Piece, row.size)
         })
       })
-  }, [userId, addItem])
+  }, [userId, addItem, hasHydrated])
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, Text, TextInput, KeyboardAvoidingView, Platform, Pressable } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -12,6 +12,16 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    if (done) {
+      navTimerRef.current = setTimeout(() => router.replace('/(tabs)' as any), 1500)
+    }
+    return () => {
+      if (navTimerRef.current) clearTimeout(navTimerRef.current)
+    }
+  }, [done])
 
   const handleSubmit = async () => {
     if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
@@ -22,7 +32,6 @@ export default function ResetPasswordScreen() {
     setLoading(false)
     if (e) { setError(e.message); return }
     setDone(true)
-    setTimeout(() => router.replace('/(tabs)' as any), 1500)
   }
 
   if (done) {
@@ -42,7 +51,7 @@ export default function ResetPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={{ flex: 1, padding: 24, justifyContent: 'center', gap: 20 }}>
         <View>
           <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 8 }}>

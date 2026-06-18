@@ -11,13 +11,13 @@ import { useSuitcaseStore } from '@/store/suitcaseStore'
 import { useIsWardrobeSaved, useToggleSavedWardrobe } from '@/hooks/useSavedWardrobes'
 import { PieceCard } from '@/components/piece/PieceCard'
 import { PieceCardSkeleton, Skeleton } from '@/components/ui/Skeleton'
-import { FilterBar, categoryGroupToList } from '@/components/ui/FilterBar'
+import { CATEGORY_GROUPS, categoryGroupToList, sizesForGroup } from '@/components/ui/FilterBar'
 import { ErrorState } from '@/components/ui/ErrorState'
 import { formatCentsPerMonth } from '@/utils/format'
 import { SIZES_BY_CATEGORY } from '@/constants/inventory'
 import { colors } from '@/constants/colors'
 import { layout, DEFAULT_BLURHASH } from '@/constants/layout'
-import type { Piece, PieceColor } from '@/types'
+import type { Piece } from '@/types'
 
 // ── Add All modal ──────────────────────────────────────────────────────────
 
@@ -28,6 +28,7 @@ function AddAllModal({
   pieces: Piece[]
   onClose: () => void
 }) {
+  const insets = useSafeAreaInsets()
   const { addItem, hasItem } = useSuitcaseStore()
   const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>({})
 
@@ -77,11 +78,11 @@ function AddAllModal({
           </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 120 }}>
+        <ScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: insets.bottom + 120 }}>
           {pieces.map(piece => {
             const categorySizes = SIZES_BY_CATEGORY[piece.category ?? '']
             const availableSizes = categorySizes
-              ? categorySizes.filter((s: string) => piece.sizes_available.includes(s))
+              ? categorySizes.filter((s: string) => (piece.sizes_available ?? []).includes(s))
               : piece.sizes_available
             const selected = selectedSizes[piece.id]
             const alreadyAdded = selected && hasItem(piece.id, selected)
@@ -151,7 +152,7 @@ function AddAllModal({
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
           backgroundColor: colors.cream, borderTopWidth: 1, borderTopColor: colors.sand,
-          padding: 20,
+          paddingTop: 16, paddingHorizontal: 20, paddingBottom: insets.bottom + 16,
         }}>
           <Pressable
             onPress={handleAdd}
@@ -182,7 +183,6 @@ export default function WardrobeDetailScreen() {
   const { data: isSaved = false } = useIsWardrobeSaved(userId, id)
   const { mutate: toggleSave, isPending: savePending } = useToggleSavedWardrobe()
   const [categoryGroup, setCategoryGroup] = useState<string | null>(null)
-  const [color, setColor] = useState<PieceColor | null>(null)
   const [size, setSize] = useState<string | null>(null)
   const [showAddAll, setShowAddAll] = useState(false)
 
@@ -191,12 +191,16 @@ export default function WardrobeDetailScreen() {
 
   const categoryList = categoryGroupToList(categoryGroup)
   const { data, isLoading: pLoading, isError: pError, refetch: refetchPieces } = usePieces({
-    wardrobeId: id, category: categoryList ?? undefined, color, size, availableOnly: true,
+    wardrobeId: id, category: categoryList ?? undefined, size, availableOnly: true,
   })
   const pieces = data?.pages.flat() ?? []
 
   if (wError) {
     return <ErrorState message="Couldn't load this wardrobe." onRetry={() => router.back()} />
+  }
+
+  if (!wLoading && !wardrobe) {
+    return <ErrorState message="Wardrobe not found." onRetry={() => router.back()} />
   }
 
   return (
@@ -276,14 +280,53 @@ export default function WardrobeDetailScreen() {
             </>
           )}
 
-          <FilterBar
-            selectedGroup={categoryGroup}
-            selectedColor={color}
-            selectedSize={size}
-            onGroupChange={setCategoryGroup}
-            onColorChange={setColor}
-            onSizeChange={setSize}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+            {CATEGORY_GROUPS.map(({ label }) => {
+              const active = label === 'All' ? !categoryGroup : categoryGroup === label
+              return (
+                <Pressable
+                  key={label}
+                  onPress={() => { setCategoryGroup(label === 'All' ? null : label); setSize(null) }}
+                  accessibilityState={{ selected: active }}
+                  style={{
+                    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+                    backgroundColor: active ? colors.navy : colors.white,
+                    borderWidth: 1, borderColor: active ? colors.navy : colors.sand + 'CC',
+                  }}
+                >
+                  <Text style={{
+                    fontFamily: 'Inter-Medium', fontSize: 13,
+                    color: active ? colors.cream : colors.slate, letterSpacing: 0.1,
+                  }}>{label}</Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
+
+          {categoryGroup && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2, marginTop: 8 }}>
+              {sizesForGroup(categoryGroup).map(s => {
+                const active = size === s
+                return (
+                  <Pressable
+                    key={s}
+                    onPress={() => setSize(active ? null : s)}
+                    accessibilityState={{ selected: active }}
+                    style={{
+                      paddingHorizontal: 14, paddingVertical: 6, borderRadius: 18,
+                      backgroundColor: active ? colors.navy + 'DD' : colors.cream,
+                      borderWidth: 1, borderColor: active ? colors.navy : colors.sand + 'CC',
+                    }}
+                  >
+                    <Text style={{
+                      fontFamily: 'Inter-Medium', fontSize: 12,
+                      color: active ? colors.cream : colors.slate,
+                    }}>{s}</Text>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          )}
         </View>
 
         {/* Add All CTA */}
@@ -320,7 +363,7 @@ export default function WardrobeDetailScreen() {
           ) : pieces.length === 0 ? (
             <View style={{ width: '100%', alignItems: 'center', paddingVertical: 40 }}>
               <Text style={{ fontFamily: 'Inter-Regular', fontSize: 15, color: colors.slate, textAlign: 'center' }}>
-                Nothing available right now — check back soon.
+                Nothing available right now. Check back soon.
               </Text>
             </View>
           ) : pieces.map((piece, index) => (

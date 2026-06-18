@@ -25,12 +25,13 @@ function NavigationGuard() {
 }
 
 export default function RootLayout() {
-  const { setSession, setProfile } = useAuthStore()
+  const { setSession, setProfile, setHydrated } = useAuthStore()
 
   const [fontsLoaded, fontError] = useFonts({
     'PlayfairDisplay-Bold': require('@/assets/fonts/PlayfairDisplay-Bold.ttf'),
     'Inter-Regular': require('@/assets/fonts/Inter-Regular.ttf'),
     'Inter-Medium': require('@/assets/fonts/Inter-Medium.ttf'),
+    'Inter-Bold': require('@/assets/fonts/Inter-Bold.ttf'),
   })
 
   useEffect(() => {
@@ -39,18 +40,29 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError])
 
   useEffect(() => {
+    // Track the last UID we fetched a profile for to avoid duplicate fetches when
+    // both getSession() and onAuthStateChange fire with the same session on cold start.
+    let lastFetchedUid: string | null = null
+
     const fetchProfile = async (uid: string) => {
+      if (lastFetchedUid === uid) return
+      lastFetchedUid = uid
       const { data, error } = await supabase.from('profiles').select('*').eq('id', uid).single()
       if (error) {
         console.error('Failed to load profile:', error.message)
+        // Mark the uid as attempted so useProtectedRoute can unblock after a failure
+        lastFetchedUid = uid
         return
       }
       if (data) setProfile(data)
     }
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
+      setHydrated(true)
       if (session?.user.id) fetchProfile(session.user.id)
     })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'PASSWORD_RECOVERY') {
         router.replace('/reset-password' as any)
@@ -58,7 +70,13 @@ export default function RootLayout() {
       }
       const previousSession = useAuthStore.getState().session
       setSession(newSession)
+      // Safety net: if getSession() hasn't resolved yet, mark hydrated now so routing
+      // doesn't stay blocked while the local-storage read is slow.
+      if (!useAuthStore.getState().hydrated) setHydrated(true)
+
       if (newSession?.user.id) {
+        // Reset dedup when the signed-in user changes so the new user's profile loads
+        if (lastFetchedUid !== newSession.user.id) lastFetchedUid = null
         await fetchProfile(newSession.user.id)
         if (!previousSession && newSession) {
           const guestItems = useSuitcaseStore.getState().items
@@ -72,13 +90,15 @@ export default function RootLayout() {
           }
         }
       } else {
+        lastFetchedUid = null
         setProfile(null)
-        // Do NOT clear suitcase on sign-out — items persist in AsyncStorage so
-        // they're available immediately on next login and merge into the server cart.
+        // Clear local suitcase on sign-out so a different user signing in on the same
+        // device doesn't inherit the previous user's cart.
+        useSuitcaseStore.getState().clearSuitcase()
       }
     })
     return () => subscription.unsubscribe()
-  }, [setSession, setProfile])
+  }, [setSession, setProfile, setHydrated])
 
   if (!fontsLoaded && !fontError) return null
 
@@ -98,6 +118,8 @@ export default function RootLayout() {
             <Stack.Screen name="checkout/index" options={{ gestureEnabled: false }} />
             <Stack.Screen name="checkout/confirmation" options={{ gestureEnabled: false }} />
             <Stack.Screen name="order/[id]" />
+            <Stack.Screen name="update-address" options={{ presentation: 'modal', headerShown: false }} />
+            <Stack.Screen name="faq" options={{ headerShown: false }} />
           </Stack>
         </SafeAreaProvider>
       </StripeWrapper>

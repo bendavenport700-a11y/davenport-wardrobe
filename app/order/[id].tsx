@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native'
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Linking } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Image } from 'expo-image'
@@ -16,12 +16,15 @@ import { layout, DEFAULT_BLURHASH } from '@/constants/layout'
 import type { Rental, Piece, ShippingAddress } from '@/types'
 
 const STATUS_MESSAGE: Record<string, string> = {
-  pending:   'Order received — sourcing your pieces now.',
-  confirmed: 'Order confirmed — sourcing your pieces now.',
-  sourcing:  'Sourcing from the retailer. Ships within 2–3 business days.',
-  shipped:   'Your pieces are on the way! Check tracking below.',
-  delivered: 'Delivered. Enjoy your pieces.',
-  complete:  'Order complete.',
+  pending:          "Order received. Your piece ships in 1-2 weeks.",
+  confirmed:        "Order confirmed. Your piece ships in 1-2 weeks.",
+  sourcing:         "Your piece is being prepared and will ship within 1-2 weeks. Email support@davenport.rentals if it's been longer than that.",
+  shipped:          "Your piece is on the way. Check the tracking number below.",
+  delivered:        "Delivered. Enjoy it. You can buy it anytime from the Account tab.",
+  return_requested: "Return in progress. We'll email a prepaid label within 24 hours. Ship back within 21 days.",
+  complete:         "Order complete.",
+  refund_requested: "Refund request received. Our team will respond within 3–5 business days.",
+  refunded:         "Refund processed. Please allow a few business days for it to appear.",
 }
 
 const STATUS_STEPS = ['pending', 'sourcing', 'shipped', 'delivered']
@@ -38,11 +41,41 @@ export default function OrderScreen() {
   const queryClient = useQueryClient()
   const { data: order, isLoading, isError, refetch } = useOrder(id)
   const [buyoutLoading, setBuyoutLoading] = useState<string | null>(null)
+  const [refundLoading, setRefundLoading] = useState(false)
+
+  async function handleRefundRequest() {
+    Alert.alert(
+      'Request a Refund',
+      'Submit a refund request for this order? Our team reviews requests within 3–5 business days and will email you the outcome.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Request Refund',
+          onPress: async () => {
+            setRefundLoading(true)
+            try {
+              await callEdgeFunction('request-refund', { order_id: id })
+              await queryClient.invalidateQueries({ queryKey: ['order', id] })
+              Alert.alert(
+                'Request Received',
+                'We\'ve received your refund request and will respond within 3–5 business days. Check your email for confirmation.'
+              )
+            } catch (err: any) {
+              Alert.alert('Request Failed', err.message ?? 'Something went wrong. Please email support@davenport.rentals.')
+            } finally {
+              setRefundLoading(false)
+            }
+          },
+        },
+      ]
+    )
+  }
 
   async function handleBuyout(rental: RentalWithPiece, buyoutPriceCents: number) {
+    const pieceName = [rental.piece?.brand, rental.piece?.name].filter(Boolean).join(' ') || 'This piece'
     Alert.alert(
       'Buy This Piece',
-      `${formatCents(buyoutPriceCents)} charged once to your card on file. Monthly billing stops immediately.`,
+      `${pieceName}: ${formatCents(buyoutPriceCents)} charged once to your card on file. Monthly billing stops immediately.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -110,7 +143,9 @@ export default function OrderScreen() {
     )
   }
 
-  const currentStepIndex = STATUS_STEPS.indexOf(order.status)
+  // 'confirmed' is equivalent to 'pending' in the progress display
+  const progressStatus = order.status === 'confirmed' ? 'pending' : order.status
+  const currentStepIndex = STATUS_STEPS.indexOf(progressStatus)
 
   return (
     <ScrollView
@@ -185,10 +220,9 @@ export default function OrderScreen() {
           const piece = rental.piece
           const months = rentalMonths(rental.created_at)
           const isLoyalty = months >= LOYALTY_BUYOUT_BONUS_MONTHS
-          const buyoutPrice = isLoyalty
-            ? Math.round(rental.buyout_price_snapshot * 0.95)
-            : rental.buyout_price_snapshot
-          const canBuyout = rental.status === 'delivered' && !rental.bought_out && buyoutPrice > 0
+          const snapshot = rental.buyout_price_snapshot ?? 0
+          const buyoutPrice = isLoyalty ? Math.round(snapshot * 0.95) : snapshot
+          const canBuyout = rental.billing_active && !rental.bought_out && buyoutPrice > 0 && rental.status !== 'return_requested'
 
           return (
             <View key={rental.id} style={{ backgroundColor: colors.white, borderRadius: 14, overflow: 'hidden' }}>
@@ -227,7 +261,7 @@ export default function OrderScreen() {
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
                       <Ionicons name="checkmark-circle" size={13} color={colors.success} />
                       <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.success }}>
-                        Purchased — yours to keep
+                        Purchased. Yours to keep.
                       </Text>
                     </View>
                   )}
@@ -241,13 +275,13 @@ export default function OrderScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
-                        Own it — {formatCents(buyoutPrice)}
+                        Own it · {formatCents(buyoutPrice)}
                       </Text>
                       {isLoyalty ? (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                           <Ionicons name="star" size={11} color={colors.success} />
                           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.success }}>
-                            Loyalty discount applied (5% off — {months}+ months)
+                            Loyalty discount applied (5% off · {months}+ months)
                           </Text>
                         </View>
                       ) : months >= 3 ? (
@@ -287,11 +321,11 @@ export default function OrderScreen() {
           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>Payment</Text>
           <SummaryRow label="First month" value={formatCents(order.first_month_total)} />
           <SummaryRow label="Handling & shipping" value={formatCents(order.handling_fee_cents)} />
-          {order.deposit_amount > 0 && (
-            <SummaryRow label="Security deposit (held)" value={formatCents(order.deposit_amount)} sub="Refundable when all pieces return" />
-          )}
           <View style={{ height: 1, backgroundColor: colors.sand }} />
-          <SummaryRow label="Charged today" value={formatCents(order.total_charged)} bold />
+          <SummaryRow label="Charged" value={formatCents(order.total_charged)} bold />
+          {order.deposit_amount > 0 && (
+            <SummaryRow label="+ Deposit hold" value={formatCents(order.deposit_amount)} sub="Authorized on your card, not captured. Released when pieces are returned." />
+          )}
         </View>
 
         {/* Shipping address */}
@@ -310,14 +344,70 @@ export default function OrderScreen() {
         })()}
 
         {/* Returns */}
-        <View style={{ backgroundColor: colors.white, borderRadius: 14, padding: 16, gap: 8 }}>
+        <View style={{ backgroundColor: colors.white, borderRadius: 14, padding: 16, gap: 10 }}>
           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>How to Return</Text>
           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, lineHeight: 20 }}>
-            Email <Text style={{ fontFamily: 'Inter-Medium', color: colors.navy }}>returns@davenport.rentals</Text> with
-            your order number and we'll send a prepaid USPS label within 24 hours.{'\n\n'}
-            Items should be returned in received condition. Normal wear is expected and fine.
+            Go to Account, tap the piece you want to return, and tap "Return." We'll email a prepaid label within 24 hours. Ship back within 21 days. Normal wear is fine — no dry cleaning needed.
           </Text>
+          <Pressable
+            onPress={() => router.replace('/(tabs)/account' as any)}
+            accessibilityRole="button"
+            style={{
+              borderWidth: 1, borderColor: colors.sand, borderRadius: 10,
+              paddingVertical: 10, alignItems: 'center', flexDirection: 'row',
+              justifyContent: 'center', gap: 8,
+            }}>
+            <Ionicons name="person-outline" size={14} color={colors.slate} />
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.slate }}>
+              Go to Account →
+            </Text>
+          </Pressable>
         </View>
+
+        {/* Refund request — visible within 30 days and not yet refunded */}
+        {(() => {
+          const daysSince = Math.floor((Date.now() - new Date(order.created_at).getTime()) / (1000 * 60 * 60 * 24))
+          const canRequest = daysSince <= 30 && !['refunded', 'refund_requested', 'complete'].includes(order.status)
+          const isPending  = order.status === 'refund_requested'
+          if (!canRequest && !isPending) return null
+          return (
+            <View style={{ backgroundColor: colors.white, borderRadius: 14, padding: 16, gap: 10 }}>
+              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>Request a Refund</Text>
+              {isPending ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="time-outline" size={14} color={colors.slate} />
+                  <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate }}>
+                    Refund request pending review (3–5 business days).
+                  </Text>
+                </View>
+              ) : (
+                <>
+                  <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, lineHeight: 20 }}>
+                    Not happy with your order? Request a refund within 30 days. We'll review and respond by email within 3–5 business days.
+                  </Text>
+                  <Pressable
+                    onPress={handleRefundRequest}
+                    disabled={refundLoading}
+                    accessibilityRole="button"
+                    style={{
+                      borderWidth: 1, borderColor: colors.sand, borderRadius: 10,
+                      paddingVertical: 10, alignItems: 'center', flexDirection: 'row',
+                      justifyContent: 'center', gap: 8,
+                      opacity: refundLoading ? 0.5 : 1,
+                    }}>
+                    {refundLoading
+                      ? <ActivityIndicator size="small" color={colors.slate} />
+                      : <Ionicons name="return-up-back-outline" size={14} color={colors.slate} />
+                    }
+                    <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.slate }}>
+                      {refundLoading ? 'Submitting…' : 'Request Refund'}
+                    </Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          )
+        })()}
 
         <Pressable
           onPress={() => router.replace('/(tabs)/account' as any)}

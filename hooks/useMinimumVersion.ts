@@ -18,8 +18,10 @@ export function useMinimumVersion() {
       .single()
       .then(({ data }) => {
         if (!data) return
-        if (currentBuild < parseInt(data.value)) setNeedsUpdate(true)
+        const minimumBuild = parseInt(data.value, 10)
+        if (!isNaN(minimumBuild) && currentBuild < minimumBuild) setNeedsUpdate(true)
       })
+      .catch(e => console.error('Version check failed (non-fatal):', e))
   }, [])
 
   return needsUpdate

@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
-import { View, Text, ScrollView, Pressable, ActivityIndicator, BackHandler, Platform } from 'react-native'
+import { useState, useEffect, useRef } from 'react'
+import { View, Text, ScrollView, Pressable, ActivityIndicator, BackHandler, Platform, Alert } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useQueryClient } from '@tanstack/react-query'
 import { useStripe } from '@/lib/stripe'
 import { callEdgeFunction } from '@/lib/supabase'
 import { useSuitcaseStore, useSuitcaseHydrated } from '@/store/suitcaseStore'
@@ -32,10 +33,20 @@ export default function CheckoutScreen() {
   const hydrated = useSuitcaseHydrated()
   const { session, profile } = useAuthStore()
   const insets = useSafeAreaInsets()
+  const queryClient = useQueryClient()
   const { initPaymentSheet, presentPaymentSheet } = useStripe()
 
+  const scrollRef = useRef<ScrollView>(null)
+  // Stable key for this checkout session — reused on network retries so Stripe deduplicates.
+  // A new mount (user navigates away and back) produces a new key, which is correct.
+  const pathBIdempotencyKey = useRef(`checkout-${Date.now()}-${Math.random().toString(36).slice(2)}`)
   const [checkoutStatus, setCheckoutStatus] = useState<CheckoutStatus>('idle')
   const [error, setError] = useState<string | null>(null)
+
+  // Scroll to top whenever an error is set so the banner is always visible
+  useEffect(() => {
+    if (error) scrollRef.current?.scrollTo({ y: 0, animated: true })
+  }, [error])
 
   const hasPaymentOnFile  = !!profile?.stripe_payment_method_id
   const hasDepositOnFile  = profile?.deposit_status === 'held'
@@ -69,9 +80,9 @@ export default function CheckoutScreen() {
     useSuitcaseStore.getState().items.map(item => ({
       piece_id:              item.piece_id,
       size:                  item.size,
-      rental_fee_cents:      item.rental_fee_cents,
-      wear_count_at_rental:  item.piece.wear_count,
-      buyout_price_snapshot: item.piece.buyout_price,
+      rental_fee_cents:      item.rental_fee_cents ?? 0,
+      wear_count_at_rental:  item.piece?.wear_count ?? 0,
+      buyout_price_snapshot: item.piece?.buyout_price ?? 0,
     }))
 
   // Path A — new customer: collect card via Payment Sheet, then charge
@@ -82,18 +93,28 @@ export default function CheckoutScreen() {
       const si = await callEdgeFunction<SetupIntentResponse>('create-setup-intent')
 
       const { error: initError } = await initPaymentSheet({
-        merchantDisplayName:       'Davenport',
-        setupIntentClientSecret:   si.client_secret,
-        customerId:                si.customer_id,
+        merchantDisplayName:        'Davenport',
+        setupIntentClientSecret:    si.client_secret,
+        customerId:                 si.customer_id,
         customerEphemeralKeySecret: si.ephemeral_key_secret,
-        style:                     'automatic',
+        style:                      'automatic',
         appearance: { colors: { primary: colors.navy, background: colors.cream } },
+        applePay: { merchantCountryCode: 'US' },
       } as any)
-      if (initError) throw new Error(initError.message)
+      if (initError) {
+        console.error('initPaymentSheet error:', JSON.stringify(initError))
+        throw new Error(initError.message)
+      }
 
-      const { error: sheetError } = await presentPaymentSheet()
+      // 2-minute hard deadline: presentPaymentSheet() can hang indefinitely on iPad
+      // in iPhone compatibility mode when the sheet fails to present or dismiss.
+      const sheetTimeout = new Promise<{ error: { code: string; message: string } }>((resolve) =>
+        setTimeout(() => resolve({ error: { code: 'Timeout', message: 'Payment sheet timed out. Please try again.' } }), 120_000)
+      )
+      const { error: sheetError } = await Promise.race([presentPaymentSheet(), sheetTimeout])
       if (sheetError) {
-        if ((sheetError as any).code === 'Canceled') { setCheckoutStatus('idle'); return }
+        console.error('presentPaymentSheet error:', JSON.stringify(sheetError))
+        if ((sheetError as any).code === 'Canceled') { setCheckoutStatus('idle'); setError(null); return }
         throw new Error((sheetError as { message: string }).message)
       }
 
@@ -103,11 +124,16 @@ export default function CheckoutScreen() {
         items: buildOrderItems(),
       })
 
-      clearSuitcase()
+      // Navigate first — if this throws the suitcase is still intact
       router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'active', session!.user.id] })
+      queryClient.invalidateQueries({ queryKey: ['orders', session!.user.id] })
+      clearSuitcase()
     } catch (err) {
-      setError(friendlyError(err))
+      const msg = friendlyError(err)
+      setError(msg)
       setCheckoutStatus('idle')
+      Alert.alert('Payment failed', msg)
     }
   }
 
@@ -115,18 +141,22 @@ export default function CheckoutScreen() {
   const handleReturningCustomer = async () => {
     setCheckoutStatus('processing')
     setError(null)
-    // Generate a per-attempt idempotency key so a network retry can't double-charge.
-    const idempotency_key = crypto.randomUUID()
+    const idempotency_key = pathBIdempotencyKey.current
     try {
       const { order_id } = await callEdgeFunction<{ order_id: string }>('confirm-order', {
         items: buildOrderItems(),
         idempotency_key,
       })
-      clearSuitcase()
+      // Navigate first — if this throws the suitcase is still intact
       router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
+      queryClient.invalidateQueries({ queryKey: ['rentals', 'active', session!.user.id] })
+      queryClient.invalidateQueries({ queryKey: ['orders', session!.user.id] })
+      clearSuitcase()
     } catch (err) {
-      setError(friendlyError(err))
+      const msg = friendlyError(err)
+      setError(msg)
       setCheckoutStatus('idle')
+      Alert.alert('Payment failed', msg)
     }
   }
 
@@ -142,6 +172,7 @@ export default function CheckoutScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.cream }}>
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{
           paddingTop: insets.top + 12,
           paddingHorizontal: layout.screenPadding,
@@ -159,12 +190,28 @@ export default function CheckoutScreen() {
           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15, color: colors.navy }}>← Back</Text>
         </Pressable>
 
-        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 4 }}>
+        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 5, letterSpacing: 0.2 }}>
           Review Order
         </Text>
-        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, marginBottom: 20 }}>
+        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, marginBottom: 22, lineHeight: 20 }}>
           {count} piece{count !== 1 ? 's' : ''} · confirm before charging
         </Text>
+
+        {/* Error — shown at top so it's always visible regardless of scroll position */}
+        {error && (
+          <View style={{
+            backgroundColor: colors.error + '15', borderRadius: 12,
+            padding: 14, marginBottom: 16,
+            borderWidth: 1, borderColor: colors.error + '30',
+          }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.error, marginBottom: 2 }}>
+              Payment failed
+            </Text>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.error, lineHeight: 19 }}>
+              {error}
+            </Text>
+          </View>
+        )}
 
         {/* Item list — remove disabled while payment is processing */}
         {items.map(item => (
@@ -180,6 +227,7 @@ export default function CheckoutScreen() {
         <View style={{ marginTop: 8, marginBottom: 16 }}>
           <SuitcaseSummary
             itemCount={count}
+            discountPieceCount={(profile?.active_rental_count ?? 0) + count}
             rawMonthlyCents={rawMonthly}
             hasDepositOnFile={hasDepositOnFile}
             handlingFeeCents={HANDLING_CENTS}
@@ -191,18 +239,6 @@ export default function CheckoutScreen() {
         <View style={{ marginBottom: 16 }}>
           <DepositExplainer depositCents={DEPOSIT_CENTS} hasDepositOnFile={hasDepositOnFile} />
         </View>
-
-        {/* Error */}
-        {error && (
-          <View style={{
-            backgroundColor: colors.error + '15', borderRadius: 12,
-            padding: 14, marginBottom: 16,
-          }}>
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.error, lineHeight: 20 }}>
-              {error}
-            </Text>
-          </View>
-        )}
 
         {/* Shipping address guard — profile should always have one here, but show
             a clear error if something went wrong rather than letting confirm-order fail */}
@@ -243,12 +279,13 @@ export default function CheckoutScreen() {
               <Text style={{
                 fontFamily: 'Inter-Medium', fontSize: 17,
                 color: isProcessing ? colors.gray400 : colors.cream,
+                letterSpacing: 0.2,
               }}>
                 {isProcessing ? 'Processing…' : 'Confirm & Pay →'}
               </Text>
             </Pressable>
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textAlign: 'center' }}>
-              Charged to your saved card · cancel anytime after 30 days
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textAlign: 'center', lineHeight: 18, letterSpacing: 0.1 }}>
+              Charged to your saved card · first month non-refundable · return anytime
             </Text>
           </View>
         ) : (
@@ -268,14 +305,15 @@ export default function CheckoutScreen() {
               <Text style={{
                 fontFamily: 'Inter-Medium', fontSize: 17,
                 color: isProcessing ? colors.gray400 : colors.cream,
+                letterSpacing: 0.2,
               }}>
                 {checkoutStatus === 'processing' ? 'Processing…'
                   : checkoutStatus === 'loading' ? 'Loading…'
                   : 'Set Up Payment & Pay →'}
               </Text>
             </Pressable>
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textAlign: 'center' }}>
-              Secured by Stripe · {formatCents(DEPOSIT_CENTS)} deposit held, not charged · cancel anytime after 30 days
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textAlign: 'center', lineHeight: 18, letterSpacing: 0.1 }}>
+              Secured by Stripe · {formatCents(DEPOSIT_CENTS)} deposit held, not charged · return anytime
             </Text>
           </View>
         )}
