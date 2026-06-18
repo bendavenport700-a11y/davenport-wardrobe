@@ -29,6 +29,7 @@ export function usePiece(id: string | undefined) {
           .order('wear_count', { ascending: true }),
       ])
       if (pieceRes.error) throw pieceRes.error
+      if (unitsRes.error) throw unitsRes.error
       return { ...pieceRes.data, availableUnits: unitsRes.data ?? [] }
     },
     staleTime: 2 * 60 * 1000,

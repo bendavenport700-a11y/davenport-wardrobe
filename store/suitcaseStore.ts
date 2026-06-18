@@ -16,7 +16,6 @@ interface SuitcaseStore {
   monthlyTotalCents: () => number
   handlingFeeCents: () => number
   depositCents: (hasDepositOnFile: boolean) => number
-  dueTodayCents: (hasDepositOnFile: boolean) => number
 }
 
 export const useSuitcaseStore = create<SuitcaseStore>()(
@@ -44,18 +43,19 @@ export const useSuitcaseStore = create<SuitcaseStore>()(
         get().items.reduce((sum, i) => sum + i.rental_fee_cents, 0),
       handlingFeeCents: () => HANDLING_CENTS,
       depositCents: (hasDepositOnFile) => hasDepositOnFile ? 0 : DEPOSIT_CENTS,
-      dueTodayCents: (hasDepositOnFile) => {
-        const raw = get().monthlyTotalCents()
-        const discount = multiPieceDiscount(get().items.length)
-        const discounted = Math.round(raw * (1 - discount))
-        return discounted + HANDLING_CENTS + get().depositCents(hasDepositOnFile)
-      },
     }),
     {
       name: 'davenport-suitcase',
       storage: createJSONStorage(() => AsyncStorage),
-      onRehydrateStorage: () => (state) => {
-        state?.setHasHydrated(true)
+      onRehydrateStorage: () => (state, error) => {
+        if (error) console.error('Suitcase store rehydration failed:', error)
+        // state is undefined when AsyncStorage fails entirely — always force-set hydrated
+        // so the Suitcase screen never gets permanently stuck on the skeleton
+        if (state) {
+          state.setHasHydrated(true)
+        } else {
+          useSuitcaseStore.getState().setHasHydrated(true)
+        }
       },
     }
   )

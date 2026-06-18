@@ -6,9 +6,11 @@ if (!process.env.EXPO_PUBLIC_SUPABASE_URL || !process.env.EXPO_PUBLIC_SUPABASE_A
   console.error('[Davenport] Missing Supabase env vars — add EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY to eas.json or .env')
 }
 
+// supabase-js throws on falsy URL/key, so we use non-empty placeholders as fallbacks.
+// Real values always come from eas.json env section in production builds.
 export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',
+  process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://placeholder.supabase.co',
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'placeholder-anon-key',
   {
     auth: {
       storage: Platform.OS === 'web' ? undefined : AsyncStorage,

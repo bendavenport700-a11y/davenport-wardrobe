@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { Linking } from 'react-native'
 import { Stack, router } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -63,6 +64,22 @@ export default function RootLayout() {
       if (session?.user.id) fetchProfile(session.user.id)
     })
 
+    // Process Supabase auth tokens that arrive via deep link (e.g. password reset emails).
+    // supabase-js only auto-processes URLs on web; on native we must do it manually.
+    const handleAuthUrl = async (url: string | null) => {
+      if (!url) return
+      const hash = url.split('#')[1]
+      if (!hash) return
+      const params = new URLSearchParams(hash)
+      const access_token = params.get('access_token')
+      const refresh_token = params.get('refresh_token')
+      if (access_token && refresh_token) {
+        await supabase.auth.setSession({ access_token, refresh_token })
+      }
+    }
+    Linking.getInitialURL().then(handleAuthUrl)
+    const linkingSub = Linking.addEventListener('url', ({ url }) => { handleAuthUrl(url) })
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'PASSWORD_RECOVERY') {
         router.replace('/reset-password' as any)
@@ -97,7 +114,7 @@ export default function RootLayout() {
         useSuitcaseStore.getState().clearSuitcase()
       }
     })
-    return () => subscription.unsubscribe()
+    return () => { subscription.unsubscribe(); linkingSub.remove() }
   }, [setSession, setProfile, setHydrated])
 
   if (!fontsLoaded && !fontError) return null

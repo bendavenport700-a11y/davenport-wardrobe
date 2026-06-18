@@ -7,7 +7,7 @@ interface BadgeProps {
 }
 
 export function Badge({ label, color }: BadgeProps) {
-  const bg = color ?? statusColor(label)
+  const bg = color ?? statusColor(label) ?? '#64748B'
   return (
     <View style={{
       backgroundColor: bg + '20', borderRadius: 999,

@@ -66,8 +66,8 @@ export function Button({
           opacity: disabled ? 0.5 : 1,
         },
       ]}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={disabled || loading ? undefined : handlePressIn}
+      onPressOut={disabled || loading ? undefined : handlePressOut}
       onPress={disabled || loading ? undefined : onPress}
       accessibilityRole="button"
       accessibilityState={{ disabled: disabled || loading }}
@@ -80,7 +80,7 @@ export function Button({
             fontFamily: 'Inter-Medium',
             fontSize: size === 'sm' ? 14 : 16,
             color: disabled ? colors.gray400 : textColors[variant],
-            letterSpacing: 0.2,
+            letterSpacing: variant === 'primary' ? 0.3 : 0.1,
           }}>
             {label}
           </Text>

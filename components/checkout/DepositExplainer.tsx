@@ -37,7 +37,7 @@ export function DepositExplainer({ depositCents, hasDepositOnFile }: DepositExpl
       </Text>
       <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, lineHeight: 20 }}>
         A <Text style={{ fontFamily: 'Inter-Medium', color: colors.navy }}>refundable hold</Text> placed
-        on your card — not a charge. Like a hotel pre-authorization, it's released within 2–3 business
+        on your card, not a charge. Like a hotel pre-authorization, it's released within 2–3 business
         days once all pieces are returned in good condition.
       </Text>
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>

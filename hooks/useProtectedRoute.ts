@@ -17,7 +17,8 @@ export function useProtectedRoute() {
       segments[0] === 'wardrobe'      ||
       segments[0] === 'faq'           ||
       segments[0] === 'rental-terms'  ||
-      segments[0] === 'privacy'
+      segments[0] === 'privacy'       ||
+      segments[0] === 'reset-password'
 
     if (!session && !inAuthGroup && !isGuestOk) {
       router.replace('/(auth)/login')

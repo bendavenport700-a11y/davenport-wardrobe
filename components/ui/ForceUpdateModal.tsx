@@ -7,7 +7,7 @@ export function ForceUpdateModal({ visible }: { visible: boolean }) {
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
       <View style={{
-        flex: 1, backgroundColor: 'rgba(0,0,0,0.7)',
+        flex: 1, backgroundColor: colors.ink + 'B3',
         alignItems: 'center', justifyContent: 'center', padding: 32,
       }}>
         <View style={{

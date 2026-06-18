@@ -7,8 +7,9 @@ export function StripeWrapper({ children }: { children: ReactNode }) {
   // Wrapping in Fragment normalises it to a single ReactElement without ts-expect-error.
   return (
     <StripeProvider
-      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY!}
+      publishableKey={process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? ''}
       urlScheme="davenport"
+      merchantIdentifier="merchant.com.davenportwardrobe"
     >
       <Fragment>{children}</Fragment>
     </StripeProvider>

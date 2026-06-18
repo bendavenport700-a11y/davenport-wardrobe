@@ -14,7 +14,7 @@ export function Card({ children, style, padding = layout.cardPadding }: CardProp
       backgroundColor: colors.white,
       borderRadius: layout.cardRadius,
       padding,
-      shadowColor: '#000',
+      shadowColor: colors.gray900,
       shadowOpacity: 0.06,
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 2 },

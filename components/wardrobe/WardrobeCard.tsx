@@ -44,7 +44,7 @@ export function WardrobeCard({ wardrobe }: WardrobeCardProps) {
   }, [images.length])
 
   // Home screen cards always show piece images — cover art is only used on the wardrobe detail page
-  const displayImage = images.length > 0 ? images[idx] : null
+  const displayImage = images.length > 0 ? images[Math.min(idx, images.length - 1)] : null
 
   return (
     <Pressable
@@ -66,14 +66,14 @@ export function WardrobeCard({ wardrobe }: WardrobeCardProps) {
         {/* Dark gradient overlay */}
         <View style={{
           position: 'absolute', bottom: 0, left: 0, right: 0,
-          paddingHorizontal: 14, paddingBottom: 14, paddingTop: 40,
-          backgroundColor: 'rgba(10,16,30,0.58)',
+          paddingHorizontal: 16, paddingBottom: 16, paddingTop: 48,
+          backgroundColor: 'rgba(8,14,26,0.65)',
         }}>
-          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 16, color: colors.cream, lineHeight: 20 }} numberOfLines={1}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 17, color: colors.cream, lineHeight: 22, letterSpacing: 0.2 }} numberOfLines={1}>
             {wardrobe.name}
           </Text>
           {wardrobe.description && (
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.cream + 'CC', marginTop: 3, lineHeight: 15 }} numberOfLines={2}>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.cream + 'C0', marginTop: 4, lineHeight: 16 }} numberOfLines={2}>
               {wardrobe.description}
             </Text>
           )}

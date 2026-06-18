@@ -9,27 +9,41 @@ import { useUpdateProfile } from '@/hooks/useProfile'
 import { Button } from '@/components/ui/Button'
 import { colors } from '@/constants/colors'
 import { completeProfileSchema, type CompleteProfileFormData } from '@/utils/schemas'
+import { DEPOSIT_CENTS } from '@/constants/billing'
+import { formatCents } from '@/utils/format'
 
 export default function CompleteProfileScreen() {
   const { session, profile } = useAuthStore()
   const { mutateAsync: updateProfile, isPending } = useUpdateProfile()
 
-  // Pre-check terms if the user already accepted during signup
+  // Pre-check terms if the user already accepted during signup.
+  // useEffect sync handles the case where profile is null on first render (still loading).
   const [termsAccepted, setTermsAccepted] = useState(!!profile?.terms_accepted_at)
   const [serverError, setServerError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (profile?.terms_accepted_at) setTermsAccepted(true)
+  }, [profile?.terms_accepted_at])
 
   // Redirect unauthenticated users — shouldn't normally reach this screen but guard anyway
   useEffect(() => {
     if (!session) router.replace('/(auth)/login')
   }, [session])
 
+  const existingAddr = profile?.shipping_address as { line1?: string; line2?: string; city?: string; state?: string; zip?: string } | null
+
   const { control, handleSubmit, formState: { errors } } = useForm<CompleteProfileFormData>({
     resolver: zodResolver(completeProfileSchema),
     defaultValues: {
-      // Pre-populate from existing profile so users who set their name at signup don't see a blank form
       full_name: profile?.full_name ?? '',
       phone:     profile?.phone ?? '',
-      shipping_address: { line1: '', line2: '', city: '', state: '', zip: '' },
+      shipping_address: {
+        line1: existingAddr?.line1 ?? '',
+        line2: existingAddr?.line2 ?? '',
+        city:  existingAddr?.city  ?? '',
+        state: existingAddr?.state ?? '',
+        zip:   existingAddr?.zip   ?? '',
+      },
     },
   })
 
@@ -53,7 +67,7 @@ export default function CompleteProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24 }}>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 8, marginTop: 24 }}>
           One more step.
@@ -169,7 +183,7 @@ export default function CompleteProfileScreen() {
 
           <Controller name="phone" control={control} render={({ field }) => (
             <View>
-              <Text style={labelStyle}>Phone <Text style={{ color: colors.slate }}>(optional — for shipping updates)</Text></Text>
+              <Text style={labelStyle}>Phone <Text style={{ color: colors.slate }}>(optional, for shipping updates)</Text></Text>
               <TextInput
                 style={inputStyle}
                 placeholder="(203) 555-0100"
@@ -184,6 +198,9 @@ export default function CompleteProfileScreen() {
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 8 }}>
             <Pressable
               onPress={() => setTermsAccepted(a => !a)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: termsAccepted }}
+              accessibilityLabel="Accept rental terms"
               style={{
                 width: 22, height: 22, borderWidth: 1.5,
                 borderColor: termsAccepted ? colors.navy : colors.gray400,
@@ -199,10 +216,12 @@ export default function CompleteProfileScreen() {
               <Text
                 style={{ color: colors.navy, fontFamily: 'Inter-Medium', textDecorationLine: 'underline' }}
                 onPress={() => router.push('/rental-terms' as any)}
+                accessibilityRole="link"
+                accessibilityLabel="View rental terms"
               >
                 Rental Terms
               </Text>
-              {' '}— 30-day minimum per piece, monthly billing, $75 refundable deposit.
+              {' '}(30-day minimum per piece, billed every 30 days, {formatCents(DEPOSIT_CENTS)} refundable deposit).
             </Text>
           </View>
 

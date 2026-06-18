@@ -5,6 +5,7 @@ import { multiPieceDiscount } from '@/utils/pricing'
 
 interface SuitcaseSummaryProps {
   itemCount: number
+  discountPieceCount?: number  // total active pieces incl. existing rentals; defaults to itemCount
   rawMonthlyCents: number
   hasDepositOnFile: boolean
   handlingFeeCents: number
@@ -13,19 +14,21 @@ interface SuitcaseSummaryProps {
 
 export function SuitcaseSummary({
   itemCount,
+  discountPieceCount,
   rawMonthlyCents,
   hasDepositOnFile,
   handlingFeeCents,
   depositCents,
 }: SuitcaseSummaryProps) {
-  const discountRate = multiPieceDiscount(itemCount)
+  const discountRate = multiPieceDiscount(discountPieceCount ?? itemCount)
   const savingsCents = Math.round(rawMonthlyCents * discountRate)
   const discountedMonthly = rawMonthlyCents - savingsCents
-  const dueTodayCents = discountedMonthly + handlingFeeCents + (hasDepositOnFile ? 0 : depositCents)
+  // Deposit is a hold (capture_method: manual) — not a charge. Only monthly + handling are captured.
+  const dueTodayCents = discountedMonthly + handlingFeeCents
 
   return (
-    <View style={{ backgroundColor: colors.white, borderRadius: 16, padding: 18, gap: 10 }}>
-      <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.navy, marginBottom: 2 }}>
+    <View style={{ backgroundColor: colors.white, borderRadius: 16, padding: 18, gap: 10, borderWidth: 1, borderColor: colors.sand + '80' }}>
+      <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 18, color: colors.navy, marginBottom: 2, letterSpacing: 0.1 }}>
         Order Summary
       </Text>
 
@@ -54,25 +57,25 @@ export function SuitcaseSummary({
 
       <Row label="Handling & shipping" value={formatCents(handlingFeeCents)} />
 
-      {!hasDepositOnFile && (
-        <Row
-          label="Refundable deposit"
-          value={formatCents(depositCents)}
-          sublabel="Held, not charged — returned when all pieces are back"
-        />
-      )}
-
       <View style={{ height: 1.5, backgroundColor: colors.navy + '20', marginVertical: 2 }} />
 
       <Row
-        label="Due today"
+        label="Charged today"
         value={formatCents(dueTodayCents)}
         bold
         largeValue
       />
 
+      {!hasDepositOnFile && (
+        <Row
+          label="+ Deposit hold"
+          value={formatCents(depositCents)}
+          sublabel="Authorized on your card, not captured. Released in full when your pieces are returned."
+        />
+      )}
+
       <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, lineHeight: 18, marginTop: 2 }}>
-        After today: {formatCentsPerMonth(discountedMonthly)} billed on the 1st of each month.
+        After today: {formatCentsPerMonth(discountedMonthly)} billed every 30 days from your order date.
         Cancel or swap pieces anytime.
       </Text>
     </View>

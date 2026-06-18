@@ -16,12 +16,14 @@ export const conditionBadgeLabel = (condition: string, wearCount: number): strin
   wearCount === 0 ? 'New' : `${conditionShort(condition)} · ${wearCount}× rented`
 export const statusLabel = (s: string): string =>
   ({ pending: 'Order Placed', confirmed: 'Confirmed', sourcing: 'Sourcing', shipped: 'Shipped',
-     delivered: 'Delivered', complete: 'Complete',
-     return_requested: 'Return Requested', returned: 'Returned', bought_out: 'Purchased' }[s] ?? s)
+     delivered: 'Delivered', complete: 'Complete', refunded: 'Refunded',
+     refund_requested: 'Refund Pending', return_requested: 'Return Requested',
+     returned: 'Returned', bought_out: 'Purchased' }[s] ?? s)
 export const statusColor = (s: string): string =>
-  ({ pending: '#F59E0B', confirmed: '#F59E0B', sourcing: '#F59E0B', shipped: '#3B82F6',
-     delivered: '#22C55E', complete: '#22C55E',
-     return_requested: '#F59E0B', returned: '#9CA3AF', bought_out: '#9CA3AF' }[s] ?? '#9CA3AF')
+  ({ pending: '#F59E0B', confirmed: '#F59E0B', sourcing: '#F59E0B', shipped: '#3B82F6', // colors.warning / colors.info
+     delivered: '#22C55E', complete: '#22C55E', refunded: '#9CA3AF',                    // colors.success / colors.gray400
+     refund_requested: '#F59E0B', return_requested: '#F59E0B',
+     returned: '#9CA3AF', bought_out: '#9CA3AF' }[s] ?? '#9CA3AF')
 export const formatDate = (iso: string, _short?: boolean): string =>
   new Date(iso).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 export const formatNextBilling = (date: string | null): string => {

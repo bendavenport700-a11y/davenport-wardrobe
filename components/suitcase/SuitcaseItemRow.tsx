@@ -21,13 +21,18 @@ export function SuitcaseItemRow({ item, onRemove, unavailable = false, removeDis
   return (
     <View style={{
       flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: colors.white, borderRadius: 14, padding: 12,
+      backgroundColor: colors.white, borderRadius: 16, padding: 14,
       marginBottom: 10,
-      shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 6,
-      shadowOffset: { width: 0, height: 2 }, elevation: 1,
+      borderWidth: 1, borderColor: colors.sand + '80',
+      shadowColor: colors.navy, shadowOpacity: 0.06, shadowRadius: 10,
+      shadowOffset: { width: 0, height: 2 }, elevation: 2,
       opacity: unavailable ? 0.6 : 1,
     }}>
-      <Pressable onPress={() => router.push({ pathname: '/piece/[id]', params: { id: piece.id } } as any)}>
+      <Pressable
+        onPress={() => router.push({ pathname: '/piece/[id]', params: { id: piece.id } } as any)}
+        accessibilityRole="button"
+        accessibilityLabel={`View ${piece.name}`}
+      >
         <Image
           source={piece.images[0] ?? null}
           placeholder={DEFAULT_BLURHASH}
@@ -67,7 +72,8 @@ export function SuitcaseItemRow({ item, onRemove, unavailable = false, removeDis
             onRemove(piece.id, size)
           }}
           hitSlop={12}
-          accessibilityLabel={`Remove ${piece.name}`}>
+          accessibilityLabel={`Remove ${piece.name}`}
+          style={{ opacity: removeDisabled ? 0.3 : 1 }}>
           <Feather name="trash-2" size={16} color={colors.slate} />
         </Pressable>
       </View>

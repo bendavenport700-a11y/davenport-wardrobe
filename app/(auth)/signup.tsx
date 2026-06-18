@@ -30,7 +30,8 @@ export default function SignupScreen() {
       password: data.password,
     })
     if (error) {
-      setServerError(error.message.includes('already') ? 'An account with this email exists. Sign in instead.' : error.message)
+      const isAlreadyExists = (error as any).code === 'user_already_exists' || error.message.toLowerCase().includes('already')
+      setServerError(isAlreadyExists ? 'An account with this email exists. Sign in instead.' : error.message)
       return
     }
     if (authData.user) {
@@ -52,12 +53,12 @@ export default function SignupScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
-        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 32, color: colors.navy, marginBottom: 8 }}>
+        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 32, color: colors.navy, marginBottom: 8, letterSpacing: 0.2 }}>
           Create account.
         </Text>
-        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 16, color: colors.slate, marginBottom: 32 }}>
+        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 16, color: colors.slate, marginBottom: 32, lineHeight: 24 }}>
           Start renting the wardrobe.
         </Text>
 
@@ -76,6 +77,8 @@ export default function SignupScreen() {
                 placeholder="Your full name"
                 placeholderTextColor={colors.gray400}
                 autoCapitalize="words"
+                textContentType="name"
+                autoComplete="name"
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -92,6 +95,8 @@ export default function SignupScreen() {
                 placeholderTextColor={colors.gray400}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -107,6 +112,8 @@ export default function SignupScreen() {
                 placeholder="At least 8 characters"
                 placeholderTextColor={colors.gray400}
                 secureTextEntry
+                autoComplete="new-password"
+                textContentType="newPassword"
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -155,16 +162,25 @@ export default function SignupScreen() {
               Sign in
             </Text>
           </Text>
+
+          <Text
+            onPress={() => router.replace('/(tabs)' as any)}
+            accessibilityRole="link"
+            accessibilityLabel="Browse the app without an account"
+            style={{ textAlign: 'center', color: colors.slate + '99', fontFamily: 'Inter-Regular', fontSize: 13, paddingVertical: 4 }}
+          >
+            Browse without an account →
+          </Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
 }
 
-const labelStyle = { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 6 } as const
+const labelStyle = { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy, marginBottom: 6, letterSpacing: 0.2 } as const
 const inputStyle = {
-  borderWidth: 1.5, borderColor: colors.sand, borderRadius: 10,
-  padding: 14, fontFamily: 'Inter-Regular', fontSize: 16, color: colors.navy,
+  borderWidth: 1.5, borderColor: colors.sand + 'CC', borderRadius: 12,
+  padding: 15, fontFamily: 'Inter-Regular', fontSize: 16, color: colors.navy,
   backgroundColor: colors.white,
 } as const
 const errorBorderStyle = { borderColor: colors.error } as const

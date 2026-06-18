@@ -21,7 +21,6 @@ export default function ForgotPasswordScreen() {
 
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setServerError(null)
-    // Note: No redirectTo for V1 — Supabase sends the standard reset link that opens in browser.
     const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
       redirectTo: 'davenport://reset-password',
     })
@@ -51,7 +50,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 8 }}>
           Reset password.
@@ -88,7 +87,7 @@ export default function ForgotPasswordScreen() {
           )} />
 
           <Button label="Send Reset Link" onPress={handleSubmit(onSubmit)} loading={isSubmitting} />
-          <Button label="Back to Sign In" onPress={() => router.back()} variant="ghost" />
+          <Button label="Back to Sign In" onPress={() => router.replace('/(auth)/login')} variant="ghost" />
         </View>
       </ScrollView>
     </KeyboardAvoidingView>

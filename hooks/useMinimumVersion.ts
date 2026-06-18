@@ -8,9 +8,7 @@ export function useMinimumVersion() {
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return
-    const currentBuild = parseInt(
-      (Constants.expoConfig?.ios?.buildNumber as string | undefined) ?? '0'
-    )
+    const currentBuild = parseInt(Constants.nativeBuildVersion ?? '0', 10)
     supabase
       .from('app_config')
       .select('value')

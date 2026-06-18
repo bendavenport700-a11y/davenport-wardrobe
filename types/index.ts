@@ -101,12 +101,13 @@ export interface Rental {
   next_billing_date: string | null
   billing_active: boolean
   min_rental_days: number
+  piece_unit_id: string | null
   notes: string | null
   created_at: string
   updated_at: string
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'sourcing' | 'shipped' | 'delivered' | 'complete'
+export type OrderStatus = 'pending' | 'confirmed' | 'sourcing' | 'shipped' | 'delivered' | 'complete' | 'refunded' | 'refund_requested'
 
 export interface Order {
   id: string
@@ -127,7 +128,7 @@ export interface Order {
   updated_at: string
 }
 
-export type BillingEventType = 'first_month' | 'recurring' | 'buyout' | 'deposit_hold' | 'deposit_release' | 'deposit_capture' | 'refund'
+export type BillingEventType = 'first_month' | 'recurring' | 'buyout' | 'deposit_hold' | 'deposit_release' | 'deposit_capture' | 'refund' | 'damage_charge' | 'nonreturn_charge'
 
 export interface BillingEvent {
   id: string
@@ -147,4 +148,14 @@ export interface SuitcaseItem {
   piece: Piece
   size: string
   rental_fee_cents: number
+}
+
+export interface Announcement {
+  id: string
+  message: string
+  icon: string
+  active: boolean
+  sort_order: number
+  created_at: string
+  updated_at: string
 }
