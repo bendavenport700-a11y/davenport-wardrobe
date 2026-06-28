@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { findUser, makeToken } from '@/lib/auth'
 
 export async function POST(req: NextRequest) {
-  const { password } = await req.json()
-  const adminPassword = process.env.ADMIN_PASSWORD
-  if (!adminPassword || password !== adminPassword) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const { username, password } = await req.json()
+  const user = await findUser(username?.trim(), password)
+  if (!user) {
+    return NextResponse.json({ error: 'Invalid username or password.' }, { status: 401 })
   }
-  const res = NextResponse.json({ ok: true })
-  res.cookies.set('admin-auth', adminPassword, {
+  const res = NextResponse.json({ ok: true, name: user.name, role: user.role })
+  res.cookies.set('admin-auth', makeToken(user.username, user.role), {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure:   process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
-    path: '/',
+    maxAge:   60 * 60 * 24 * 30,
+    path:     '/',
   })
   return res
 }

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+import { getSessionUser } from '@/lib/auth'
 
 const PROMPT = `You are a fashion product data extractor for Davenport Wardrobe, a menswear rental company.
 
@@ -14,8 +13,11 @@ Given a retailer product URL and optional page content, extract structured produ
   "color": one of: "Navy"|"White"|"Black"|"Grey"|"Olive"|"Khaki"|"Tan"|"Brown"|"Blue"|"Light Blue"|"Green"|"Burgundy"|"Red"|"Pink"|"Orange"|"Yellow"|"Purple"|"Cream"|"Charcoal"|"Multi"|"Pattern",
   "sizes_available": array of sizes. Rules:
     - Tops (shirt/polo/t-shirt/henley/sweater/hoodie/sweatshirt/cardigan/vest/outerwear/jacket/blazer/coat/bomber/fleece): XS/S/M/L/XL/XXL
-    - Bottoms (pants/chinos/trousers/denim/joggers): waist sizes 28-42
-    - Shorts: if athletic/performance/running/swim shorts (e.g. Vuori, Lululemon, Nike) use XS/S/M/L/XL/XXL; if chino/dress/casual shorts use waist 28-38
+    - Bottoms — detect which system the product uses:
+        • Waist + specific inseam (dress pants, jeans, structured trousers): use "WxL" format e.g. ["30x30","30x32","32x30","32x32"]. Include only combinations actually shown as available.
+        • Waist + length designation (Short/Regular/Long/XL): use "W/Length" format e.g. ["30/Short","30/Regular","32/Regular","32/Long"]. Only include sizes shown on the page.
+        • Performance/stretch bottoms without a second dimension (joggers, some chinos): waist only e.g. ["28","30","32","34"]
+    - Shorts: if athletic/performance use XS/S/M/L/XL/XXL; if chino/dress/casual use waist 28-38
     - Shoes: 7 through 12 (including half sizes)
     - Accessories: ["One Size"]
     Detect from page content which sizing system the product uses. Include all sizes shown as available on the page.
@@ -27,6 +29,10 @@ Given a retailer product URL and optional page content, extract structured produ
 Return ONLY the JSON object, no explanation.`
 
 export async function POST(req: NextRequest) {
+  if (!await getSessionUser()) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { url } = await req.json() as { url: string }
     if (!url) return NextResponse.json({ error: 'url is required' }, { status: 400 })
@@ -56,6 +62,7 @@ export async function POST(req: NextRequest) {
       ? `${PROMPT}\n\nProduct URL: ${url}\n\nPage content:\n${pageContent}`
       : `${PROMPT}\n\nProduct URL: ${url}\n\n(Page could not be fetched — extract from URL and knowledge of this retailer.)`
 
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 1024,

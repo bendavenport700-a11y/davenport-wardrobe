@@ -4,17 +4,30 @@ export type PieceCategory =
   | 'pants' | 'chinos' | 'trousers' | 'denim' | 'joggers'
   | 'shorts' | 'outerwear' | 'jacket' | 'blazer' | 'coat' | 'bomber' | 'fleece'
   | 'shoes' | 'accessories'
+  | 'dress' | 'midi-dress' | 'maxi-dress' | 'mini-dress'
+  | 'skirt' | 'blouse' | 'women-shirt' | 'women-pants' | 'women-shorts'
+  | 'romper' | 'jumpsuit' | 'women-outerwear' | 'women-jacket'
+  | 'women-shoes' | 'women-accessories'
+
+export type PieceGender = 'men' | 'women' | 'unisex'
 export type PieceColor = 'Navy' | 'White' | 'Black' | 'Grey' | 'Olive' | 'Khaki' | 'Tan' | 'Brown' |
   'Blue' | 'Light Blue' | 'Green' | 'Burgundy' | 'Red' | 'Pink' | 'Orange' |
   'Yellow' | 'Purple' | 'Cream' | 'Charcoal' | 'Multi' | 'Pattern'
 
-export const CATEGORIES: PieceCategory[] = [
+export const MEN_CATEGORIES: PieceCategory[] = [
   'shirt', 'polo', 't-shirt', 'henley',
   'sweater', 'hoodie', 'sweatshirt', 'cardigan', 'vest',
   'pants', 'chinos', 'trousers', 'denim', 'joggers',
   'shorts', 'outerwear', 'jacket', 'blazer', 'coat', 'bomber', 'fleece',
   'shoes', 'accessories',
 ]
+export const WOMEN_CATEGORIES: PieceCategory[] = [
+  'dress', 'midi-dress', 'maxi-dress', 'mini-dress',
+  'skirt', 'blouse', 'women-shirt', 'women-pants', 'women-shorts',
+  'romper', 'jumpsuit', 'women-outerwear', 'women-jacket',
+  'women-shoes', 'women-accessories',
+]
+export const CATEGORIES: PieceCategory[] = [...MEN_CATEGORIES, ...WOMEN_CATEGORIES]
 export const COLORS: PieceColor[] = ['Navy', 'White', 'Black', 'Grey', 'Olive', 'Khaki', 'Tan', 'Brown',
   'Blue', 'Light Blue', 'Green', 'Burgundy', 'Red', 'Pink', 'Orange',
   'Yellow', 'Purple', 'Cream', 'Charcoal', 'Multi', 'Pattern']
@@ -36,6 +49,7 @@ export interface Piece {
   buyout_price: number | null
   images: string[]
   tags: string[]
+  gender: PieceGender
   is_available: boolean
   is_featured: boolean
   is_draft: boolean
@@ -50,9 +64,9 @@ export interface Rental {
   id: string
   user_id: string
   piece_id: string
-  piece?: { name: string; brand: string; images: string[] }
+  piece?: { id?: string; name: string; brand: string; images: string[]; source_url?: string | null }
   size: string
-  status: 'pending' | 'sourcing' | 'shipped' | 'delivered' | 'return_requested' | 'returned' | 'bought_out'
+  status: 'pending' | 'sourcing' | 'packaged' | 'shipped' | 'delivered' | 'return_requested' | 'returned' | 'bought_out'
   tracking_number: string | null
   carrier: string | null
   rental_fee_cents: number
@@ -74,10 +88,23 @@ export interface Order {
   deposit_amount: number
   total_charged: number
   shipping_address: { line1: string; line2?: string; city: string; state: string; zip: string }
-  status: 'pending' | 'confirmed' | 'sourcing' | 'shipped' | 'delivered' | 'complete'
+  status: 'pending' | 'confirmed' | 'sourcing' | 'packaged' | 'shipped' | 'delivered' | 'complete' | 'refunded' | 'refund_requested'
   notes: string | null
+  stripe_payment_intent_id: string | null
+  deposit_intent_id: string | null
   created_at: string
   updated_at: string
+}
+
+export interface PieceUnit {
+  id: string
+  piece_id: string
+  size: string
+  wear_count: number
+  condition: 'new' | 'like_new' | 'good'
+  is_available: boolean
+  notes: string | null
+  created_at: string
 }
 
 export interface Wardrobe {
@@ -87,6 +114,7 @@ export interface Wardrobe {
   slug: string
   cover_image_url: string | null
   tags: string[]
+  gender: PieceGender
   is_active: boolean
   sort_order: number
   created_at: string

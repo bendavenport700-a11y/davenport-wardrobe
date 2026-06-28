@@ -39,12 +39,19 @@ export default async function WardrobeDetailPage({ params }: { params: { id: str
         <p className="text-gray-400 text-xs mt-1">{pieces.length} piece{pieces.length !== 1 ? 's' : ''}</p>
       </div>
 
+      {/* Add piece button — always visible at top */}
+      <div className="mb-4">
+        <Link
+          href={`/pieces/new?wardrobe=${wardrobe.id}`}
+          className="inline-flex items-center gap-2 bg-navy text-white text-sm font-medium px-4 py-2 rounded-lg hover:bg-navy/90 transition-colors"
+        >
+          + Add piece to this wardrobe
+        </Link>
+      </div>
+
       {pieces.length === 0 ? (
         <div className="bg-white rounded-xl border border-gray-100 p-12 text-center">
           <p className="text-gray-400 text-sm">No pieces in this wardrobe yet.</p>
-          <Link href="/pieces/new" className="text-navy text-sm font-medium hover:underline mt-2 inline-block">
-            Add a piece →
-          </Link>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-50">

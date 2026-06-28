@@ -9,15 +9,27 @@ async function getWardrobes() {
   return (data ?? []) as Wardrobe[]
 }
 
-export default async function NewPiecePage() {
+export default async function NewPiecePage({ searchParams }: { searchParams: { wardrobe?: string } }) {
   const wardrobes = await getWardrobes()
+  const defaultWardrobeId = searchParams.wardrobe ?? ''
+  const defaultWardrobe = wardrobes.find(w => w.id === defaultWardrobeId)
+
   return (
     <div className="p-8">
       <div className="mb-6">
-        <a href="/pieces" className="text-sm text-gray-500 hover:text-navy">← Pieces</a>
+        {defaultWardrobe ? (
+          <a href={`/wardrobes/${defaultWardrobeId}`} className="text-sm text-gray-500 hover:text-navy">
+            ← {defaultWardrobe.name}
+          </a>
+        ) : (
+          <a href="/pieces" className="text-sm text-gray-500 hover:text-navy">← Pieces</a>
+        )}
         <h1 className="text-2xl font-bold text-navy mt-1">Add Piece</h1>
+        {defaultWardrobe && (
+          <p className="text-sm text-navy/60 mt-0.5">Adding to: <span className="font-medium text-navy">{defaultWardrobe.name}</span></p>
+        )}
       </div>
-      <PieceForm wardrobes={wardrobes} />
+      <PieceForm wardrobes={wardrobes} defaultWardrobeId={defaultWardrobeId} />
     </div>
   )
 }

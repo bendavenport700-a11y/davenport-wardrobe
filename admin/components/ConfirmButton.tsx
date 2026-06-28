@@ -6,10 +6,11 @@ interface Props {
   message: string
   action: () => Promise<void>
   className?: string
+  pendingLabel?: string
   children: React.ReactNode
 }
 
-export function ConfirmButton({ message, action, className, children }: Props) {
+export function ConfirmButton({ message, action, className, pendingLabel = 'Working…', children }: Props) {
   const [isPending, startTransition] = useTransition()
 
   return (
@@ -22,7 +23,7 @@ export function ConfirmButton({ message, action, className, children }: Props) {
       }}
       className={className}
     >
-      {isPending ? 'Deleting…' : children}
+      {isPending ? pendingLabel : children}
     </button>
   )
 }

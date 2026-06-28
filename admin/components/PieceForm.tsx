@@ -3,29 +3,44 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createPiece, updatePiece } from '@/lib/actions'
-import { CATEGORIES, COLORS } from '@/lib/types'
-import type { Piece, Wardrobe, PieceCategory, PieceColor } from '@/lib/types'
+import { MEN_CATEGORIES, WOMEN_CATEGORIES, COLORS } from '@/lib/types'
+import type { Piece, Wardrobe, PieceCategory, PieceColor, PieceGender } from '@/lib/types'
 
-const TOPS        = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
-const BOTTOMS     = ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
-// Shorts use both systems — athletic brands (Vuori, Nike) use XS-XXL, chino shorts use waist sizes
+const TOPS         = ['XS', 'S', 'M', 'L', 'XL', 'XXL']
+const WAIST_SIZES  = ['28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42']
+const INSEAM_SIZES = ['28', '29', '30', '31', '32', '33', '34', '36']
+const LENGTH_OPTS  = ['Short', 'Regular', 'Long', 'XL']
 const SHORTS_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '29', '30', '31', '32', '33', '34', '36', '38']
+// Bottoms that support compound sizing (waist+inseam or waist+length)
+const BOTTOM_CATS  = new Set(['pants', 'chinos', 'trousers', 'denim'])
 const SIZE_SETS: Record<string, string[]> = {
   shirt: TOPS, polo: TOPS, 't-shirt': TOPS, henley: TOPS,
   sweater: TOPS, hoodie: TOPS, sweatshirt: TOPS, cardigan: TOPS, vest: TOPS,
-  pants: BOTTOMS, chinos: BOTTOMS, trousers: BOTTOMS, denim: BOTTOMS, joggers: BOTTOMS,
+  pants: WAIST_SIZES, chinos: WAIST_SIZES, trousers: WAIST_SIZES, denim: WAIST_SIZES,
+  joggers: TOPS,
   shorts: SHORTS_SIZES,
   outerwear: TOPS, jacket: TOPS, blazer: TOPS, coat: TOPS, bomber: TOPS, fleece: TOPS,
   shoes: ['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12'],
   accessories: ['One Size'],
 }
 
+type BottomsSizingType = 'waist_only' | 'waist_inseam' | 'waist_length'
+
+function detectSizingType(sizes: string[]): BottomsSizingType {
+  if (sizes.some(s => s.includes('x'))) return 'waist_inseam'
+  if (sizes.some(s => s.includes('/'))) return 'waist_length'
+  return 'waist_only'
+}
+
 interface Props {
   piece?: Piece
   wardrobes: Wardrobe[]
+  defaultWardrobeId?: string
+  /** Current unit counts per size, fetched from piece_units. Used in edit mode. */
+  unitCounts?: Record<string, number>
 }
 
-export function PieceForm({ piece, wardrobes }: Props) {
+export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts = {} }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [extracting, setExtracting] = useState(false)
@@ -33,18 +48,28 @@ export function PieceForm({ piece, wardrobes }: Props) {
   const [extractError, setExtractError] = useState('')
   const [saveError, setSaveError] = useState('')
 
+  // Quantity per size — how many units we want (new pieces start at 0, edit uses current counts)
+  const [sizeQty, setSizeQty] = useState<Record<string, number>>(unitCounts)
+
+  // Bottoms sizing type — inferred from existing sizes in edit mode
+  const [bottomsSizingType, setBottomsSizingType] = useState<BottomsSizingType>(() =>
+    BOTTOM_CATS.has(piece?.category ?? '') && Object.keys(unitCounts).length > 0
+      ? detectSizingType(Object.keys(unitCounts))
+      : 'waist_only'
+  )
+
   const [fields, setFields] = useState({
     name:            piece?.name ?? '',
     brand:           piece?.brand ?? '',
     description:     piece?.description ?? '',
     category:        (piece?.category ?? 'shirt') as PieceCategory,
     color:           (piece?.color ?? null) as PieceColor | null,
-    sizes_available: piece?.sizes_available ?? [],
     condition:       (piece?.condition ?? 'new') as 'new' | 'like_new' | 'good',
+    gender:          (piece?.gender ?? 'men') as PieceGender,
     cost_price:      piece ? (piece.cost_price / 100).toFixed(0) : '',
     base_rental_rate: piece ? piece.base_rental_rate.toString() : '0.15',
     imageUrls:       piece?.images?.length ? piece.images : [''],
-    wardrobe_id:     piece?.wardrobe_id ?? '',
+    wardrobe_id:     piece?.wardrobe_id ?? defaultWardrobeId,
     source_url:      piece?.source_url ?? '',
     source_retailer: piece?.source_retailer ?? '',
     is_featured:     piece?.is_featured ?? false,
@@ -56,12 +81,8 @@ export function PieceForm({ piece, wardrobes }: Props) {
     setFields(f => ({ ...f, [key]: value }))
   }
 
-  function toggleSize(size: string) {
-    set('sizes_available',
-      fields.sizes_available.includes(size)
-        ? fields.sizes_available.filter(s => s !== size)
-        : [...fields.sizes_available, size]
-    )
+  function adjustQty(size: string, delta: number) {
+    setSizeQty(q => ({ ...q, [size]: Math.max(0, (q[size] ?? 0) + delta) }))
   }
 
   async function handleExtract() {
@@ -87,12 +108,26 @@ export function PieceForm({ piece, wardrobes }: Props) {
         description:     p.description ?? f.description,
         category:        p.category ?? f.category,
         color:           p.color ?? f.color,
-        sizes_available: p.sizes_available?.length ? p.sizes_available : f.sizes_available,
         cost_price:      p.cost_price_estimate_cents ? (p.cost_price_estimate_cents / 100).toFixed(0) : f.cost_price,
         imageUrls:       p.images?.length ? p.images : f.imageUrls,
         source_url:      extractUrl,
         source_retailer: p.source_retailer ?? f.source_retailer,
       }))
+      // Pre-fill 1 unit per extracted size (only if no quantities set yet)
+      if (p.sizes_available?.length) {
+        // Detect and set the sizing type from extracted sizes
+        if (BOTTOM_CATS.has(p.category ?? fields.category)) {
+          const detectedType = detectSizingType(p.sizes_available)
+          setBottomsSizingType(detectedType)
+        }
+        setSizeQty(q => {
+          const hasAny = Object.values(q).some(v => v > 0)
+          if (hasAny) return q
+          const next: Record<string, number> = {}
+          for (const s of p.sizes_available) next[s] = 1
+          return next
+        })
+      }
     } catch {
       setExtractError('Network error during extraction')
     } finally {
@@ -114,8 +149,8 @@ export function PieceForm({ piece, wardrobes }: Props) {
       description:     fields.description,
       category:        fields.category,
       color:           fields.color,
-      sizes_available: fields.sizes_available,
       condition:       fields.condition,
+      gender:          fields.gender,
       cost_price:      costCents,
       base_rental_rate: parseFloat(fields.base_rental_rate) || 0.15,
       images:          fields.imageUrls.map(u => u.trim()).filter(Boolean),
@@ -127,23 +162,67 @@ export function PieceForm({ piece, wardrobes }: Props) {
       is_available:    fields.is_available,
     }
 
+    const returnTo = fields.wardrobe_id ? `/wardrobes/${fields.wardrobe_id}` : '/pieces'
+
     startTransition(async () => {
       if (piece) {
-        const result = await updatePiece(piece.id, input)
+        const result = await updatePiece(piece.id, input, sizeQty)
         if ('error' in result && result.error) { setSaveError(result.error); return }
-        router.push('/pieces')
+        router.push(returnTo)
       } else {
-        const result = await createPiece(input)
+        const result = await createPiece(input, sizeQty)
         if ('error' in result) { setSaveError(result.error); return }
-        router.push('/pieces')
+        router.push(returnTo)
       }
     })
   }
 
+  const categoryOptions = fields.gender === 'women' ? WOMEN_CATEGORIES
+    : fields.gender === 'unisex' ? [...MEN_CATEGORIES, ...WOMEN_CATEGORIES]
+    : MEN_CATEGORIES
+
   const sizeOptions = SIZE_SETS[fields.category] ?? SIZE_SETS.shirt
+
+  function handleGenderChange(g: PieceGender) {
+    set('gender', g)
+    if (g === 'unisex') return
+    const validCats = g === 'women' ? WOMEN_CATEGORIES : MEN_CATEGORIES
+    if (!validCats.includes(fields.category as any)) {
+      handleCategoryChange((g === 'women' ? 'dress' : 'shirt') as PieceCategory)
+    }
+  }
+
+  // Reset qty keys when category changes so size options stay coherent
+  function handleCategoryChange(cat: PieceCategory) {
+    set('category', cat)
+    if (BOTTOM_CATS.has(cat)) {
+      setBottomsSizingType('waist_only')
+    }
+    const newSizes = SIZE_SETS[cat] ?? SIZE_SETS.shirt
+    setSizeQty(q => {
+      const next: Record<string, number> = {}
+      for (const s of newSizes) next[s] = q[s] ?? 0
+      return next
+    })
+  }
+
+  function handleBottomsSizingTypeChange(type: BottomsSizingType) {
+    setBottomsSizingType(type)
+    setSizeQty({}) // clear all qty when switching sizing system
+  }
 
   return (
     <div className="max-w-2xl space-y-8">
+
+      {/* Wardrobe — at the top so context is clear before filling anything else */}
+      <section className="bg-white rounded-xl border border-gray-100 p-5">
+        <Field label="Wardrobe">
+          <select value={fields.wardrobe_id} onChange={e => set('wardrobe_id', e.target.value)} className={input}>
+            <option value="">No wardrobe (unassigned)</option>
+            {wardrobes.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
+        </Field>
+      </section>
 
       {/* AI Extraction */}
       <section className="bg-white rounded-xl border border-gray-100 p-5">
@@ -187,10 +266,17 @@ export function PieceForm({ piece, wardrobes }: Props) {
             rows={2} placeholder="1-2 sentences for the listing…" className={input} />
         </Field>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-4 gap-4">
+          <Field label="Gender">
+            <select value={fields.gender} onChange={e => handleGenderChange(e.target.value as PieceGender)} className={input}>
+              <option value="men">Men</option>
+              <option value="women">Women</option>
+              <option value="unisex">Unisex</option>
+            </select>
+          </Field>
           <Field label="Category">
-            <select value={fields.category} onChange={e => set('category', e.target.value as PieceCategory)} className={input}>
-              {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+            <select value={fields.category} onChange={e => handleCategoryChange(e.target.value as PieceCategory)} className={input}>
+              {categoryOptions.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
           <Field label="Color">
@@ -199,33 +285,136 @@ export function PieceForm({ piece, wardrobes }: Props) {
               {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
-          <Field label="Condition">
+          <Field label="Condition" hint="Auto-set from wear count on save">
             <select value={fields.condition} onChange={e => set('condition', e.target.value as typeof fields.condition)} className={input}>
-              <option value="new">New</option>
-              <option value="like_new">Like New</option>
-              <option value="good">Good</option>
+              <option value="new">Pristine (0 wears)</option>
+              <option value="like_new">Seasoned (1–3 wears)</option>
+              <option value="good">Refined / Veteran (4+ wears)</option>
             </select>
           </Field>
         </div>
 
-        {/* Sizes */}
-        <Field label="Sizes available">
-          <div className="flex flex-wrap gap-2 mt-1">
-            {sizeOptions.map(size => (
-              <button
-                key={size}
-                type="button"
-                onClick={() => toggleSize(size)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-                  fields.sizes_available.includes(size)
-                    ? 'bg-navy text-white border-navy'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-navy/40'
-                }`}
-              >
-                {size}
-              </button>
-            ))}
-          </div>
+        {/* Inventory by size */}
+        <Field label="Inventory by size" hint="units in stock per size">
+
+          {/* Bottoms sizing type selector */}
+          {BOTTOM_CATS.has(fields.category) && (
+            <div className="flex gap-2 mb-4">
+              {(['waist_only', 'waist_inseam', 'waist_length'] as BottomsSizingType[]).map(type => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleBottomsSizingTypeChange(type)}
+                  className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+                    bottomsSizingType === type
+                      ? 'bg-navy text-white border-navy'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-navy/40'
+                  }`}
+                >
+                  {type === 'waist_only' ? 'Waist only' : type === 'waist_inseam' ? 'Waist × Inseam' : 'Waist × Length'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Waist × Inseam matrix */}
+          {BOTTOM_CATS.has(fields.category) && bottomsSizingType === 'waist_inseam' && (
+            <div className="overflow-x-auto">
+              <table className="text-xs border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left text-gray-400 font-medium pr-3 pb-2">Waist ↓ / Inseam →</th>
+                    {INSEAM_SIZES.map(inseam => (
+                      <th key={inseam} className="text-center font-semibold text-gray-600 w-12 pb-2">{inseam}"</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {WAIST_SIZES.map(waist => (
+                    <tr key={waist}>
+                      <td className="font-semibold text-gray-700 pr-3 py-1">{waist}"</td>
+                      {INSEAM_SIZES.map(inseam => {
+                        const key = `${waist}x${inseam}`
+                        const qty = sizeQty[key] ?? 0
+                        return (
+                          <td key={inseam} className="text-center py-1 px-1">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <button type="button" onClick={() => adjustQty(key, 1)}
+                                className="w-6 h-5 text-xs rounded border border-gray-200 bg-white hover:border-navy/50 leading-none transition-colors">+</button>
+                              <span className={`text-xs font-medium w-6 text-center ${qty > 0 ? 'text-navy font-bold' : 'text-gray-300'}`}>{qty}</span>
+                              <button type="button" onClick={() => adjustQty(key, -1)} disabled={qty === 0}
+                                className="w-6 h-5 text-xs rounded border border-gray-200 bg-white hover:border-navy/50 disabled:opacity-20 leading-none transition-colors">−</button>
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Waist × Length matrix */}
+          {BOTTOM_CATS.has(fields.category) && bottomsSizingType === 'waist_length' && (
+            <div className="overflow-x-auto">
+              <table className="text-xs border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left text-gray-400 font-medium pr-3 pb-2">Waist ↓ / Length →</th>
+                    {LENGTH_OPTS.map(len => (
+                      <th key={len} className="text-center font-semibold text-gray-600 w-20 pb-2">{len}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {WAIST_SIZES.map(waist => (
+                    <tr key={waist}>
+                      <td className="font-semibold text-gray-700 pr-3 py-1">{waist}"</td>
+                      {LENGTH_OPTS.map(len => {
+                        const key = `${waist}/${len}`
+                        const qty = sizeQty[key] ?? 0
+                        return (
+                          <td key={len} className="text-center py-1 px-1">
+                            <div className="flex flex-col items-center gap-0.5">
+                              <button type="button" onClick={() => adjustQty(key, 1)}
+                                className="w-6 h-5 text-xs rounded border border-gray-200 bg-white hover:border-navy/50 leading-none transition-colors">+</button>
+                              <span className={`text-xs font-medium w-6 text-center ${qty > 0 ? 'text-navy font-bold' : 'text-gray-300'}`}>{qty}</span>
+                              <button type="button" onClick={() => adjustQty(key, -1)} disabled={qty === 0}
+                                className="w-6 h-5 text-xs rounded border border-gray-200 bg-white hover:border-navy/50 disabled:opacity-20 leading-none transition-colors">−</button>
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Flat list — waist only or non-bottom categories */}
+          {(!BOTTOM_CATS.has(fields.category) || bottomsSizingType === 'waist_only') && (
+            <div className="flex flex-wrap gap-3 mt-1">
+              {sizeOptions.map(size => {
+                const qty = sizeQty[size] ?? 0
+                return (
+                  <div key={size} className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1.5">
+                    <span className={`text-xs font-semibold w-8 text-center ${qty > 0 ? 'text-navy' : 'text-gray-400'}`}>{size}</span>
+                    <button type="button" onClick={() => adjustQty(size, -1)} disabled={qty === 0}
+                      className="w-6 h-6 rounded-md flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:border-navy/40 disabled:opacity-30 text-sm leading-none transition-colors">−</button>
+                    <span className={`text-sm font-medium w-4 text-center ${qty > 0 ? 'text-navy' : 'text-gray-400'}`}>{qty}</span>
+                    <button type="button" onClick={() => adjustQty(size, 1)}
+                      className="w-6 h-6 rounded-md flex items-center justify-center bg-white border border-gray-200 text-gray-600 hover:border-navy/40 text-sm leading-none transition-colors">+</button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
+          <p className="text-xs text-gray-400 mt-2">
+            Total: {Object.values(sizeQty).reduce((s, v) => s + v, 0)} units across {Object.values(sizeQty).filter(v => v > 0).length} sizes
+          </p>
         </Field>
       </section>
 
@@ -316,12 +505,6 @@ export function PieceForm({ piece, wardrobes }: Props) {
               placeholder="Vuori" className={input} />
           </Field>
         </div>
-        <Field label="Wardrobe">
-          <select value={fields.wardrobe_id} onChange={e => set('wardrobe_id', e.target.value)} className={input}>
-            <option value="">— No wardrobe —</option>
-            {wardrobes.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
-          </select>
-        </Field>
       </section>
 
       {/* Visibility */}

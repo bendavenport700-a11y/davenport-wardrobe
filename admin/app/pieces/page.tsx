@@ -59,17 +59,17 @@ export default async function PiecesPage({
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-500 border-b border-gray-100">
-              <th className="text-left px-4 py-3 font-medium">Piece</th>
-              <th className="text-left px-4 py-3 font-medium">Category</th>
-              <th className="text-left px-4 py-3 font-medium">Condition</th>
-              <th className="text-left px-4 py-3 font-medium">Cost</th>
-              <th className="text-left px-4 py-3 font-medium">Fee/mo</th>
-              <th className="text-left px-4 py-3 font-medium">Wears</th>
-              <th className="text-left px-4 py-3 font-medium">Flags</th>
+            <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+              <th className="text-left px-4 py-3 font-semibold">Piece</th>
+              <th className="text-left px-4 py-3 font-semibold">Category</th>
+              <th className="text-left px-4 py-3 font-semibold">Condition</th>
+              <th className="text-left px-4 py-3 font-semibold">Cost</th>
+              <th className="text-left px-4 py-3 font-semibold">Fee/mo</th>
+              <th className="text-left px-4 py-3 font-semibold">Wears</th>
+              <th className="text-left px-4 py-3 font-semibold">Flags</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>

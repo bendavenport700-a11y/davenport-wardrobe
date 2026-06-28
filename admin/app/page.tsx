@@ -1,20 +1,24 @@
 import { unstable_noStore as noStore } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
+import { OrderStatusBadge } from '@/components/StatusBadge'
 
 async function getStats() {
   noStore()
   const [pieces, orders, rentals] = await Promise.all([
-    supabaseAdmin.from('pieces').select('id, is_available, is_draft', { count: 'exact' }),
-    supabaseAdmin.from('orders').select('id, status', { count: 'exact' }),
-    supabaseAdmin.from('rentals').select('id, billing_active', { count: 'exact' }),
+    supabaseAdmin.from('pieces').select('id, is_available, is_draft'),
+    supabaseAdmin.from('orders').select('id, status'),
+    supabaseAdmin.from('rentals').select('id, status'),
   ])
 
-  const totalPieces     = pieces.count ?? 0
-  const availPieces     = (pieces.data ?? []).filter(p => p.is_available && !p.is_draft).length
-  const pendingOrders   = (orders.data ?? []).filter(o => ['pending', 'confirmed', 'sourcing'].includes(o.status)).length
-  const activeRentals   = (rentals.data ?? []).filter(r => r.billing_active).length
+  const TERMINAL_STATUSES = ['returned', 'cancelled', 'bought_out']
 
-  return { totalPieces, availPieces, pendingOrders, activeRentals }
+  const totalPieces     = (pieces.data ?? []).filter(p => !p.is_draft).length
+  const availPieces     = (pieces.data ?? []).filter(p => p.is_available && !p.is_draft).length
+  const pendingOrders   = (orders.data ?? []).filter(o => ['confirmed', 'sourcing', 'packaged'].includes(o.status)).length
+  const activeRentals   = (rentals.data ?? []).filter(r => !TERMINAL_STATUSES.includes(r.status)).length
+  const pendingReturns  = (rentals.data ?? []).filter(r => r.status === 'return_requested').length
+
+  return { totalPieces, availPieces, pendingOrders, activeRentals, pendingReturns }
 }
 
 async function getRecentOrders() {
@@ -29,9 +33,9 @@ async function getRecentOrders() {
 
 function StatCard({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
-    <div className="bg-white rounded-xl p-5 border border-gray-100">
-      <p className="text-sm text-gray-500">{label}</p>
-      <p className="text-3xl font-bold text-navy mt-1">{value}</p>
+    <div className="bg-white rounded-xl p-5 border border-gray-100 shadow-sm">
+      <p className="text-[11px] uppercase tracking-wider font-semibold text-gray-400">{label}</p>
+      <p className="text-2xl font-bold text-navy mt-2 tracking-tight">{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
     </div>
   )
@@ -46,23 +50,23 @@ export default async function DashboardPage() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard label="Pending Orders" value={stats.pendingOrders} sub="Needs attention" />
-        <StatCard label="Active Rentals" value={stats.activeRentals} sub="Currently billing" />
+        <StatCard label="Active Rentals" value={stats.activeRentals} sub="Pieces with customers" />
         <StatCard label="Available Pieces" value={stats.availPieces} sub={`of ${stats.totalPieces} total`} />
-        <StatCard label="Total Inventory" value={stats.totalPieces} />
+        <StatCard label="Pending Returns" value={stats.pendingReturns} sub="Awaiting receipt" />
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="font-semibold text-navy">Recent Orders</h2>
           <a href="/orders" className="text-sm text-navy/60 hover:text-navy">View all →</a>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-500 border-b border-gray-100">
-              <th className="text-left px-5 py-3 font-medium">Order ID</th>
-              <th className="text-left px-5 py-3 font-medium">Status</th>
-              <th className="text-left px-5 py-3 font-medium">Total</th>
-              <th className="text-left px-5 py-3 font-medium">Date</th>
+            <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+              <th className="text-left px-5 py-3 font-semibold">Order ID</th>
+              <th className="text-left px-5 py-3 font-semibold">Status</th>
+              <th className="text-left px-5 py-3 font-semibold">Total</th>
+              <th className="text-left px-5 py-3 font-semibold">Date</th>
             </tr>
           </thead>
           <tbody>
@@ -74,14 +78,9 @@ export default async function DashboardPage() {
                   </a>
                 </td>
                 <td className="px-5 py-3">
-                  <span className={`inline-flex px-2 py-0.5 rounded text-xs font-medium capitalize ${
-                    order.status === 'delivered' ? 'bg-green-100 text-green-800' :
-                    order.status === 'shipped' ? 'bg-purple-100 text-purple-800' :
-                    order.status === 'sourcing' ? 'bg-orange-100 text-orange-800' :
-                    'bg-yellow-100 text-yellow-800'
-                  }`}>{order.status}</span>
+                  <OrderStatusBadge status={order.status} />
                 </td>
-                <td className="px-5 py-3 text-gray-700">${(order.total_charged / 100).toFixed(2)}</td>
+                <td className="px-5 py-3 text-gray-700">${((order.total_charged ?? 0) / 100).toFixed(2)}</td>
                 <td className="px-5 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
               </tr>
             ))}

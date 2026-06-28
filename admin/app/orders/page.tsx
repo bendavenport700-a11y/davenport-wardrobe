@@ -18,10 +18,11 @@ async function getOrders(status?: string) {
   return (data ?? []) as OrderWithProfile[]
 }
 
-const STATUS_FILTERS = ['', 'pending', 'confirmed', 'sourcing', 'shipped', 'delivered', 'complete']
+const STATUS_FILTERS = ['', 'confirmed', 'sourcing', 'packaged', 'shipped', 'delivered', 'complete', 'refund_requested', 'refunded']
 const STATUS_LABELS: Record<string, string> = {
-  '': 'All', pending: 'Pending', confirmed: 'Confirmed', sourcing: 'Sourcing',
+  '': 'All', confirmed: 'Confirmed', sourcing: 'Sourcing', packaged: 'Packaged',
   shipped: 'Shipped', delivered: 'Delivered', complete: 'Complete',
+  refund_requested: 'Refund Req.', refunded: 'Refunded',
 }
 
 export default async function OrdersPage({ searchParams }: { searchParams: { status?: string } }) {
@@ -46,16 +47,16 @@ export default async function OrdersPage({ searchParams }: { searchParams: { sta
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100">
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-xs text-gray-500 border-b border-gray-100">
-              <th className="text-left px-4 py-3 font-medium">Order</th>
-              <th className="text-left px-4 py-3 font-medium">Customer</th>
-              <th className="text-left px-4 py-3 font-medium">Status</th>
-              <th className="text-left px-4 py-3 font-medium">Items</th>
-              <th className="text-left px-4 py-3 font-medium">Total</th>
-              <th className="text-left px-4 py-3 font-medium">Date</th>
+            <tr className="text-[10px] uppercase tracking-wider text-gray-400 border-b border-gray-100">
+              <th className="text-left px-4 py-3 font-semibold">Order</th>
+              <th className="text-left px-4 py-3 font-semibold">Customer</th>
+              <th className="text-left px-4 py-3 font-semibold">Status</th>
+              <th className="text-left px-4 py-3 font-semibold">Items</th>
+              <th className="text-left px-4 py-3 font-semibold">Total</th>
+              <th className="text-left px-4 py-3 font-semibold">Date</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -72,8 +73,8 @@ export default async function OrdersPage({ searchParams }: { searchParams: { sta
                   <p className="text-gray-400 text-xs">{order.profile?.email ?? order.user_id.slice(0, 8)}</p>
                 </td>
                 <td className="px-4 py-3"><OrderStatusBadge status={order.status} /></td>
-                <td className="px-4 py-3 text-gray-600">{order.rental_ids.length}</td>
-                <td className="px-4 py-3 text-gray-700 font-medium">${(order.total_charged / 100).toFixed(2)}</td>
+                <td className="px-4 py-3 text-gray-600">{order.rental_ids?.length ?? 0}</td>
+                <td className="px-4 py-3 text-gray-700 font-medium">${((order.total_charged ?? 0) / 100).toFixed(2)}</td>
                 <td className="px-4 py-3 text-gray-500">{new Date(order.created_at).toLocaleDateString()}</td>
                 <td className="px-4 py-3">
                   <Link href={`/orders/${order.id}`} className="text-navy/60 hover:text-navy text-xs font-medium">
