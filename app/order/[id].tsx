@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator, Linking } from 'react-native'
+import { View, Text, ScrollView, Pressable, Alert, ActivityIndicator } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { useLocalSearchParams, router } from 'expo-router'
 import { Image } from 'expo-image'
@@ -19,6 +19,7 @@ const STATUS_MESSAGE: Record<string, string> = {
   pending:          "Order received. Your piece ships in 1-2 weeks.",
   confirmed:        "Order confirmed. Your piece ships in 1-2 weeks.",
   sourcing:         "Your piece is being prepared and will ship within 1-2 weeks. Email support@davenport.rentals if it's been longer than that.",
+  packaged:         "Your piece has been packed and is heading to the carrier. Tracking arrives by email once shipped.",
   shipped:          "Your piece is on the way. Check the tracking number below.",
   delivered:        "Delivered. Enjoy it. You can buy it anytime from the Account tab.",
   return_requested: "Return in progress. We'll email a prepaid label within 24 hours. Ship back within 21 days.",
@@ -36,7 +37,8 @@ function rentalMonths(createdAt: string): number {
 }
 
 export default function OrderScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id: rawId } = useLocalSearchParams<{ id: string }>()
+  const id = Array.isArray(rawId) ? rawId[0] : rawId
   const insets = useSafeAreaInsets()
   const queryClient = useQueryClient()
   const { data: order, isLoading, isError, refetch } = useOrder(id)
@@ -143,8 +145,11 @@ export default function OrderScreen() {
     )
   }
 
-  // 'confirmed' is equivalent to 'pending' in the progress display
-  const progressStatus = order.status === 'confirmed' ? 'pending' : order.status
+  // map sub-steps to their nearest major milestone for the progress bar
+  const progressStatus =
+    order.status === 'confirmed' ? 'pending' :
+    order.status === 'packaged'  ? 'sourcing' :
+    order.status
   const currentStepIndex = STATUS_STEPS.indexOf(progressStatus)
 
   return (
@@ -218,7 +223,7 @@ export default function OrderScreen() {
         {/* Rental items */}
         {(order.rentals as RentalWithPiece[])?.map((rental) => {
           const piece = rental.piece
-          const months = rentalMonths(rental.created_at)
+          const months = rental.created_at ? rentalMonths(rental.created_at) : 0
           const isLoyalty = months >= LOYALTY_BUYOUT_BONUS_MONTHS
           const snapshot = rental.buyout_price_snapshot ?? 0
           const buyoutPrice = isLoyalty ? Math.round(snapshot * 0.95) : snapshot

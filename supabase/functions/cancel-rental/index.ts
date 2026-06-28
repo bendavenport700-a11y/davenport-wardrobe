@@ -1,8 +1,9 @@
 import { corsHeaders } from '../_shared/cors.ts'
 import { supabaseAdmin } from '../_shared/supabase.ts'
 
-// Customer cancels a rental (after the 30-day minimum period).
-// Marks rental inactive, frees up the piece for new rentals.
+// INTERNAL / ADMIN USE: Hard-cancels a rental and immediately frees the unit.
+// Customer-facing return requests go through `request-return` instead, which does NOT
+// free the unit until admin confirms physical receipt of the piece.
 // Body: { rental_id: string }
 
 Deno.serve(async (req) => {
@@ -17,60 +18,65 @@ Deno.serve(async (req) => {
     )
     if (authError || !user) throw new Error('Unauthorized')
 
+    // Admin-only guard: this function frees piece_units immediately.
+    // Customers must use request-return, which does NOT free inventory.
+    const { data: callerProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', user.id)
+      .single()
+    if (!callerProfile?.is_admin) throw new Error('Admin access required')
+
     const { rental_id }: { rental_id: string } = await req.json()
     if (!rental_id) throw new Error('rental_id is required')
 
     // Fetch rental — must belong to this user
     const { data: rental, error: rentalError } = await supabaseAdmin
       .from('rentals')
-      .select('id, piece_id, billing_active, created_at, min_rental_days, status, rental_fee_cents')
+      .select('id, user_id, piece_id, piece_unit_id, billing_active, created_at, min_rental_days, status, rental_fee_cents')
       .eq('id', rental_id)
-      .eq('user_id', user.id)
       .single()
 
     if (rentalError || !rental) throw new Error('Rental not found')
-    if (!rental.billing_active) throw new Error('Rental is already inactive')
     if (rental.status === 'bought_out') throw new Error('Rental has been bought out')
+    if (rental.status === 'returned')   throw new Error('Rental is already returned')
 
-    // Enforce minimum rental period
-    const daysSinceStart = Math.floor(
-      (Date.now() - new Date(rental.created_at).getTime()) / (1000 * 60 * 60 * 24)
-    )
-    const minDays = rental.min_rental_days ?? 30
-    if (daysSinceStart < minDays) {
-      throw new Error(`Minimum rental period is ${minDays} days. ${minDays - daysSinceStart} days remaining.`)
-    }
-
-    // Stop billing and mark as return_requested
-    await supabaseAdmin
+    // Stop billing and mark as return_requested (idempotent — safe to repeat)
+    const { error: updateErr } = await supabaseAdmin
       .from('rentals')
       .update({
         billing_active: false,
         status:         'return_requested',
       })
       .eq('id', rental_id)
+    if (updateErr) throw new Error(`Failed to update rental: ${updateErr.message}`)
 
-    // Free the piece for new rentals
+    // Free the specific unit and recompute piece availability
+    if (rental.piece_unit_id) {
+      await supabaseAdmin
+        .from('piece_units')
+        .update({ is_available: true })
+        .eq('id', rental.piece_unit_id)
+    }
+
+    const { data: availUnits } = await supabaseAdmin
+      .from('piece_units')
+      .select('size')
+      .eq('piece_id', rental.piece_id)
+      .eq('is_available', true)
+
+    const availSizes = [...new Set((availUnits ?? []).map(u => u.size))].sort()
     await supabaseAdmin
       .from('pieces')
-      .update({ is_available: true })
+      .update({ sizes_available: availSizes, is_available: availSizes.length > 0 })
       .eq('id', rental.piece_id)
 
-    // Decrement active_rental_count on profile
-    const { data: profile } = await supabaseAdmin
-      .from('profiles')
-      .select('active_rental_count, monthly_total')
-      .eq('id', user.id)
-      .single()
-
-    if (profile) {
-      await supabaseAdmin
-        .from('profiles')
-        .update({
-          active_rental_count: Math.max(0, (profile.active_rental_count ?? 0) - 1),
-          monthly_total:       Math.max(0, (profile.monthly_total ?? 0) - (rental.rental_fee_cents ?? 0)),
-        })
-        .eq('id', user.id)
+    // Only decrement counters if billing was still active (avoid double-decrement)
+    if (rental.billing_active) {
+      await supabaseAdmin.rpc('decrement_rental_counters', {
+        p_user_id:   rental.user_id,
+        p_fee_cents: rental.rental_fee_cents ?? 0,
+      })
     }
 
     return new Response(

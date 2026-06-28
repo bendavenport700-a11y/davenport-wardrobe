@@ -81,8 +81,9 @@ export default function CheckoutScreen() {
       piece_id:              item.piece_id,
       size:                  item.size,
       rental_fee_cents:      item.rental_fee_cents ?? 0,
-      wear_count_at_rental:  item.piece?.wear_count ?? 0,
+      wear_count_at_rental:  item.wear_count_at_rental ?? item.piece?.wear_count ?? 0,
       buyout_price_snapshot: item.piece?.buyout_price ?? 0,
+      prefer_worn:           item.prefer_worn ?? false,
     }))
 
   // Path A — new customer: collect card via Payment Sheet, then charge
@@ -124,11 +125,10 @@ export default function CheckoutScreen() {
         items: buildOrderItems(),
       })
 
-      // Navigate first — if this throws the suitcase is still intact
-      router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
+      clearSuitcase()
       queryClient.invalidateQueries({ queryKey: ['rentals', 'active', session!.user.id] })
       queryClient.invalidateQueries({ queryKey: ['orders', session!.user.id] })
-      clearSuitcase()
+      router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
     } catch (err) {
       const msg = friendlyError(err)
       setError(msg)
@@ -147,11 +147,10 @@ export default function CheckoutScreen() {
         items: buildOrderItems(),
         idempotency_key,
       })
-      // Navigate first — if this throws the suitcase is still intact
-      router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
+      clearSuitcase()
       queryClient.invalidateQueries({ queryKey: ['rentals', 'active', session!.user.id] })
       queryClient.invalidateQueries({ queryKey: ['orders', session!.user.id] })
-      clearSuitcase()
+      router.replace({ pathname: '/checkout/confirmation', params: { order_id } } as any)
     } catch (err) {
       const msg = friendlyError(err)
       setError(msg)

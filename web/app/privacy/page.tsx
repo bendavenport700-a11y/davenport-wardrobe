@@ -16,7 +16,7 @@ const SECTIONS = [
   },
   {
     title: '4. Data Retention',
-    body: 'We retain your account data for as long as your account is active. When you delete your account (via Settings → Account → Delete Account), your personal information is removed within 30 days. Order records may be retained for legal compliance, anonymized from your identity.',
+    body: 'We retain your account data for as long as your account is active. When you delete your account (Account tab → Delete Account at the bottom), your personal information is removed within 30 days. Order records may be retained for legal compliance, anonymized from your identity.',
   },
   {
     title: '5. Your Rights',

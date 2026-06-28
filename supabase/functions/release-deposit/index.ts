@@ -35,10 +35,16 @@ Deno.serve(async (req) => {
       .single()
 
     if (!profile?.deposit_payment_intent_id) throw new Error('No deposit on file for this user')
-    if (profile.deposit_status !== 'held') throw new Error(`Deposit status is '${profile.deposit_status}', not 'held'`)
+    if (!['held', 'partially_captured'].includes(profile.deposit_status ?? '')) {
+      throw new Error(`Deposit status is '${profile.deposit_status}' — nothing to release`)
+    }
 
-    // Cancel the PaymentIntent — releases the authorization hold with no charge
-    await stripe.paymentIntents.cancel(profile.deposit_payment_intent_id)
+    if (profile.deposit_status === 'held') {
+      // Cancel the PaymentIntent — releases the authorization hold with no charge
+      await stripe.paymentIntents.cancel(profile.deposit_payment_intent_id)
+    }
+    // If partially_captured: Stripe already released the remainder when the partial capture occurred.
+    // No Stripe call needed — just update the DB.
 
     await supabaseAdmin
       .from('profiles')

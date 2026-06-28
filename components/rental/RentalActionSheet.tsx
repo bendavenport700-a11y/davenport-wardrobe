@@ -72,7 +72,7 @@ export function RentalActionSheet({ visible, onClose, rental, userId }: RentalAc
       })
       backdropOpacity.value = withTiming(0, { duration: 200 })
     }
-  }, [visible])
+  }, [visible, mounted, translateY, backdropOpacity])
 
   const sheetStyle = useAnimatedStyle(() => ({ transform: [{ translateY: translateY.value }] }))
   const backdropStyle = useAnimatedStyle(() => ({ opacity: backdropOpacity.value }))
@@ -95,13 +95,15 @@ export function RentalActionSheet({ visible, onClose, rental, userId }: RentalAc
 
   const isDelivered = r.status === 'delivered'
   const isReturnRequested = r.status === 'return_requested'
-  const isInTransit = ['pending', 'sourcing', 'shipped'].includes(r.status)
+  const isInTransit = ['pending', 'sourcing', 'packaged', 'shipped'].includes(r.status)
+  const isShipped = r.status === 'shipped'
 
   // Buyout: allowed at any active stage except return_requested / bought_out
   const canBuyout = r.billing_active && !r.bought_out && buyoutPrice > 0 && !isReturnRequested
 
-  // Return: allowed any time after delivery (or even during transit so customer can decide early)
-  const canReturn = (isDelivered || isInTransit) && !r.bought_out && !isReturnRequested
+  // Return: only allowed once shipped or delivered — backend rejects earlier statuses.
+  // For pre-shipment cancellations, customers use the refund request on the order detail screen.
+  const canReturn = (isDelivered || isShipped) && !r.bought_out && !isReturnRequested
 
   const pieceName = [piece?.brand, piece?.name].filter(Boolean).join(' ')
 

@@ -37,7 +37,7 @@ export default function CheckoutConfirmationScreen() {
     // Fire confetti after checkmark appears
     const timer = setTimeout(() => confettiRef.current?.start(), 500)
     return () => clearTimeout(timer)
-  }, [])
+  }, [checkScale])
 
   const handleShare = async () => {
     const names = order?.rentals?.map(r => (r as RentalWithPiece).piece?.name).filter(Boolean).join(' + ')

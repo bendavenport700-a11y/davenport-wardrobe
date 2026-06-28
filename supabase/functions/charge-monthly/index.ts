@@ -2,11 +2,11 @@ import { stripe } from '../_shared/stripe.ts'
 import { supabaseAdmin } from '../_shared/supabase.ts'
 import { multiPieceDiscount } from '../_shared/pricing.ts'
 
-// Cron schedule: 0 9 1 * *  (9am UTC on the 1st of every month)
-// Charges all active rentals that are due for billing.
+// Cron schedule: 0 9 * * *  (9am UTC daily — charges rentals whose next_billing_date is today or past)
 
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@davenport.rentals'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const APP_STORE_URL  = 'https://apps.apple.com/app/davenport/id6778844291'
 
 async function sendEmail(to: string, subject: string, html: string) {
   if (!RESEND_API_KEY || !to) return
@@ -29,19 +29,47 @@ interface ProfileRow {
   stripe_customer_id: string
   stripe_payment_method_id: string
   deposit_status: string
+  active_rental_count?: number
+}
+
+// Advances a rental's billing date by 30 days from its scheduled date (not from today,
+// so a missed-by-one-day cron still bills on the same rolling cycle).
+function advancedBillingDate(currentDate: string): string {
+  const d = new Date(currentDate + 'T00:00:00Z')
+  d.setUTCDate(d.getUTCDate() + 30)
+  return d.toISOString().split('T')[0]
+}
+
+// Batch-updates next_billing_date +30 days for a set of rentals, grouped by current date
+// so rentals on the same cycle get a single DB round-trip.
+async function advanceRentalDates(rentals: RentalRow[]): Promise<void> {
+  const byNextDate = new Map<string, string[]>()
+  for (const r of rentals) {
+    const nextDate = advancedBillingDate(r.next_billing_date)
+    const group = byNextDate.get(nextDate) ?? []
+    group.push(r.id)
+    byNextDate.set(nextDate, group)
+  }
+  const now = new Date().toISOString()
+  for (const [nextDate, ids] of byNextDate) {
+    const { error } = await supabaseAdmin
+      .from('rentals')
+      .update({ last_billed_at: now, next_billing_date: nextDate })
+      .in('id', ids)
+    if (error) throw new Error(`advanceRentalDates failed for group ${nextDate}: ${error.message}`)
+  }
 }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok')
 
-  // Require a shared secret so this endpoint can't be triggered by anyone who knows the URL.
-  // Set CRON_SECRET in Supabase secrets. The Supabase scheduler passes it as a header.
+  // Primary auth: verify_jwt validates the Supabase service-role key sent by pg_cron.
+  // Optional extra layer: if CRON_SECRET env var is set AND x-cron-secret header is
+  // provided, they must match. If either is absent the check is skipped.
   const cronSecret = Deno.env.get('CRON_SECRET')
-  if (cronSecret) {
-    const provided = req.headers.get('x-cron-secret')
-    if (provided !== cronSecret) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
-    }
+  const provided   = req.headers.get('x-cron-secret')
+  if (cronSecret && provided && provided !== cronSecret) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 })
   }
 
   const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD
@@ -70,7 +98,6 @@ Deno.serve(async (req) => {
     byUser.set(r.user_id, list)
   }
 
-  const nextBillingDate = getNextFirstOfMonth()
   let successCount = 0
   let failCount    = 0
 
@@ -78,10 +105,10 @@ Deno.serve(async (req) => {
     // Hoist p so the catch block can reference it for the failure email
     let p: (ProfileRow & { email?: string; full_name?: string }) | null = null
     try {
-      // Get profile with payment method and email for receipts
+      // Get profile with payment method, email, and total active piece count for discount
       const { data: profile } = await supabaseAdmin
         .from('profiles')
-        .select('id, stripe_customer_id, stripe_payment_method_id, deposit_status, email, full_name')
+        .select('id, stripe_customer_id, stripe_payment_method_id, deposit_status, email, full_name, active_rental_count')
         .eq('id', userId)
         .single()
 
@@ -89,21 +116,35 @@ Deno.serve(async (req) => {
       if (!p?.stripe_customer_id || !p?.stripe_payment_method_id) {
         console.error(`No payment method for user ${userId} — skipping`)
         failCount++
+        await supabaseAdmin.from('billing_events').insert({
+          user_id:      userId,
+          type:         'recurring',
+          amount_cents: userRentals.reduce((s, r) => s + r.rental_fee_cents, 0),
+          status:       'failed',
+          description:  '30-day charge failed: no payment method on file',
+        }).catch(e => console.error('Failed to log missing-PM billing event:', e))
+        if (p?.email) {
+          sendEmail(
+            p.email,
+            'Action required — Davenport payment method missing',
+            `<p>Hi ${p.full_name ?? 'there'},</p>
+<p>We were unable to process your Davenport charge because no payment method is on file. Please open the Davenport app to add a payment method: <a href="${APP_STORE_URL}">davenport.rentals</a>.</p>
+<p>— Davenport Wardrobe</p>`
+          ).catch(e => console.error('Missing-PM email failed:', e))
+        }
         continue
       }
 
-      // Apply multi-piece discount
-      const rawTotal   = userRentals.reduce((sum, r) => sum + r.rental_fee_cents, 0)
-      const discount   = multiPieceDiscount(userRentals.length)
+      // Discount based on total active pieces, not just pieces due today.
+      // A user with 3 pieces but only 1 renewing today still gets the 3-piece rate.
+      const rawTotal    = userRentals.reduce((sum, r) => sum + r.rental_fee_cents, 0)
+      const totalPieces = p.active_rental_count ?? userRentals.length
+      const discount    = multiPieceDiscount(totalPieces)
       const chargeAmount = Math.round(rawTotal * (1 - discount))
 
       if (chargeAmount <= 0) {
-        // No charge needed but still advance billing date so this rental doesn't stay overdue
-        const rentalIds = userRentals.map(r => r.id)
-        await supabaseAdmin
-          .from('rentals')
-          .update({ last_billed_at: new Date().toISOString(), next_billing_date: nextBillingDate })
-          .in('id', rentalIds)
+        // No charge needed but still advance billing date so rental doesn't stay overdue
+        await advanceRentalDates(userRentals)
         successCount++
         continue
       }
@@ -117,7 +158,7 @@ Deno.serve(async (req) => {
         payment_method: p.stripe_payment_method_id,
         confirm:        true,
         off_session:    true,
-        description:    `Davenport monthly — ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''} (${today})`,
+        description:    `Davenport billing — ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''} (${today})`,
         metadata:       { user_id: userId, billing_date: today },
       }, { idempotencyKey: `monthly_${userId}_${today}` })
 
@@ -132,15 +173,11 @@ Deno.serve(async (req) => {
         amount_cents:             chargeAmount,
         stripe_payment_intent_id: paymentIntent.id,
         status:                   'succeeded',
-        description:              `Monthly charge for ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''}`,
+        description:              `30-day charge for ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''}`,
       })
 
-      // Advance next_billing_date for all charged rentals
-      const rentalIds = userRentals.map(r => r.id)
-      await supabaseAdmin
-        .from('rentals')
-        .update({ last_billed_at: new Date().toISOString(), next_billing_date: nextBillingDate })
-        .in('id', rentalIds)
+      // Advance next_billing_date +30 days from each rental's own scheduled date
+      await advanceRentalDates(userRentals)
 
       // Send billing receipt email (non-blocking)
       if (p.email) {
@@ -148,9 +185,9 @@ Deno.serve(async (req) => {
           p.email,
           `Davenport billing receipt — $${(chargeAmount / 100).toFixed(2)}`,
           `<p>Hi ${p.full_name ?? 'there'},</p>
-<p>Your monthly Davenport charge of <strong>$${(chargeAmount / 100).toFixed(2)}</strong> was processed successfully.</p>
-<p>You're renting ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''}. Next billing date: <strong>${nextBillingDate}</strong>.</p>
-<p>To return a piece, email <a href="mailto:returns@davenport.rentals">returns@davenport.rentals</a> with your order number.</p>
+<p>Your Davenport charge of <strong>$${(chargeAmount / 100).toFixed(2)}</strong> was processed successfully.</p>
+<p>You're renting ${userRentals.length} piece${userRentals.length !== 1 ? 's' : ''}${totalPieces > userRentals.length ? ` (${totalPieces} total active)` : ''}. Your next charge is in 30 days.</p>
+<p>To return a piece, open the Davenport app, go to Account, tap the piece, and tap Return. We'll email a prepaid label within 24 hours.</p>
 <p>— Davenport Wardrobe</p>`
         ).catch(e => console.error('Billing receipt email failed:', e))
       }
@@ -161,11 +198,11 @@ Deno.serve(async (req) => {
       failCount++
       // Log failure
       await supabaseAdmin.from('billing_events').insert({
-        user_id:     userId,
-        type:        'recurring',
+        user_id:      userId,
+        type:         'recurring',
         amount_cents: userRentals.reduce((s, r) => s + r.rental_fee_cents, 0),
-        status:      'failed',
-        description: `Monthly charge failed: ${err instanceof Error ? err.message : 'unknown'}`,
+        status:       'failed',
+        description:  `30-day charge failed: ${err instanceof Error ? err.message : 'unknown'}`,
       }).catch(e => console.error('Failed to log billing failure event:', e))
 
       // Send payment failure email (non-blocking)
@@ -174,7 +211,7 @@ Deno.serve(async (req) => {
           p.email,
           'Action required — Davenport payment failed',
           `<p>Hi ${p.full_name ?? 'there'},</p>
-<p>We were unable to process your monthly Davenport charge. Please update your payment method at <a href="https://davenport.rentals/account">davenport.rentals/account</a>.</p>
+<p>We were unable to process your Davenport charge. Please open the Davenport app to update your payment method: <a href="${APP_STORE_URL}">Download the app</a>.</p>
 <p>— Davenport Wardrobe</p>`
         ).catch(e => console.error('Payment failure email failed:', e))
       }
@@ -186,9 +223,3 @@ Deno.serve(async (req) => {
     { headers: { 'Content-Type': 'application/json' } }
   )
 })
-
-function getNextFirstOfMonth(): string {
-  const now = new Date()
-  const next = new Date(now.getFullYear(), now.getMonth() + 1, 1)
-  return next.toISOString().split('T')[0]
-}

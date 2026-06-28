@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
         await supabaseAdmin
           .from('profiles')
-          .update({ deposit_status: 'held', deposit_payment_intent_id: pi.id })
+          .update({ deposit_status: 'held', deposit_payment_intent_id: pi.id, deposit_amount: pi.amount_capturable })
           .eq('stripe_customer_id', pi.customer as string)
         break
       }

@@ -7,11 +7,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { supabase } from '@/lib/supabase'
 import { useUpdateProfile } from '@/hooks/useProfile'
 import { Button } from '@/components/ui/Button'
+import { SocialAuthButtons } from '@/components/auth/SocialAuthButtons'
 import { colors } from '@/constants/colors'
 import { signupSchema, type SignupFormData } from '@/utils/schemas'
 
 export default function SignupScreen() {
   const [serverError, setServerError] = useState<string | null>(null)
+  const [focused, setFocused] = useState<string | null>(null)
   const { mutateAsync: updateProfile } = useUpdateProfile()
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<SignupFormData>({
@@ -19,10 +21,6 @@ export default function SignupScreen() {
     defaultValues: { full_name: '', email: '', password: '', terms: false as unknown as true },
   })
 
-  // NOTE: After signUp succeeds, do NOT manually call setSession or setProfile.
-  // The onAuthStateChange listener in app/_layout.tsx fires automatically and
-  // handles session + profile hydration. useProtectedRoute then redirects to
-  // complete-profile (since terms_accepted_at will be null on new accounts).
   const onSubmit = async (data: SignupFormData) => {
     setServerError(null)
     const { data: authData, error } = await supabase.auth.signUp({
@@ -32,6 +30,11 @@ export default function SignupScreen() {
     if (error) {
       const isAlreadyExists = (error as any).code === 'user_already_exists' || error.message.toLowerCase().includes('already')
       setServerError(isAlreadyExists ? 'An account with this email exists. Sign in instead.' : error.message)
+      return
+    }
+    if (authData.user && !authData.session) {
+      // Email confirmation is required — session won't exist until the user confirms
+      setServerError('Check your email to verify your account, then sign in.')
       return
     }
     if (authData.user) {
@@ -44,16 +47,24 @@ export default function SignupScreen() {
           },
         })
       } catch {
-        // Profile update failed — not fatal. User is signed in and useProtectedRoute
-        // will still land them on complete-profile where they can fill in their details.
         console.error('Profile update failed after signup — user will retry on complete-profile')
       }
     }
-    // useProtectedRoute will redirect to complete-profile since shipping_address is null
   }
 
+  const inputStyle = (name: string, hasError: boolean) => ({
+    borderWidth: 1.5,
+    borderColor: hasError ? colors.error : focused === name ? colors.navy : colors.sand + 'CC',
+    borderRadius: 12,
+    padding: 15,
+    fontFamily: 'Inter-Regular' as const,
+    fontSize: 16,
+    color: colors.navy,
+    backgroundColor: colors.white,
+  })
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 32, color: colors.navy, marginBottom: 8, letterSpacing: 0.2 }}>
           Create account.
@@ -73,12 +84,14 @@ export default function SignupScreen() {
             <View>
               <Text style={labelStyle}>Full name</Text>
               <TextInput
-                style={[inputStyle, errors.full_name && errorBorderStyle]}
+                style={inputStyle('full_name', !!errors.full_name)}
                 placeholder="Your full name"
                 placeholderTextColor={colors.gray400}
                 autoCapitalize="words"
                 textContentType="name"
                 autoComplete="name"
+                onFocus={() => setFocused('full_name')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -90,13 +103,15 @@ export default function SignupScreen() {
             <View>
               <Text style={labelStyle}>Email</Text>
               <TextInput
-                style={[inputStyle, errors.email && errorBorderStyle]}
+                style={inputStyle('email', !!errors.email)}
                 placeholder="you@example.com"
                 placeholderTextColor={colors.gray400}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
                 textContentType="emailAddress"
+                onFocus={() => setFocused('email')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -108,12 +123,14 @@ export default function SignupScreen() {
             <View>
               <Text style={labelStyle}>Password</Text>
               <TextInput
-                style={[inputStyle, errors.password && errorBorderStyle]}
+                style={inputStyle('password', !!errors.password)}
                 placeholder="At least 8 characters"
                 placeholderTextColor={colors.gray400}
                 secureTextEntry
                 autoComplete="new-password"
                 textContentType="newPassword"
+                onFocus={() => setFocused('password')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -154,6 +171,8 @@ export default function SignupScreen() {
             </View>
           )} />
 
+          <SocialAuthButtons onError={msg => setServerError(msg)} />
+
           <Button label="Create Account" onPress={handleSubmit(onSubmit)} loading={isSubmitting} />
 
           <Text style={{ textAlign: 'center', color: colors.slate, fontFamily: 'Inter-Regular', fontSize: 14 }}>
@@ -178,10 +197,4 @@ export default function SignupScreen() {
 }
 
 const labelStyle = { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy, marginBottom: 6, letterSpacing: 0.2 } as const
-const inputStyle = {
-  borderWidth: 1.5, borderColor: colors.sand + 'CC', borderRadius: 12,
-  padding: 15, fontFamily: 'Inter-Regular', fontSize: 16, color: colors.navy,
-  backgroundColor: colors.white,
-} as const
-const errorBorderStyle = { borderColor: colors.error } as const
 const errorTextStyle = { color: colors.error, fontFamily: 'Inter-Regular', fontSize: 12, marginTop: 4 } as const

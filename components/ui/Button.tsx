@@ -4,6 +4,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated'
+import * as Haptics from 'expo-haptics'
 import { colors } from '@/constants/colors'
 
 interface ButtonProps extends Omit<PressableProps, 'style'> {
@@ -24,7 +25,10 @@ export function Button({
     transform: [{ scale: scale.value }],
   }))
 
-  const handlePressIn = () => { scale.value = withSpring(0.97, { damping: 15, stiffness: 400 }) }
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 400 })
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+  }
   const handlePressOut = () => { scale.value = withSpring(1.0, { damping: 15, stiffness: 400 }) }
 
   const bgColors = {

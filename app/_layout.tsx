@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { Linking } from 'react-native'
-import { Stack, router } from 'expo-router'
+import { View, Text, Pressable, Linking } from 'react-native'
+import { Stack, router, ErrorBoundaryProps } from 'expo-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { useFonts } from 'expo-font'
@@ -15,6 +15,25 @@ import { StripeWrapper } from '@/lib/StripeWrapper'
 import { ForceUpdateModal } from '@/components/ui/ForceUpdateModal'
 
 SplashScreen.preventAutoHideAsync()
+
+export function ErrorBoundary({ error, retry }: ErrorBoundaryProps) {
+  return (
+    <View style={{ flex: 1, backgroundColor: '#F5EFE6', alignItems: 'center', justifyContent: 'center', padding: 32, gap: 16 }}>
+      <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: '#0D1B2A', letterSpacing: -0.3 }}>
+        Something went wrong
+      </Text>
+      <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 21 }}>
+        {error.message ?? 'An unexpected error occurred.'}
+      </Text>
+      <Pressable
+        onPress={retry}
+        style={{ backgroundColor: '#0D1B2A', borderRadius: 12, paddingHorizontal: 28, paddingVertical: 14 }}
+      >
+        <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15, color: '#F5EFE6' }}>Try again</Text>
+      </Pressable>
+    </View>
+  )
+}
 
 const queryClient = new QueryClient({ defaultOptions: { queries: { retry: 2, staleTime: 60_000 } } })
 
@@ -82,6 +101,7 @@ export default function RootLayout() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (event === 'PASSWORD_RECOVERY') {
+        setSession(newSession)
         router.replace('/reset-password' as any)
         return
       }
@@ -99,9 +119,10 @@ export default function RootLayout() {
           const guestItems = useSuitcaseStore.getState().items
           if (guestItems.length > 0) {
             const inserts = guestItems.map(item => ({
-              user_id: newSession.user.id,
-              piece_id: item.piece_id,
-              size: item.size,
+              user_id:    newSession.user.id,
+              piece_id:   item.piece_id,
+              size:       item.size,
+              prefer_worn: item.prefer_worn ?? false,
             }))
             await supabase.from('suitcase_items').upsert(inserts, { onConflict: 'user_id,piece_id,size' })
           }
@@ -137,6 +158,9 @@ export default function RootLayout() {
             <Stack.Screen name="order/[id]" />
             <Stack.Screen name="update-address" options={{ presentation: 'modal', headerShown: false }} />
             <Stack.Screen name="faq" options={{ headerShown: false }} />
+            <Stack.Screen name="trips" options={{ headerShown: false }} />
+            <Stack.Screen name="trip/[id]" options={{ headerShown: false }} />
+            <Stack.Screen name="trip/new" options={{ headerShown: false, presentation: 'modal' }} />
           </Stack>
         </SafeAreaProvider>
       </StripeWrapper>

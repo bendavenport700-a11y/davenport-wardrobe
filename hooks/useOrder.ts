@@ -26,10 +26,11 @@ export function useOrder(id: string | undefined) {
       if (error) throw error
 
       if (order.rental_ids?.length) {
-        const { data: rentals } = await supabase
+        const { data: rentals, error: rentalsError } = await supabase
           .from('rentals')
           .select('*, piece:pieces(*)')
           .in('id', order.rental_ids)
+        if (rentalsError) throw rentalsError
         return { ...order, rentals: rentals ?? [] }
       }
 

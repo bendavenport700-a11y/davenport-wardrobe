@@ -9,7 +9,7 @@ interface SuitcaseStore {
   items: SuitcaseItem[]
   _hasHydrated: boolean
   setHasHydrated: (v: boolean) => void
-  addItem: (piece: Piece, size: string) => void
+  addItem: (piece: Piece, size: string, options?: { preferWorn?: boolean; rentalFeeCents?: number; wearCountAtRental?: number }) => void
   removeItem: (pieceId: string, size: string) => void
   clearSuitcase: () => void
   hasItem: (pieceId: string, size: string) => boolean
@@ -25,12 +25,17 @@ export const useSuitcaseStore = create<SuitcaseStore>()(
       _hasHydrated: false,
       setHasHydrated: (v) => set({ _hasHydrated: v }),
 
-      addItem: (piece, size) => {
+      addItem: (piece, size, options = {}) => {
         if (get().hasItem(piece.id, size)) return
+        const { preferWorn = false, rentalFeeCents, wearCountAtRental } = options
         set(s => ({
           items: [...s.items, {
-            piece_id: piece.id, piece, size,
-            rental_fee_cents: piece.rental_fee,
+            piece_id:             piece.id,
+            piece,
+            size,
+            rental_fee_cents:     rentalFeeCents ?? piece.rental_fee ?? 0,
+            prefer_worn:          preferWorn,
+            wear_count_at_rental: wearCountAtRental ?? piece.wear_count ?? 0,
           }],
         }))
       },
@@ -49,8 +54,6 @@ export const useSuitcaseStore = create<SuitcaseStore>()(
       storage: createJSONStorage(() => AsyncStorage),
       onRehydrateStorage: () => (state, error) => {
         if (error) console.error('Suitcase store rehydration failed:', error)
-        // state is undefined when AsyncStorage fails entirely — always force-set hydrated
-        // so the Suitcase screen never gets permanently stuck on the skeleton
         if (state) {
           state.setHasHydrated(true)
         } else {

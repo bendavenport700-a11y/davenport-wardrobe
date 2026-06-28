@@ -14,7 +14,9 @@ import { PieceCard } from '@/components/piece/PieceCard'
 import { PieceCardSkeleton } from '@/components/ui/Skeleton'
 import { FilterBar, categoryGroupToList } from '@/components/ui/FilterBar'
 import { FilterSheet } from '@/components/ui/FilterSheet'
+import { GenderToggle } from '@/components/ui/GenderToggle'
 import { ErrorState } from '@/components/ui/ErrorState'
+import { useWomensEnabled } from '@/hooks/useAppSettings'
 import { colors } from '@/constants/colors'
 import { layout, DEFAULT_BLURHASH } from '@/constants/layout'
 import type { Wardrobe } from '@/types'
@@ -132,6 +134,8 @@ export default function BrowseScreen() {
   const [sortBy,         setSortBy]         = useState<SortOption>('newest')
   const [wearFilter,     setWearFilter]     = useState<WearFilter>('any')
   const [showFilters,    setShowFilters]    = useState(false)
+  const [gender,         setGender]         = useState<'men' | 'women' | 'all'>('men')
+  const womensEnabled = useWomensEnabled()
 
   const { data: wardrobes = [], isLoading: wardrobesLoading } = useWardrobes()
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -169,7 +173,7 @@ export default function BrowseScreen() {
 
   type FilterTag = { key: string; label: string; clear: () => void }
   const activeFilterTags: FilterTag[] = [
-    ...(wearFilter !== 'any'  ? [{ key: 'wear',     label: wearFilter === 'new' ? 'Brand New' : wearFilter === '1-5' ? '1–5 wears' : wearFilter === '6-10' ? '6–10 wears' : '10+ wears', clear: () => setWearFilter('any') }] : []),
+    ...(wearFilter !== 'any'  ? [{ key: 'wear',     label: wearFilter === 'new' ? 'Pristine' : wearFilter === '1-5' ? 'Seasoned' : wearFilter === '6-10' ? 'Refined' : 'Veteran', clear: () => setWearFilter('any') }] : []),
     ...(brand                 ? [{ key: 'brand',    label: brand,                      clear: () => setBrand(null) }] : []),
     ...(season                ? [{ key: 'season',   label: season,                     clear: () => setSeason(null) }] : []),
     ...(categoryGroup         ? [{ key: 'category', label: categoryGroup,               clear: () => { setCategoryGroup(null); setSize(null) } }] : []),
@@ -182,6 +186,7 @@ export default function BrowseScreen() {
     size, search: debouncedSearch, sortBy, availableOnly: true, wearFilter,
     brand: brand ?? undefined,
     tags: filterTags.length > 0 ? filterTags : undefined,
+    gender: womensEnabled ? gender : undefined,
   })
   const pieces = data?.pages.flat() ?? []
 
@@ -303,6 +308,12 @@ export default function BrowseScreen() {
             </View>
           </View>
         </View>
+
+        {viewMode === 'pieces' && womensEnabled && (
+          <View style={{ marginBottom: 10 }}>
+            <GenderToggle value={gender} onChange={setGender} />
+          </View>
+        )}
 
         {/* Occasion pills — pieces mode only */}
         {viewMode === 'pieces' && (

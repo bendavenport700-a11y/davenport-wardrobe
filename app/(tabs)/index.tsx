@@ -17,6 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useWardrobes } from '@/hooks/useWardrobes'
 import { useFeaturedPieces } from '@/hooks/useFeaturedPieces'
 import { useAnnouncements } from '@/hooks/useAnnouncements'
+import { useTripsEnabled } from '@/hooks/useAppSettings'
 import { useAuthStore } from '@/store/authStore'
 import { useSuitcaseStore, useSuitcaseHydrated } from '@/store/suitcaseStore'
 import { WardrobeCard } from '@/components/wardrobe/WardrobeCard'
@@ -57,8 +58,9 @@ export default function HomeScreen() {
   const { data: wardrobes, isLoading: wardrobesLoading, isError: wardrobesError } = useWardrobes()
   const { data: featured, isLoading: featuredLoading, isError: featuredError } = useFeaturedPieces()
   const { data: announcements } = useAnnouncements()
+  const tripsEnabled = useTripsEnabled()
 
-  const [welcomeDismissed, setWelcomeDismissed] = useState(true)
+  const [welcomeDismissed, setWelcomeDismissed] = useState<boolean | null>(null)
   const [dismissedUpdates, setDismissedUpdates] = useState<Set<string>>(new Set())
 
   const wardrobeScrollRef = useRef<ScrollView>(null)
@@ -100,7 +102,7 @@ export default function HomeScreen() {
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     if (signedUpAt < sevenDaysAgo) return
     AsyncStorage.getItem(WELCOME_KEY).then(val => {
-      if (!val) setWelcomeDismissed(false)
+      setWelcomeDismissed(val ? true : false)
     })
   }, [session, profile])
 
@@ -162,41 +164,65 @@ export default function HomeScreen() {
       </View>
 
       {/* Dismissible announcements — live from admin, session-only dismiss */}
-      {(announcements?.filter(a => !dismissedUpdates.has(a.id)) ?? []).length > 0 && (
-        <View style={{ paddingHorizontal: layout.screenPadding, paddingTop: 12, paddingBottom: 4, gap: 8 }}>
-          {announcements?.filter(a => !dismissedUpdates.has(a.id))
+      {(() => {
+        const activeAnnouncements = (announcements ?? []).filter(a => !dismissedUpdates.has(a.id))
+        if (!activeAnnouncements.length) return null
+        return (
+        <View style={{ paddingHorizontal: layout.screenPadding, paddingTop: 16, paddingBottom: 4, gap: 10 }}>
+          {activeAnnouncements
             .map((a, i) => (
               <Animated.View
                 key={a.id}
                 entering={FadeInDown.delay(i * 60).springify()}
-                style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.white, borderRadius: 12, paddingVertical: 10, paddingHorizontal: 12, gap: 10, borderWidth: 1, borderColor: colors.sand + '60' }}
+                style={{ borderRadius: 16, backgroundColor: colors.cream, overflow: 'hidden', flexDirection: 'row' }}
               >
-                <View style={{ width: 26, height: 26, borderRadius: 7, backgroundColor: colors.navy + '0C', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <Ionicons name={a.icon as React.ComponentProps<typeof Ionicons>['name']} size={13} color={colors.navy} />
+                {/* Amber left stripe — stands out on the navy background */}
+                <View style={{ width: 4, backgroundColor: colors.accent }} />
+                {/* Content */}
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'flex-start', padding: 16, gap: 12 }}>
+                  {/* Icon */}
+                  <View style={{ width: 40, height: 40, borderRadius: 11, backgroundColor: colors.accent + '15', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                    <Ionicons name={a.icon as React.ComponentProps<typeof Ionicons>['name']} size={19} color={colors.accent} />
+                  </View>
+                  {/* Text */}
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.accent, textTransform: 'uppercase', letterSpacing: 1.8 }}>
+                      Announcement
+                    </Text>
+                    <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15, color: colors.navy, lineHeight: 22 }}>
+                      {a.message}
+                    </Text>
+                  </View>
+                  {/* Dismiss */}
+                  <Pressable
+                    onPress={() => setDismissedUpdates(prev => new Set([...prev, a.id]))}
+                    hitSlop={14}
+                    accessibilityLabel="Dismiss announcement"
+                    style={{ marginTop: 2 }}
+                  >
+                    <Ionicons name="close" size={15} color={colors.slate + '80'} />
+                  </Pressable>
                 </View>
-                <Text style={{ flex: 1, fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, lineHeight: 17 }}>
-                  {a.message}
-                </Text>
-                <Pressable onPress={() => setDismissedUpdates(prev => new Set([...prev, a.id]))} hitSlop={12} accessibilityLabel="Dismiss">
-                  <Ionicons name="close" size={14} color={colors.slate + '80'} />
-                </Pressable>
               </Animated.View>
             ))
           }
         </View>
-      )}
+        )
+      })()}
 
       {/* Welcome banner — new signed-in users, 0 rentals, within first 7 days */}
-      {session && !welcomeDismissed && (
+      {session && welcomeDismissed === false && (
         <Animated.View entering={FadeInDown.springify()} style={{
           margin: layout.screenPadding,
           marginBottom: 0,
-          backgroundColor: colors.navy,
+          backgroundColor: colors.ink,
           borderRadius: 14,
           padding: 18,
           flexDirection: 'row',
           alignItems: 'flex-start',
           gap: 12,
+          borderWidth: 1,
+          borderColor: colors.sand + '25',
         }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.cream, letterSpacing: -0.4, marginBottom: 4 }}>
@@ -274,12 +300,46 @@ export default function HomeScreen() {
 
       </View>
 
+      {/* Plan a Trip */}
+      {tripsEnabled && (
+        <View style={{ marginHorizontal: layout.screenPadding, marginBottom: 20 }}>
+          <Pressable
+            onPress={() => router.push('/trip/new' as any)}
+            accessibilityRole="button"
+            accessibilityLabel="Plan a trip"
+            style={({ pressed }) => ({
+              backgroundColor: colors.ink,
+              borderRadius: 16,
+              padding: 20,
+              borderWidth: 1,
+              borderColor: colors.sand + '20',
+              opacity: pressed ? 0.9 : 1,
+            })}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: colors.sand + '15', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="airplane-outline" size={22} color={colors.sand} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, color: colors.cream, letterSpacing: -0.3 }}>
+                  Plan a Trip
+                </Text>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.sand, marginTop: 2 }}>
+                  Build a packing list from the catalog
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.sand + '80'} />
+            </View>
+          </Pressable>
+        </View>
+      )}
+
       {/* Featured Pieces */}
       <View style={{ paddingHorizontal: layout.screenPadding, paddingBottom: 28 }}>
         <Text style={{ fontFamily: 'Inter-Bold', fontSize: 22, color: colors.cream, marginBottom: 16, letterSpacing: -0.5 }}>
           Featured Pieces
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: layout.cardGap }}>
           {featuredError ? (
             <Pressable onPress={() => queryClient.invalidateQueries({ queryKey: ['pieces', 'featured'] })}
               style={{ width: '100%', paddingVertical: 12 }}>
@@ -400,13 +460,13 @@ export default function HomeScreen() {
 
           {/* Body */}
           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.sand, lineHeight: 21 }}>
-            Davenport started in Fairfield, CT. We add new pieces every week and we're growing fast.
+            I built Davenport because I was spending $200 on clothes I wore twice, then letting them sit. There had to be a better way to dress well.
           </Text>
 
           <View style={{ height: 1, backgroundColor: colors.sand + '20' }} />
 
           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.sand, lineHeight: 21 }}>
-            If something isn't right, email me directly. I'm the founder and I read every message.
+            We're still small — every customer matters and I read every message. If something isn't right, email me directly.
           </Text>
 
           {/* Signature row */}
@@ -491,7 +551,7 @@ export default function HomeScreen() {
             onPress={() => router.push('/(auth)/signup')}
             accessibilityLabel="Create a free account"
             accessibilityRole="button"
-            style={{ backgroundColor: colors.navy, borderRadius: 12, padding: 18, alignItems: 'center' }}>
+            style={{ backgroundColor: colors.accent, borderRadius: 12, padding: 18, alignItems: 'center' }}>
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 16, color: colors.cream }}>
               Create a Free Account →
             </Text>
@@ -500,9 +560,9 @@ export default function HomeScreen() {
             onPress={() => router.push('/(auth)/login')}
             accessibilityRole="button"
             style={{ alignItems: 'center', padding: 8 }}>
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate }}>
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.sand }}>
               Already a member?{' '}
-              <Text style={{ color: colors.navy, fontFamily: 'Inter-Medium' }}>Sign in</Text>
+              <Text style={{ color: colors.cream, fontFamily: 'Inter-Medium' }}>Sign in</Text>
             </Text>
           </Pressable>
         </View>

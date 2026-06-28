@@ -1,4 +1,5 @@
 import { corsHeaders } from '../_shared/cors.ts'
+import { stripe } from '../_shared/stripe.ts'
 import { supabaseAdmin } from '../_shared/supabase.ts'
 
 // Deletes the authenticated user's account and all associated data.
@@ -19,12 +20,12 @@ Deno.serve(async (req) => {
 
     const userId = user.id
 
-    // Check for active rentals — don't allow deletion if pieces haven't been returned
+    // Check for active or in-transit rentals — don't allow deletion until all pieces are back
     const { data: activeRentals } = await supabaseAdmin
       .from('rentals')
       .select('id')
       .eq('user_id', userId)
-      .eq('billing_active', true)
+      .in('status', ['pending', 'sourcing', 'packaged', 'shipped', 'delivered', 'return_requested'])
       .limit(1)
 
     if (activeRentals && activeRentals.length > 0) {
@@ -34,7 +35,22 @@ Deno.serve(async (req) => {
       )
     }
 
+    // Cancel any open deposit hold so the authorization is released from the customer's card
+    const { data: depositProfile } = await supabaseAdmin
+      .from('profiles')
+      .select('deposit_payment_intent_id, deposit_status')
+      .eq('id', userId)
+      .single()
+    if (depositProfile?.deposit_status === 'held' && depositProfile.deposit_payment_intent_id) {
+      try {
+        await stripe.paymentIntents.cancel(depositProfile.deposit_payment_intent_id)
+      } catch {
+        // Already cancelled or expired — safe to continue
+      }
+    }
+
     // Delete user data in order (foreign keys)
+    await supabaseAdmin.from('trips').delete().eq('user_id', userId) // trip_items cascade via FK
     await supabaseAdmin.from('suitcase_items').delete().eq('user_id', userId)
     await supabaseAdmin.from('billing_events').delete().eq('user_id', userId)
     await supabaseAdmin.from('email_log').delete().eq('user_id', userId)
@@ -45,6 +61,9 @@ Deno.serve(async (req) => {
       shipping_address: null,
       stripe_customer_id: null,
       stripe_payment_method_id: null,
+      deposit_payment_intent_id: null,
+      deposit_status: null,
+      deposit_amount: 0,
     }).eq('id', userId)
 
     // Delete the auth user last

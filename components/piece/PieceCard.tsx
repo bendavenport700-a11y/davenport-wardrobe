@@ -3,7 +3,7 @@ import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { colors } from '@/constants/colors'
-import { formatCentsPerMonth, conditionBadgeLabel } from '@/utils/format'
+import { formatCentsPerMonth, wearTierLabel } from '@/utils/format'
 import { DEFAULT_BLURHASH } from '@/constants/layout'
 import type { Piece } from '@/types'
 
@@ -14,7 +14,7 @@ interface PieceCardProps {
 
 export function PieceCard({ piece, index = 0 }: PieceCardProps) {
   return (
-    <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={{ flex: 1, margin: 5 }}>
+    <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={{ flex: 1, margin: 6 }}>
       <Pressable
         onPress={() => router.push({ pathname: '/piece/[id]', params: { id: piece.id } } as any)}
         accessibilityLabel={`${piece.brand} ${piece.name}, ${formatCentsPerMonth(piece.rental_fee)}`}
@@ -28,8 +28,10 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
           {/* Image */}
           <View style={{ width: '100%', aspectRatio: 3 / 4 }}>
             <Image
-              source={piece.images[0] ?? null}
+              source={piece.images?.[0] ?? null}
+              recyclingKey={piece.images?.[0] ?? piece.id}
               placeholder={DEFAULT_BLURHASH}
+              placeholderContentFit="cover"
               contentFit="cover"
               style={{ width: '100%', height: '100%' }}
               transition={300}
@@ -73,7 +75,7 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
                   fontFamily: 'Inter-Medium', fontSize: 9.5,
                   color: piece.wear_count === 0 ? colors.navy : colors.slate,
                 }}>
-                  {conditionBadgeLabel(piece.condition, piece.wear_count)}
+                  {wearTierLabel(piece.wear_count)}
                 </Text>
               </View>
             </View>

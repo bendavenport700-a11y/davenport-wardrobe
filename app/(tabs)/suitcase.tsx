@@ -1,5 +1,6 @@
 import { useCallback, useState, useRef } from 'react'
 import { View, Text, ScrollView, Pressable } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -19,6 +20,7 @@ import { supabase } from '@/lib/supabase'
 import { colors } from '@/constants/colors'
 import { layout, DEFAULT_BLURHASH } from '@/constants/layout'
 import { DEPOSIT_CENTS, HANDLING_CENTS } from '@/constants/billing'
+import { useTripsEnabled } from '@/hooks/useAppSettings'
 
 function nextDiscountTier(count: number): { add: number; pct: number } | null {
   if (count < 2) return { add: 2 - count, pct: 8 }
@@ -37,6 +39,7 @@ export default function SuitcaseScreen() {
   const { session, profile } = useAuthStore()
   const queryClient = useQueryClient()
   const insets = useSafeAreaInsets()
+  const tripsEnabled = useTripsEnabled()
   const [unavailableIds, setUnavailableIds]   = useState<Set<string>>(new Set())
   const [reviewTarget,   setReviewTarget]     = useState<PendingReview | null>(null)
 
@@ -53,9 +56,9 @@ export default function SuitcaseScreen() {
   const currentDiscount = multiPieceDiscount(totalCount)
 
   useFocusEffect(useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['pieces'] })
     const pieceIds = useSuitcaseStore.getState().items.map(i => i.piece_id)
     if (!pieceIds.length) return
+    queryClient.invalidateQueries({ queryKey: ['pieces'] })
     let cancelled = false
     supabase
       .from('pieces')
@@ -94,6 +97,18 @@ export default function SuitcaseScreen() {
             Browse All Pieces →
           </Text>
         </Pressable>
+        {tripsEnabled && (
+          <Pressable
+            onPress={() => router.push('/trip/new' as any)}
+            accessibilityLabel="Plan a trip instead"
+            accessibilityRole="button"
+            style={{ marginTop: 12, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 14, borderWidth: 1, borderColor: colors.sand + 'AA' }}
+          >
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.slate, textAlign: 'center' }}>
+              Building for a trip? Start here →
+            </Text>
+          </Pressable>
+        )}
         {!session && (
           <Pressable onPress={() => router.push('/(auth)/login' as any)} style={{ marginTop: 16, padding: 8 }}>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate }}>
@@ -241,9 +256,14 @@ export default function SuitcaseScreen() {
                   <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy }} numberOfLines={1}>
                     {pr.piece_name}
                   </Text>
-                  <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.accent, marginTop: 2 }}>
-                    ☆☆☆☆☆  How did it fit? Leave a review →
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 }}>
+                    {[1,2,3,4,5].map(n => (
+                      <Ionicons key={n} name="star-outline" size={11} color={colors.accent} />
+                    ))}
+                    <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.accent, marginLeft: 4 }}>
+                      Leave a review →
+                    </Text>
+                  </View>
                 </View>
               </Pressable>
             ))}

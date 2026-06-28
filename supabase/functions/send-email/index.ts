@@ -21,6 +21,7 @@ interface EmailPayload {
 
 const FROM = Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@davenport.rentals'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const APP_STORE_URL = 'https://apps.apple.com/app/davenport/id6778844291'
 
 function buildEmail(template: EmailTemplate, data: Record<string, unknown>): { subject: string; html: string } {
   switch (template) {
@@ -28,7 +29,7 @@ function buildEmail(template: EmailTemplate, data: Record<string, unknown>): { s
       return {
         subject: 'Your Davenport order is confirmed',
         html: `<p>Hi ${data.name ?? 'there'},</p>
-<p>Your order is confirmed. We're sourcing your pieces and will ship within 2–3 business days.</p>
+<p>Your order is confirmed. We're sourcing your pieces — expect delivery in 1–2 weeks.</p>
 <p><strong>Order ID:</strong> ${data.order_id}</p>
 <p><strong>Monthly total:</strong> ${data.monthly_total}</p>
 <p>Track your order at <a href="https://davenport.rentals">davenport.rentals</a>.</p>
@@ -64,7 +65,7 @@ function buildEmail(template: EmailTemplate, data: Record<string, unknown>): { s
         subject: 'Action required — Davenport payment failed',
         html: `<p>Hi ${data.name ?? 'there'},</p>
 <p>We weren't able to process your monthly payment of <strong>${data.amount}</strong>.</p>
-<p>Please update your payment method at <a href="https://davenport.rentals/account">davenport.rentals/account</a> to avoid a lapse in your rental.</p>
+<p>Please open the Davenport app to update your payment method: <a href="${APP_STORE_URL}">Download the app</a>.</p>
 <p>— The Davenport Team</p>`,
       }
     case 'deposit_released':

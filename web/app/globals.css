@@ -4,6 +4,17 @@
 
 html { scroll-behavior: smooth; }
 
+@keyframes marquee-left {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+.animate-marquee-left  { animation: marquee-left  40s linear infinite; }
+.animate-marquee-right { animation: marquee-right 40s linear infinite; }
+
 body {
   background-color: #F5F0E8;
   color: #1B2A4A;

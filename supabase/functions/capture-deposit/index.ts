@@ -36,6 +36,12 @@ Deno.serve(async (req) => {
       .single()
 
     if (!profile?.deposit_payment_intent_id) throw new Error('No deposit on file for this user')
+    if (profile.deposit_status === 'partially_captured') {
+      throw new Error(
+        'Deposit was already partially captured. The remaining authorization was released by Stripe. ' +
+        'Use the charge-damage function to charge additional damage amounts.'
+      )
+    }
     if (profile.deposit_status !== 'held') throw new Error(`Deposit status is '${profile.deposit_status}', not 'held'`)
 
     const captureAmount = amount_cents ?? profile.deposit_amount
@@ -45,7 +51,11 @@ Deno.serve(async (req) => {
 
     const captured = await stripe.paymentIntents.capture(profile.deposit_payment_intent_id, {
       amount_to_capture: captureAmount,
-    })
+    }, { idempotencyKey: `capture_deposit_${user_id}_${profile.deposit_payment_intent_id}_${captureAmount}` })
+
+    if (captured.status !== 'succeeded') {
+      throw new Error(`Deposit capture returned status '${captured.status}' — verify in Stripe dashboard`)
+    }
 
     const newStatus = isPartial ? 'partially_captured' : 'forfeited'
     await supabaseAdmin

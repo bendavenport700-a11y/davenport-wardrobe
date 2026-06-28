@@ -12,6 +12,7 @@ export default function ResetPasswordScreen() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  const [focused, setFocused] = useState<string | null>(null)
   const navTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -77,9 +78,13 @@ export default function ResetPasswordScreen() {
               secureTextEntry
               placeholder="At least 8 characters"
               placeholderTextColor={colors.gray400}
+              textContentType="newPassword"
+              onFocus={() => setFocused('password')}
+              onBlur={() => setFocused(null)}
               style={{
-                borderWidth: 1.5, borderColor: colors.sand, borderRadius: 10,
-                padding: 14, fontFamily: 'Inter-Regular', fontSize: 16,
+                borderWidth: 1.5,
+                borderColor: focused === 'password' ? colors.navy : colors.sand,
+                borderRadius: 12, padding: 14, fontFamily: 'Inter-Regular', fontSize: 16,
                 color: colors.navy, backgroundColor: colors.white,
               }}
             />
@@ -92,9 +97,13 @@ export default function ResetPasswordScreen() {
               secureTextEntry
               placeholder="Repeat your password"
               placeholderTextColor={colors.gray400}
+              textContentType="newPassword"
+              onFocus={() => setFocused('confirm')}
+              onBlur={() => setFocused(null)}
               style={{
-                borderWidth: 1.5, borderColor: colors.sand, borderRadius: 10,
-                padding: 14, fontFamily: 'Inter-Regular', fontSize: 16,
+                borderWidth: 1.5,
+                borderColor: focused === 'confirm' ? colors.navy : colors.sand,
+                borderRadius: 12, padding: 14, fontFamily: 'Inter-Regular', fontSize: 16,
                 color: colors.navy, backgroundColor: colors.white,
               }}
             />

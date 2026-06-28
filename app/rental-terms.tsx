@@ -52,7 +52,7 @@ const SECTIONS: Section[] = [
   {
     number: '7',
     title: 'Item Condition',
-    body: 'Items are described accurately at time of listing. Condition is assessed as New, Like New, or Good. Wear count reflects prior rentals.',
+    body: 'Items are described accurately at time of listing. Condition is assessed as Pristine, Seasoned, Refined, or Veteran based on prior rental count. Wear count reflects rentals completed.',
   },
   {
     number: '8',

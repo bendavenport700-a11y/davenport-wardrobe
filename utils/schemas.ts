@@ -12,7 +12,7 @@ export const signupSchema = z.object({
   full_name: z.string().min(2, 'Name is required'),
   email:     z.string().email('Enter a valid email'),
   password:  z.string().min(8, 'Password must be at least 8 characters'),
-  terms:     z.literal(true, { error: 'You must accept the terms' }),
+  terms:     z.literal(true, { message: 'You must accept the terms' }),
 })
 
 export const loginSchema = z.object({

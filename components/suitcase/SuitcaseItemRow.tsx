@@ -34,7 +34,7 @@ export function SuitcaseItemRow({ item, onRemove, unavailable = false, removeDis
         accessibilityLabel={`View ${piece.name}`}
       >
         <Image
-          source={piece.images[0] ?? null}
+          source={piece.images?.[0] ?? null}
           placeholder={DEFAULT_BLURHASH}
           contentFit="cover"
           style={{ width: 64, height: 80, borderRadius: 10 }}

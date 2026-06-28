@@ -29,10 +29,11 @@ Deno.serve(async (req) => {
         metadata: { supabase_user_id: user.id },
       })
       customerId = customer.id
-      await supabaseAdmin
+      const { error: updateErr } = await supabaseAdmin
         .from('profiles')
         .update({ stripe_customer_id: customerId })
         .eq('id', user.id)
+      if (updateErr) throw new Error(`Failed to save Stripe customer: ${updateErr.message}`)
     }
 
     const [setupIntent, ephemeralKey] = await Promise.all([
@@ -51,6 +52,12 @@ Deno.serve(async (req) => {
       throw new Error('Stripe did not return a client secret for the SetupIntent')
     }
 
+    console.log('create-setup-intent ok:', {
+      setup_intent_id: setupIntent.id,
+      customer_id: customerId,
+      livemode: setupIntent.livemode,
+    })
+
     return new Response(
       JSON.stringify({
         client_secret:        setupIntent.client_secret,
@@ -61,8 +68,12 @@ Deno.serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    const stripeCode = (err as any)?.code ?? null
+    const stripeType = (err as any)?.type ?? null
+    console.error('create-setup-intent error:', { message, stripeCode, stripeType })
     return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'Unknown error' }),
+      JSON.stringify({ error: message, stripeCode, stripeType }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

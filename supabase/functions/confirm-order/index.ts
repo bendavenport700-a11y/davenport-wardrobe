@@ -4,9 +4,11 @@ import { supabaseAdmin } from '../_shared/supabase.ts'
 import { multiPieceDiscount } from '../_shared/pricing.ts'
 
 const DEPOSIT_CENTS  = parseInt(Deno.env.get('DEPOSIT_AMOUNT_CENTS') ?? '7500')
-const HANDLING_CENTS = parseInt(Deno.env.get('HANDLING_FEE_CENTS')   ?? '500')
+const HANDLING_CENTS = parseInt(Deno.env.get('HANDLING_FEE_CENTS')   ?? '1400')
 const FROM_EMAIL     = Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@davenport.rentals'
 const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+const ADMIN_EMAIL    = Deno.env.get('ADMIN_EMAIL') ?? 'support@davenport.rentals'
+const ADMIN_PANEL_URL = Deno.env.get('ADMIN_PANEL_URL') ?? 'http://localhost:3001'
 
 interface OrderItem {
   piece_id: string
@@ -14,6 +16,45 @@ interface OrderItem {
   rental_fee_cents: number
   wear_count_at_rental: number
   buyout_price_snapshot: number
+  prefer_worn?: boolean
+}
+
+// Fire-and-forget admin notification — fires after DB commit so the admin knows about new orders
+async function sendAdminNotification(p: {
+  customerName: string; customerEmail: string; customerPhone: string | null
+  orderId: string; itemLines: string
+  chargeToday: string; monthlyTotal: string
+  address: { line1?: string; line2?: string; city?: string; state?: string; zip?: string } | null
+}) {
+  if (!RESEND_API_KEY) return
+  const addr = p.address
+  const addrHtml = addr
+    ? [addr.line1, addr.line2, `${addr.city ?? ''}, ${addr.state ?? ''} ${addr.zip ?? ''}`]
+        .filter(Boolean).join('<br>')
+    : 'No address on file'
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      from: FROM_EMAIL,
+      to: ADMIN_EMAIL,
+      subject: `New order — ${p.customerName || p.customerEmail} — ${p.chargeToday}`,
+      html: `<h2 style="font-family:sans-serif">New Davenport Order</h2>
+<table style="font-family:sans-serif;font-size:14px;border-collapse:collapse">
+<tr><td style="padding:4px 12px 4px 0;color:#666">Order ID</td><td><code>${p.orderId}</code></td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#666">Customer</td><td>${p.customerName || '—'}</td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#666">Email</td><td>${p.customerEmail}</td></tr>
+${p.customerPhone ? `<tr><td style="padding:4px 12px 4px 0;color:#666">Phone</td><td>${p.customerPhone}</td></tr>` : ''}
+<tr><td style="padding:4px 12px 4px 0;color:#666">Ships to</td><td>${addrHtml}</td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#666">Items</td><td><pre style="margin:0">${p.itemLines}</pre></td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#666">Charged today</td><td><strong>${p.chargeToday}</strong></td></tr>
+<tr><td style="padding:4px 12px 4px 0;color:#666">Monthly</td><td>${p.monthlyTotal}/mo</td></tr>
+</table>
+<p style="font-family:sans-serif;margin-top:20px;color:#666;font-size:13px">
+  <a href="${ADMIN_PANEL_URL}/orders/${p.orderId}">Open order in admin →</a>
+</p>`,
+    }),
+  })
 }
 
 // Fire-and-forget confirmation email via Resend — called after DB commit succeeds
@@ -30,13 +71,13 @@ async function sendConfirmationEmail(p: {
       to: p.to,
       subject: 'Your Davenport order is confirmed',
       html: `<p>Hi ${p.name || 'there'},</p>
-<p>Your suitcase is confirmed and we're sourcing your pieces now.</p>
+<p>Your suitcase is confirmed. Your pieces ship within 1–2 weeks.</p>
 <p><strong>What you ordered:</strong><br><pre>${p.itemLines}</pre></p>
 <p><strong>Charged today:</strong> ${p.chargeToday} (first month + delivery${p.depositHeld ? ' + ' + p.depositHeld : ''})</p>
-<p><strong>Ongoing:</strong> ${p.monthlyTotal}/month, charged on the 1st. Minimum 30 days per piece.</p>
-<p>Ships within 2–3 business days${p.city ? ` to ${p.city}, ${p.state}` : ''}.</p>
-<p>Questions? Email <a href="mailto:support@davenport.rentals">support@davenport.rentals</a></p>
-<p>— Davenport Wardrobe</p>`,
+<p><strong>Ongoing:</strong> ${p.monthlyTotal}/month, charged every 30 days. Minimum 30 days per piece.</p>
+${p.city ? `<p>Shipping to ${p.city}, ${p.state}.</p>` : ''}
+<p>Questions? Email <a href="mailto:support@davenport.rentals">support@davenport.rentals</a> and a real person will respond.</p>
+<p>- Davenport Wardrobe</p>`,
     }),
   })
   if (!res.ok) {
@@ -90,9 +131,11 @@ Deno.serve(async (req) => {
 
     const hasDepositOnFile = profile.deposit_status === 'held'
 
-    // Apply multi-piece discount to monthly total
+    // Discount is based on TOTAL active pieces after this order, matching charge-monthly.
+    // profile.active_rental_count is the count BEFORE this order; add items.length for the new pieces.
     const rawMonthly    = items.reduce((sum, i) => sum + i.rental_fee_cents, 0)
-    const discount      = multiPieceDiscount(items.length)
+    const totalPieces   = (profile.active_rental_count ?? 0) + items.length
+    const discount      = multiPieceDiscount(totalPieces)
     const monthlyTotal  = Math.round(rawMonthly * (1 - discount))
     const chargeToday   = monthlyTotal + HANDLING_CENTS
 
@@ -128,6 +171,11 @@ Deno.serve(async (req) => {
         description: 'Davenport — refundable security deposit',
         metadata: { user_id: user.id, type: 'deposit' },
       }, { idempotencyKey: `${idemKey}_deposit` })
+
+      if (depositIntent.status !== 'requires_capture') {
+        throw new Error(`Deposit authorization failed — status: ${depositIntent.status}. Customer's card may not support authorization holds.`)
+      }
+
       depositIntentId = depositIntent.id
 
       await supabaseAdmin
@@ -139,6 +187,15 @@ Deno.serve(async (req) => {
           stripe_payment_method_id:   paymentMethodId,
         })
         .eq('id', user.id)
+
+      await supabaseAdmin.from('billing_events').insert({
+        user_id: user.id,
+        type: 'deposit_hold',
+        amount_cents: DEPOSIT_CENTS,
+        stripe_payment_intent_id: depositIntentId,
+        status: 'succeeded',
+        description: 'Security deposit authorized (hold, not captured)',
+      })
     } else {
       await supabaseAdmin
         .from('profiles')
@@ -156,26 +213,70 @@ Deno.serve(async (req) => {
       p_deposit_intent_id:         depositIntentId,
       p_has_deposit_on_file:       hasDepositOnFile,
       p_shipping_address:          profile.shipping_address,
-      p_discounted_monthly_cents:  monthlyTotal,   // actual discounted amount charged
+      p_charged_today_cents:       chargeToday,
       p_handling_fee_cents:        HANDLING_CENTS,
       p_deposit_amount_cents:      hasDepositOnFile ? 0 : DEPOSIT_CENTS,
     })
 
     if (rpcError) {
-      // CRITICAL: payment charged but DB insert failed — needs manual reconciliation
+      // Attempt to reverse Stripe charges before surfacing the error to the client
+      let refundOk = true
+      try {
+        await stripe.refunds.create({ payment_intent: paymentIntent.id })
+      } catch (refundErr) {
+        refundOk = false
+        console.error('CRITICAL: Auto-refund failed after RPC failure — manual reconciliation needed:', refundErr, { payment_intent_id: paymentIntent.id })
+      }
+      if (depositIntentId) {
+        try {
+          await stripe.paymentIntents.cancel(depositIntentId)
+        } catch (cancelErr) {
+          console.error('CRITICAL: Deposit cancel failed after RPC failure — manual reconciliation needed:', cancelErr, { depositIntentId })
+        }
+      }
       console.error('create_order_atomic failed after successful charge:', rpcError, {
         payment_intent_id: paymentIntent.id,
         order_id: orderId,
         user_id: user.id,
       })
+      // Surface inventory errors with a specific code so the client can show a targeted message.
+      // For these the refund is automatic; for other DB errors use the generic rpc_failed code.
+      const rpcMsg = rpcError.message ?? ''
+      if (rpcMsg.includes('PIECE_UNAVAILABLE') || rpcMsg.includes('PIECE_NOT_FOUND')) {
+        throw new Error(refundOk ? 'PIECE_UNAVAILABLE' : `PIECE_UNAVAILABLE_REFUND_FAILED:${orderId}`)
+      }
+      if (rpcMsg.includes('SIZE_UNAVAILABLE')) {
+        throw new Error(refundOk ? 'SIZE_UNAVAILABLE' : `PIECE_UNAVAILABLE_REFUND_FAILED:${orderId}`)
+      }
       throw new Error(`rpc_failed:${orderId}`)
     }
 
-    // 4. Send order confirmation email (non-blocking — failure doesn't affect checkout)
-    const addr = profile.shipping_address as { line1?: string; city?: string; state?: string } | null
-    const itemLines = items.map((i: OrderItem) =>
-      `• Size ${i.size} — $${(i.rental_fee_cents / 100).toFixed(0)}/mo`
-    ).join('\n')
+    // 4. Send emails (non-blocking — failure doesn't affect checkout)
+    const addr = profile.shipping_address as { line1?: string; line2?: string; city?: string; state?: string; zip?: string } | null
+
+    // Fetch piece names for readable email notifications
+    const { data: pieceRows } = await supabaseAdmin
+      .from('pieces')
+      .select('id, name, brand')
+      .in('id', items.map(i => i.piece_id))
+    const pieceMap = Object.fromEntries((pieceRows ?? []).map((p: { id: string; name: string; brand: string }) => [p.id, p]))
+    const itemLines = items.map((i: OrderItem) => {
+      const p = pieceMap[i.piece_id] as { brand: string; name: string } | undefined
+      const label = p ? `${p.brand} ${p.name}` : i.piece_id.slice(0, 8)
+      return `• ${label} · Size ${i.size} — $${(i.rental_fee_cents / 100).toFixed(0)}/mo`
+    }).join('\n')
+
+    sendAdminNotification({
+      customerName:  (profile as any).full_name ?? '',
+      customerEmail: (profile as any).email ?? user.email ?? '',
+      customerPhone: (profile as any).phone ?? null,
+      orderId,
+      itemLines,
+      chargeToday:  `$${(chargeToday / 100).toFixed(2)}`,
+      monthlyTotal: `$${(monthlyTotal / 100).toFixed(2)}`,
+      address: addr,
+    }).catch(err => console.error('Admin notification failed (non-fatal):', err))
+
     sendConfirmationEmail({
       to: profile.email ?? user.email ?? '',
       name: (profile as any).full_name ?? '',

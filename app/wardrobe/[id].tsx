@@ -176,7 +176,8 @@ function AddAllModal({
 // ── Wardrobe detail screen ─────────────────────────────────────────────────
 
 export default function WardrobeDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  const { id: rawId } = useLocalSearchParams<{ id: string }>()
+  const id = Array.isArray(rawId) ? rawId[0] : rawId
   const { session } = useAuthStore()
   const insets = useSafeAreaInsets()
   const userId = session?.user.id
@@ -199,7 +200,7 @@ export default function WardrobeDetailScreen() {
     return <ErrorState message="Couldn't load this wardrobe." onRetry={() => router.back()} />
   }
 
-  if (!wLoading && !wardrobe) {
+  if (!wLoading && wardrobes !== undefined && !wardrobe) {
     return <ErrorState message="Wardrobe not found." onRetry={() => router.back()} />
   }
 
@@ -240,12 +241,25 @@ export default function WardrobeDetailScreen() {
         {wLoading ? (
           <Skeleton height={240} borderRadius={0} />
         ) : (
-          <Image
-            source={wardrobe?.cover_image_url ?? undefined}
-            style={{ width: '100%', height: 240 }}
-            contentFit="cover"
-            placeholder={DEFAULT_BLURHASH}
-          />
+          <View style={{ width: '100%', height: 240, backgroundColor: colors.navy, justifyContent: 'flex-end' }}>
+            {wardrobe?.cover_image_url && !wardrobe.cover_image_url.startsWith('data:') && (
+              <Image
+                source={wardrobe.cover_image_url}
+                style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, opacity: 0.55 }}
+                contentFit="cover"
+              />
+            )}
+            <View style={{ paddingHorizontal: 20, paddingBottom: 24, paddingTop: 16, backgroundColor: 'rgba(8,14,26,0.45)' }}>
+              <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.cream, lineHeight: 34 }}>
+                {wardrobe?.name}
+              </Text>
+              {wardrobe?.description ? (
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.cream + 'BB', marginTop: 6, lineHeight: 18 }} numberOfLines={2}>
+                  {wardrobe.description}
+                </Text>
+              ) : null}
+            </View>
+          </View>
         )}
 
         <View style={{ padding: layout.screenPadding }}>
@@ -256,17 +270,9 @@ export default function WardrobeDetailScreen() {
             </>
           ) : (
             <>
-              <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 26, color: colors.navy, marginBottom: 6 }}>
-                {wardrobe?.name}
-              </Text>
-              {wardrobe?.description && (
-                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 15, color: colors.slate, lineHeight: 22, marginBottom: 12 }}>
-                  {wardrobe.description}
-                </Text>
-              )}
               {(wardrobe?.tags?.length ?? 0) > 0 && (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8, marginBottom: 16 }}>
+                  contentContainerStyle={{ gap: 8, marginBottom: 4 }}>
                   {wardrobe?.tags.map(tag => (
                     <View key={tag} style={{
                       backgroundColor: colors.navy + '12', borderRadius: 20,
@@ -353,7 +359,7 @@ export default function WardrobeDetailScreen() {
           </Animated.View>
         )}
 
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: layout.screenPadding, paddingBottom: 40 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: layout.cardGap, paddingHorizontal: layout.screenPadding, paddingBottom: 40 }}>
           {pError ? (
             <ErrorState message="Couldn't load pieces." onRetry={() => refetchPieces()} />
           ) : pLoading ? (

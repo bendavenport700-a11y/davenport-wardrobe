@@ -17,12 +17,13 @@ interface UsePiecesOptions {
   wardrobeId?: string
   pageSize?: number
   wearFilter?: WearFilter
+  gender?: 'men' | 'women' | 'all' | null
   enabled?: boolean
 }
 
-export function usePieces({ category, color, brand, tags, size, search, sortBy = 'newest', availableOnly = true, wardrobeId, pageSize = 20, wearFilter = 'any', enabled = true }: UsePiecesOptions = {}) {
+export function usePieces({ category, color, brand, tags, size, search, sortBy = 'newest', availableOnly = true, wardrobeId, pageSize = 20, wearFilter = 'any', gender, enabled = true }: UsePiecesOptions = {}) {
   return useInfiniteQuery<Piece[]>({
-    queryKey: ['pieces', { category, color, brand, tags, size, search, sortBy, availableOnly, wardrobeId, wearFilter, pageSize }],
+    queryKey: ['pieces', { category, color, brand, tags, size, search, sortBy, availableOnly, wardrobeId, wearFilter, gender, pageSize }],
     queryFn: async ({ pageParam = 0 }) => {
       let query = supabase.from('pieces').select('*').eq('is_draft', false)
         .range(pageParam as number, (pageParam as number) + pageSize - 1)
@@ -41,6 +42,9 @@ export function usePieces({ category, color, brand, tags, size, search, sortBy =
       }
       if (wardrobeId) query = query.eq('wardrobe_id', wardrobeId)
       if (availableOnly) query = query.eq('is_available', true)
+      if (gender && gender !== 'all') {
+        query = query.in('gender', [gender, 'unisex'])
+      }
 
       if (wearFilter === 'new') query = query.eq('wear_count', 0)
       else if (wearFilter === '1-5') query = query.gte('wear_count', 1).lte('wear_count', 5)

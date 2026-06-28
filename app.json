@@ -2,27 +2,23 @@
   "expo": {
     "name": "Davenport",
     "slug": "davenport-wardrobe",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "davenport",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#F5F0E8"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.davenportwardrobe.app",
-      "buildNumber": "1",
-      "minimumOsVersion": "16.0",
+      "buildNumber": "26",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Camera access is used to scan payment card details for faster checkout."
       },
       "entitlements": {
-        "com.apple.developer.applesignin": ["Default"]
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "android": {
@@ -41,6 +37,14 @@
       "expo-router",
       "expo-font",
       [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#F5F0E8"
+        }
+      ],
+      [
         "@stripe/stripe-react-native",
         {
           "merchantIdentifier": "merchant.com.davenportwardrobe",
@@ -51,7 +55,6 @@
       "expo-web-browser",
       "expo-apple-authentication"
     ],
-    "newArchEnabled": true,
     "experiments": {
       "typedRoutes": true
     },

@@ -13,6 +13,7 @@ export default function ForgotPasswordScreen() {
   const [sent, setSent] = useState(false)
   const [sentEmail, setSentEmail] = useState('')
   const [serverError, setServerError] = useState<string | null>(null)
+  const [focused, setFocused] = useState(false)
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -34,7 +35,7 @@ export default function ForgotPasswordScreen() {
 
   if (sent) {
     return (
-      <View style={{ flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: colors.cream, padding: 24, justifyContent: 'center', alignItems: 'center' }} >
         <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: colors.success, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
           <Ionicons name="checkmark" size={32} color={colors.white} />
         </View>
@@ -50,7 +51,7 @@ export default function ForgotPasswordScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, marginBottom: 8 }}>
           Reset password.
@@ -70,15 +71,20 @@ export default function ForgotPasswordScreen() {
             <View>
               <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 6 }}>Email</Text>
               <TextInput
-                style={[{
-                  borderWidth: 1.5, borderColor: errors.email ? colors.error : colors.sand,
-                  borderRadius: 10, padding: 14, fontFamily: 'Inter-Regular',
+                style={{
+                  borderWidth: 1.5,
+                  borderColor: errors.email ? colors.error : focused ? colors.navy : colors.sand,
+                  borderRadius: 12, padding: 14, fontFamily: 'Inter-Regular',
                   fontSize: 16, color: colors.navy, backgroundColor: colors.white,
-                }]}
+                }}
                 placeholder="you@example.com"
                 placeholderTextColor={colors.gray400}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                textContentType="emailAddress"
+                autoComplete="email"
+                onFocus={() => setFocused(true)}
+                onBlur={() => setFocused(false)}
                 onChangeText={field.onChange}
                 value={field.value}
               />

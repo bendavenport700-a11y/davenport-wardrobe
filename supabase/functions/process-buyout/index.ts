@@ -80,16 +80,36 @@ Deno.serve(async (req) => {
       throw new Error(`Buyout payment failed — status: ${paymentIntent.status}`)
     }
 
-    // Update rental and piece
-    await supabaseAdmin
+    // Guard against race with request-return: only update if the rental is still active.
+    // If request-return fired between our fetch and now, billing_active would already be false
+    // and this update would affect 0 rows — we catch that and refund the charge.
+    const { data: updated } = await supabaseAdmin
       .from('rentals')
       .update({
-        bought_out:              true,
-        billing_active:          false,
-        status:                  'bought_out',
-        buyout_charged_cents:    buyoutPrice,
+        bought_out:           true,
+        billing_active:       false,
+        status:               'bought_out',
+        buyout_charged_cents: buyoutPrice,
       })
       .eq('id', rental_id)
+      .eq('billing_active', true)
+      .eq('bought_out', false)
+      .select('id')
+
+    if (!updated?.length) {
+      let refundSucceeded = false
+      try {
+        await stripe.refunds.create({ payment_intent: paymentIntent.id })
+        refundSucceeded = true
+      } catch (refundErr) {
+        console.error('CRITICAL: buyout race detected, auto-refund failed — manual reconciliation needed:', refundErr)
+      }
+      throw new Error(
+        refundSucceeded
+          ? 'Rental is no longer eligible for buyout — it may have just been returned. Your card has not been charged.'
+          : 'Rental is no longer eligible for buyout. A charge was attempted but could not be automatically reversed — please contact support@davenport.rentals immediately.'
+      )
+    }
 
     await supabaseAdmin
       .from('billing_events')
@@ -103,16 +123,11 @@ Deno.serve(async (req) => {
         description:              `Buyout${monthsRented >= LOYALTY_MONTHS ? ' (loyalty discount applied)' : ''}`,
       })
 
-    // Decrement active_rental_count and monthly_total using already-fetched profile
-    if (profile) {
-      await supabaseAdmin
-        .from('profiles')
-        .update({
-          active_rental_count: Math.max(0, (profile.active_rental_count ?? 0) - 1),
-          monthly_total:       Math.max(0, (profile.monthly_total ?? 0) - (rental.rental_fee_cents ?? 0)),
-        })
-        .eq('id', user.id)
-    }
+    // Atomically decrement counters — avoids stale read-then-write race
+    await supabaseAdmin.rpc('decrement_rental_counters', {
+      p_user_id:   user.id,
+      p_fee_cents: rental.rental_fee_cents ?? 0,
+    })
 
     // Send buyout confirmation email (fire-and-forget — must not throw into outer try/catch)
     if (RESEND_API_KEY && (profile as any).email) {

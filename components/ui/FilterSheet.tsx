@@ -1,4 +1,4 @@
-import { Modal, View, Text, Pressable, ScrollView, StyleSheet } from 'react-native'
+import { Modal, View, Text, Pressable, ScrollView, StyleSheet, ActivityIndicator } from 'react-native'
 import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, withTiming, runOnJS, Easing,
 } from 'react-native-reanimated'
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { colors } from '@/constants/colors'
 import { CATEGORY_GROUPS, sizesForGroup } from '@/components/ui/FilterBar'
+import { useBrands } from '@/hooks/useBrands'
 import type { WearFilter, SortOption } from '@/hooks/usePieces'
 
 interface FilterSheetProps {
@@ -28,10 +29,10 @@ interface FilterSheetProps {
 
 const WEAR_OPTIONS: { value: WearFilter; label: string; sub?: string }[] = [
   { value: 'any',  label: 'Any condition' },
-  { value: 'new',  label: 'Brand New',    sub: '0 wears' },
-  { value: '1-5',  label: 'Lightly worn', sub: '1–5 wears' },
-  { value: '6-10', label: 'Well worn',    sub: '6–10 wears' },
-  { value: '10+',  label: 'Veteran',      sub: '10+ wears' },
+  { value: 'new',  label: 'Pristine',  sub: '0 wears' },
+  { value: '1-5',  label: 'Seasoned',  sub: '1–5 wears' },
+  { value: '6-10', label: 'Refined',   sub: '6–10 wears' },
+  { value: '10+',  label: 'Veteran',   sub: '11+ wears' },
 ]
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
@@ -41,12 +42,6 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
 ]
 
 const SEASONS = ['Spring', 'Summer', 'Fall', 'Winter']
-
-const BRANDS = [
-  'Lululemon', 'Tracksmith', 'Rails', 'Billy Reid',
-  'Vuori', 'Faherty', 'Patagonia', "Arc'teryx",
-  'Todd Snyder', 'Reigning Champ', 'Nike', 'Polo Ralph Lauren',
-]
 
 function Chip({
   label, sub, active, onPress,
@@ -109,6 +104,7 @@ export function FilterSheet({
 }: FilterSheetProps) {
   const insets    = useSafeAreaInsets()
   const [mounted, setMounted] = useState(false)
+  const { data: brands = [], isLoading: brandsLoading } = useBrands()
 
   const translateY     = useSharedValue(700)
   const backdropOpacity = useSharedValue(0)
@@ -135,6 +131,7 @@ export function FilterSheet({
     onCategoryChange(null); onSizeChange(null)
     onWearFilterChange('any'); onSortChange('newest')
     onBrandChange(null); onSeasonChange(null)
+    onClose()
   }
 
   if (!mounted) return null
@@ -202,13 +199,17 @@ export function FilterSheet({
               </Section>
             )}
 
-            {/* Brand */}
+            {/* Brand — loaded live from DB */}
             <Section title="Brand">
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                {BRANDS.map(b => (
-                  <Chip key={b} label={b} active={brand === b} onPress={() => onBrandChange(brand === b ? null : b)} />
-                ))}
-              </View>
+              {brandsLoading ? (
+                <ActivityIndicator color={colors.navy} size="small" />
+              ) : brands.length === 0 ? null : (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {brands.map(b => (
+                    <Chip key={b} label={b} active={brand === b} onPress={() => onBrandChange(brand === b ? null : b)} />
+                  ))}
+                </View>
+              )}
             </Section>
 
             {/* Season */}

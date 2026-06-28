@@ -11,10 +11,10 @@ export function useActiveRentals(userId: string | undefined) {
       // in-progress returns. Bought-out and returned are excluded (terminal states).
       const { data, error } = await supabase.from('rentals').select('*, piece:pieces(*)')
         .eq('user_id', userId!)
-        .in('status', ['pending', 'sourcing', 'shipped', 'delivered', 'return_requested'])
+        .in('status', ['pending', 'sourcing', 'packaged', 'shipped', 'delivered', 'return_requested'])
         .order('created_at', { ascending: false })
       if (error) throw error
-      return data
+      return data ?? []
     },
     staleTime: 30_000,
   })

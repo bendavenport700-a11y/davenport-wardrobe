@@ -13,6 +13,7 @@ export interface Profile {
   monthly_total: number
   is_admin: boolean
   terms_accepted_at: string | null
+  gender_preference: 'men' | 'women' | 'all'
   created_at: string
   updated_at: string
 }
@@ -32,6 +33,7 @@ export interface Wardrobe {
   slug: string
   cover_image_url: string | null
   tags: string[]
+  gender: 'men' | 'women' | 'unisex'
   is_active: boolean
   sort_order: number
   created_at: string
@@ -44,10 +46,20 @@ export type PieceCategory =
   | 'pants' | 'chinos' | 'trousers' | 'denim' | 'joggers'
   | 'shorts' | 'outerwear' | 'jacket' | 'blazer' | 'coat' | 'bomber' | 'fleece'
   | 'shoes' | 'accessories'
+  | 'dress' | 'midi-dress' | 'maxi-dress' | 'mini-dress'
+  | 'skirt' | 'blouse' | 'women-shirt' | 'women-pants' | 'women-shorts'
+  | 'romper' | 'jumpsuit' | 'women-outerwear' | 'women-jacket'
+  | 'women-shoes' | 'women-accessories'
 export type PieceColor = 'Navy' | 'White' | 'Black' | 'Grey' | 'Olive' | 'Khaki' | 'Tan' | 'Brown' |
   'Blue' | 'Light Blue' | 'Green' | 'Burgundy' | 'Red' | 'Pink' | 'Orange' |
   'Yellow' | 'Purple' | 'Cream' | 'Charcoal' | 'Multi' | 'Pattern'
-export type ClothingSize = 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL' | '28' | '29' | '30' | '31' | '32' | '33' | '34' | '36' | '38' | '40' | '42' | '7' | '7.5' | '8' | '8.5' | '9' | '9.5' | '10' | '10.5' | '11' | '11.5' | '12' | 'One Size'
+export type ClothingSize =
+  | 'XS' | 'S' | 'M' | 'L' | 'XL' | 'XXL'
+  | '28' | '29' | '30' | '31' | '32' | '33' | '34' | '36' | '38' | '40' | '42'
+  | '7' | '7.5' | '8' | '8.5' | '9' | '9.5' | '10' | '10.5' | '11' | '11.5' | '12'
+  | '00' | '0' | '2' | '4' | '6'| '14' | '16' | '18'
+  | '5' | '5.5' | '6' | '6.5'
+  | 'One Size'
 export type PieceCondition = 'new' | 'like_new' | 'good'
 export type ImageSource = 'retailer' | 'own'
 
@@ -68,6 +80,7 @@ export interface Piece {
   buyout_price: number
   images: string[]
   tags: string[]
+  gender: 'men' | 'women' | 'unisex'
   is_available: boolean
   is_featured: boolean
   is_draft: boolean
@@ -78,7 +91,7 @@ export interface Piece {
   updated_at: string
 }
 
-export type RentalStatus = 'pending' | 'sourcing' | 'shipped' | 'delivered' | 'return_requested' | 'returned' | 'bought_out'
+export type RentalStatus = 'pending' | 'sourcing' | 'packaged' | 'shipped' | 'delivered' | 'return_requested' | 'returned' | 'bought_out'
 
 export interface Rental {
   id: string
@@ -107,7 +120,7 @@ export interface Rental {
   updated_at: string
 }
 
-export type OrderStatus = 'pending' | 'confirmed' | 'sourcing' | 'shipped' | 'delivered' | 'complete' | 'refunded' | 'refund_requested'
+export type OrderStatus = 'pending' | 'confirmed' | 'sourcing' | 'packaged' | 'shipped' | 'delivered' | 'complete' | 'refunded' | 'refund_requested'
 
 export interface Order {
   id: string
@@ -148,6 +161,8 @@ export interface SuitcaseItem {
   piece: Piece
   size: string
   rental_fee_cents: number
+  prefer_worn?: boolean
+  wear_count_at_rental?: number
 }
 
 export interface Announcement {
@@ -158,4 +173,36 @@ export interface Announcement {
   sort_order: number
   created_at: string
   updated_at: string
+}
+
+export type TripType = 'event' | 'vacation' | 'extended_stay' | 'season'
+export type TripStatus = 'planning' | 'active' | 'ordered' | 'complete'
+export type TripClimate = 'tropical' | 'cold' | 'mild' | 'variable'
+
+export interface Trip {
+  id: string
+  user_id: string
+  name: string
+  type: TripType
+  start_date: string | null
+  end_date: string | null
+  destination: string | null
+  climate: TripClimate | null
+  occasions: string[] | null
+  notes: string | null
+  status: TripStatus
+  created_at: string
+  updated_at: string
+}
+
+export interface TripItem {
+  id: string
+  trip_id: string
+  piece_id: string
+  piece?: Piece
+  size: string | null
+  occasion: string | null
+  notes: string | null
+  sort_order: number
+  created_at: string
 }

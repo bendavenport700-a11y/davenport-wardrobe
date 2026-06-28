@@ -9,10 +9,10 @@ import { formatCents, formatCentsPerMonth } from '@/lib/format'
 export const revalidate = 300
 
 function conditionLabel(wears: number) {
-  if (wears === 0) return 'New'
-  if (wears <= 3) return 'Like New'
-  if (wears <= 8) return 'Good'
-  return 'Well Loved'
+  if (wears === 0)  return 'Pristine'
+  if (wears <= 5)   return 'Seasoned'
+  if (wears <= 10)  return 'Refined'
+  return 'Veteran'
 }
 
 export default async function PiecePage({ params }: { params: { id: string } }) {
@@ -87,9 +87,18 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
               >
                 Rent in the App →
               </Link>
-              <p className="font-sans text-xs text-slate text-center mt-3">
-                Ships in 2–3 days · $75 deposit held, not charged
-              </p>
+              <div className="grid grid-cols-2 gap-2 mt-4">
+                {[
+                  'Ships in 1–2 weeks',
+                  '$75 deposit held, not charged',
+                  'Professionally cleaned',
+                  'Cancel anytime after 30 days',
+                ].map(note => (
+                  <p key={note} className="font-sans text-xs text-slate/60 flex items-start gap-1.5">
+                    <span className="text-gold/60 mt-0.5">✦</span>{note}
+                  </p>
+                ))}
+              </div>
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ import { loginSchema, type LoginFormData } from '@/utils/schemas'
 export default function LoginScreen() {
   const [serverError, setServerError] = useState<string | null>(null)
   const [appleError, setAppleError] = useState<string | null>(null)
+  const [focused, setFocused] = useState<string | null>(null)
 
   const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -28,11 +29,21 @@ export default function LoginScreen() {
       const isWrongCredentials = (error as any).code === 'invalid_credentials' || error.message.toLowerCase().includes('invalid')
       setServerError(isWrongCredentials ? 'Incorrect email or password.' : error.message)
     }
-    // On success, useProtectedRoute (NavigationGuard) handles redirect automatically
   }
 
+  const inputStyle = (name: string, hasError: boolean) => ({
+    borderWidth: 1.5,
+    borderColor: hasError ? colors.error : focused === name ? colors.navy : colors.sand + 'CC',
+    borderRadius: 12,
+    padding: 15,
+    fontFamily: 'Inter-Regular' as const,
+    fontSize: 16,
+    color: colors.navy,
+    backgroundColor: colors.white,
+  })
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, justifyContent: 'center' }}>
         <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 36, color: colors.navy, marginBottom: 8, letterSpacing: 0.2 }}>
           Welcome back.
@@ -54,15 +65,17 @@ export default function LoginScreen() {
         <View style={{ gap: 16, marginTop: 4 }}>
           <Controller name="email" control={control} render={({ field }) => (
             <View>
-              <Text style={[labelStyle, { marginBottom: 6 }]}>Email</Text>
+              <Text style={labelStyle}>Email</Text>
               <TextInput
-                style={[inputStyle, errors.email && errorBorderStyle]}
+                style={inputStyle('email', !!errors.email)}
                 placeholder="you@example.com"
                 placeholderTextColor={colors.gray400}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
                 textContentType="emailAddress"
+                onFocus={() => setFocused('email')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -84,12 +97,14 @@ export default function LoginScreen() {
                 </Text>
               </View>
               <TextInput
-                style={[inputStyle, errors.password && errorBorderStyle]}
+                style={inputStyle('password', !!errors.password)}
                 placeholder="Your password"
                 placeholderTextColor={colors.gray400}
                 secureTextEntry
                 autoComplete="password"
                 textContentType="password"
+                onFocus={() => setFocused('password')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
@@ -129,11 +144,5 @@ export default function LoginScreen() {
   )
 }
 
-const labelStyle = { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy, letterSpacing: 0.2 } as const
-const inputStyle = {
-  borderWidth: 1.5, borderColor: colors.sand + 'CC', borderRadius: 12,
-  padding: 15, fontFamily: 'Inter-Regular', fontSize: 16, color: colors.navy,
-  backgroundColor: colors.white,
-} as const
-const errorBorderStyle = { borderColor: colors.error } as const
+const labelStyle = { fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy, marginBottom: 6, letterSpacing: 0.2 } as const
 const errorTextStyle = { color: colors.error, fontFamily: 'Inter-Regular', fontSize: 12, marginTop: 4 } as const

@@ -20,7 +20,7 @@ export function useProfile(userId: string | undefined) {
 export function useUpdateProfile() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<Pick<Profile, 'full_name' | 'phone' | 'shipping_address' | 'terms_accepted_at'>> }) => {
+    mutationFn: async ({ userId, updates }: { userId: string; updates: Partial<Pick<Profile, 'full_name' | 'phone' | 'shipping_address' | 'terms_accepted_at' | 'gender_preference'>> }) => {
       const { data, error } = await supabase.from('profiles').update(updates).eq('id', userId).select().single()
       if (error) throw error
       return data
@@ -48,7 +48,7 @@ export function useSyncServerSuitcase(userId: string | undefined) {
       .then(({ data, error }) => {
         if (error) { console.error('Failed to sync server suitcase:', error.message); return }
         data?.forEach(row => {
-          if (row.piece) addItem(row.piece as Piece, row.size)
+          if (row.piece) addItem(row.piece as Piece, row.size, { preferWorn: row.prefer_worn ?? false })
         })
       })
   }, [userId, addItem, hasHydrated])

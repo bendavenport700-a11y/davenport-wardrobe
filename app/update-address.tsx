@@ -23,6 +23,7 @@ export default function UpdateAddressScreen() {
   const { session, profile } = useAuthStore()
   const { mutateAsync: updateProfile, isPending } = useUpdateProfile()
   const [serverError, setServerError] = useState<string | null>(null)
+  const [focused, setFocused] = useState<string | null>(null)
   const insets = useSafeAreaInsets()
 
   const existing = profile?.shipping_address as { line1?: string; line2?: string; city?: string; state?: string; zip?: string } | null
@@ -52,8 +53,19 @@ export default function UpdateAddressScreen() {
     }
   }
 
+  const inputStyle = (name: string, hasError: boolean) => ({
+    borderWidth: 1.5,
+    borderColor: hasError ? colors.error : focused === name ? colors.navy : colors.sand,
+    borderRadius: 12,
+    padding: 14,
+    fontFamily: 'Inter-Regular' as const,
+    fontSize: 16,
+    color: colors.navy,
+    backgroundColor: colors.white,
+  })
+
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.cream }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView contentContainerStyle={{ flexGrow: 1, padding: 24, paddingTop: insets.top + 20 }}>
         <Pressable
           onPress={() => router.back()}
@@ -77,96 +89,117 @@ export default function UpdateAddressScreen() {
           </View>
         )}
 
-        <View style={{ gap: 16 }}>
+        <View style={{ gap: 12 }}>
+
           <Controller name="line1" control={control} render={({ field }) => (
             <View>
-              <Text style={label}>Street address</Text>
+              <Text style={labelStyle}>Street address</Text>
               <TextInput
-                style={[input, errors.line1 && errorBorder]}
+                style={inputStyle('line1', !!errors.line1)}
                 placeholder="123 Main Street"
                 placeholderTextColor={colors.gray400}
                 autoCapitalize="words"
+                textContentType="streetAddressLine1"
+                autoComplete="street-address"
+                onFocus={() => setFocused('line1')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value}
               />
-              {errors.line1 && <Text style={errorText}>{errors.line1.message}</Text>}
+              {errors.line1 && <Text style={errorTextStyle}>{errors.line1.message}</Text>}
             </View>
           )} />
 
           <Controller name="line2" control={control} render={({ field }) => (
             <View>
-              <Text style={label}>Apt / Unit <Text style={{ color: colors.slate }}>(optional)</Text></Text>
+              <Text style={labelStyle}>Apt / Unit <Text style={{ color: colors.slate }}>(optional)</Text></Text>
               <TextInput
-                style={input}
+                style={inputStyle('line2', false)}
                 placeholder="Apt 2B"
                 placeholderTextColor={colors.gray400}
+                textContentType="streetAddressLine2"
+                onFocus={() => setFocused('line2')}
+                onBlur={() => { setFocused(null); field.onBlur() }}
                 onChangeText={field.onChange}
                 value={field.value ?? ''}
               />
             </View>
           )} />
 
-          <View style={{ flexDirection: 'row', gap: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
             <View style={{ flex: 2 }}>
               <Controller name="city" control={control} render={({ field }) => (
                 <View>
-                  <Text style={label}>City</Text>
+                  <Text style={labelStyle}>City</Text>
                   <TextInput
-                    style={[input, errors.city && errorBorder]}
+                    style={inputStyle('city', !!errors.city)}
                     placeholder="Fairfield"
                     placeholderTextColor={colors.gray400}
                     autoCapitalize="words"
+                    textContentType="addressCity"
+                    autoComplete="address-line2"
+                    onFocus={() => setFocused('city')}
+                    onBlur={() => { setFocused(null); field.onBlur() }}
                     onChangeText={field.onChange}
                     value={field.value}
                   />
-                  {errors.city && <Text style={errorText}>{errors.city.message}</Text>}
+                  {errors.city && <Text style={errorTextStyle}>{errors.city.message}</Text>}
                 </View>
               )} />
             </View>
             <View style={{ flex: 1 }}>
               <Controller name="state" control={control} render={({ field }) => (
                 <View>
-                  <Text style={label}>State</Text>
+                  <Text style={labelStyle}>State</Text>
                   <TextInput
-                    style={[input, errors.state && errorBorder]}
+                    style={inputStyle('state', !!errors.state)}
                     placeholder="CT"
                     placeholderTextColor={colors.gray400}
                     autoCapitalize="characters"
                     maxLength={2}
+                    textContentType="addressState"
+                    autoComplete="address-line1"
+                    onFocus={() => setFocused('state')}
+                    onBlur={() => { setFocused(null); field.onBlur() }}
                     onChangeText={v => field.onChange(v.toUpperCase())}
                     value={field.value}
                   />
-                  {errors.state && <Text style={errorText}>{errors.state.message}</Text>}
+                  {errors.state && <Text style={errorTextStyle}>{errors.state.message}</Text>}
                 </View>
               )} />
             </View>
             <View style={{ flex: 1 }}>
               <Controller name="zip" control={control} render={({ field }) => (
                 <View>
-                  <Text style={label}>ZIP</Text>
+                  <Text style={labelStyle}>ZIP</Text>
                   <TextInput
-                    style={[input, errors.zip && errorBorder]}
+                    style={inputStyle('zip', !!errors.zip)}
                     placeholder="06824"
                     placeholderTextColor={colors.gray400}
                     keyboardType="numeric"
                     maxLength={5}
+                    textContentType="postalCode"
+                    autoComplete="postal-code"
+                    onFocus={() => setFocused('zip')}
+                    onBlur={() => { setFocused(null); field.onBlur() }}
                     onChangeText={field.onChange}
                     value={field.value}
                   />
-                  {errors.zip && <Text style={errorText}>{errors.zip.message}</Text>}
+                  {errors.zip && <Text style={errorTextStyle}>{errors.zip.message}</Text>}
                 </View>
               )} />
             </View>
           </View>
 
-          <Button label="Save address" onPress={handleSubmit(onSubmit)} loading={isPending} />
+          <View style={{ marginTop: 8 }}>
+            <Button label="Save address" onPress={handleSubmit(onSubmit)} loading={isPending} />
+          </View>
+
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
   )
 }
 
-const label    = { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 6 } as const
-const input    = { borderWidth: 1.5, borderColor: colors.sand, borderRadius: 10, padding: 14, fontFamily: 'Inter-Regular', fontSize: 16, color: colors.navy, backgroundColor: colors.white } as const
-const errorBorder = { borderColor: colors.error } as const
-const errorText   = { color: colors.error, fontFamily: 'Inter-Regular', fontSize: 12, marginTop: 4 } as const
+const labelStyle    = { fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy, marginBottom: 6 } as const
+const errorTextStyle = { color: colors.error, fontFamily: 'Inter-Regular', fontSize: 12, marginTop: 4 } as const

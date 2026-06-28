@@ -10,6 +10,9 @@ import { useAuthStore } from '@/store/authStore'
 import { useTabBarStore } from '@/store/tabBarStore'
 import { useActiveRentals } from '@/hooks/useRentals'
 import { useSavedWardrobes } from '@/hooks/useSavedWardrobes'
+import { useTrips } from '@/hooks/useTrips'
+import { TripCard } from '@/components/trip/TripCard'
+import { useTripsEnabled } from '@/hooks/useAppSettings'
 import { WardrobeCard } from '@/components/wardrobe/WardrobeCard'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
@@ -27,6 +30,8 @@ export default function AccountScreen() {
   const { session, profile } = useAuthStore()
   const userId = session?.user.id
   const { data: savedWardrobes } = useSavedWardrobes(userId)
+  const tripsEnabled = useTripsEnabled()
+  const { data: trips, isLoading: tripsLoading } = useTrips(tripsEnabled ? userId : undefined)
   const { data: rentals, isLoading, isError: rentalsError, refetch: refetchRentals } = useActiveRentals(userId)
   const setScrolledDown = useTabBarStore(s => s.setScrolledDown)
   const lastScrollY = useRef(0)
@@ -218,12 +223,13 @@ export default function AccountScreen() {
                   </View>
 
                   {/* In-transit status strip */}
-                  {['pending','sourcing','shipped'].includes(rental.status) && (
+                  {['pending','sourcing','packaged','shipped'].includes(rental.status) && (
                     <View style={{ borderTopWidth: 1, borderTopColor: colors.sand + '50', paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <Ionicons name={rental.status === 'shipped' ? 'airplane-outline' : 'cube-outline'} size={14} color={colors.slate} />
                       <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, flex: 1, lineHeight: 17 }}>
                         {rental.status === 'pending' ? 'Order confirmed. Your piece ships in 1–2 weeks.' :
                          rental.status === 'sourcing' ? 'Your piece ships in 1–2 weeks. Tracking info comes via email.' :
+                         rental.status === 'packaged' ? 'Packed and heading to the carrier. Tracking arrives by email once shipped.' :
                          rental.tracking_number ? `${rental.carrier ? rental.carrier + ': ' : ''}${rental.tracking_number}` :
                          "On its way. You'll get tracking info via email shortly."}
                       </Text>
@@ -231,7 +237,7 @@ export default function AccountScreen() {
                   )}
 
                   {/* Action chips */}
-                  {!rental.bought_out && ['delivered', 'shipped', 'sourcing', 'pending', 'return_requested'].includes(rental.status) && (
+                  {!rental.bought_out && ['delivered', 'shipped', 'packaged', 'sourcing', 'pending', 'return_requested'].includes(rental.status) && (
                     <View style={{
                       borderTopWidth: 1, borderTopColor: colors.sand + '40',
                       paddingHorizontal: 14, paddingVertical: 10,
@@ -272,7 +278,7 @@ export default function AccountScreen() {
                             )
                           })()}
                           {/* Return chip — shown for delivered and in-transit */}
-                          {(isDelivered || ['shipped', 'sourcing', 'pending'].includes(rental.status)) && (
+                          {(isDelivered || ['shipped', 'packaged', 'sourcing', 'pending'].includes(rental.status)) && (
                             <View style={{
                               flexDirection: 'row', alignItems: 'center', gap: 5,
                               backgroundColor: colors.sand + '40', borderRadius: 20,
@@ -362,6 +368,50 @@ export default function AccountScreen() {
             </Text>
           </View>
         )}
+
+        {/* My Trips */}
+        {tripsEnabled && <View style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate, letterSpacing: 1.4, textTransform: 'uppercase' }}>
+              My Trips{trips && trips.length > 0 ? ` (${trips.length})` : ''}
+            </Text>
+            <Pressable onPress={() => router.push('/trips' as any)} hitSlop={12}>
+              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.navy + 'AA' }}>
+                {(trips?.length ?? 0) > 0 ? 'See all →' : 'Plan a trip →'}
+              </Text>
+            </Pressable>
+          </View>
+          {tripsLoading ? (
+            <Skeleton height={72} borderRadius={16} />
+          ) : (trips?.length ?? 0) === 0 ? (
+            <Pressable
+              onPress={() => router.push('/trip/new' as any)}
+              accessibilityRole="button"
+              style={({ pressed }) => ({
+                backgroundColor: colors.white,
+                borderRadius: 14,
+                padding: 18,
+                borderWidth: 1,
+                borderColor: colors.sand + '80',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+                opacity: pressed ? 0.9 : 1,
+              })}
+            >
+              <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: colors.navy + '0D', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="airplane-outline" size={18} color={colors.navy} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>Plan a trip</Text>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, marginTop: 1 }}>Build a packing list from the catalog</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={14} color={colors.gray400} />
+            </Pressable>
+          ) : (
+            (trips ?? []).slice(0, 3).map(trip => <TripCard key={trip.id} trip={trip} />)
+          )}
+        </View>}
 
         {/* Saved Wardrobes */}
         {(savedWardrobes?.length ?? 0) > 0 && (

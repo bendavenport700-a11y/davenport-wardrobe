@@ -23,6 +23,7 @@ export interface PendingReview {
 export function usePieceReviews(pieceId: string) {
   return useQuery<Review[]>({
     queryKey: ['reviews', pieceId],
+    enabled: !!pieceId,
     queryFn: async () => {
       const { data, error } = await supabase
         .from('reviews')
@@ -61,7 +62,8 @@ export function usePendingReviews(userId: string | undefined) {
       return (rentals ?? [])
         .filter(r => !reviewedIds.has(r.id))
         .map(r => {
-          const p = r.piece as { name: string; brand: string; images: string[] } | null
+          const raw = r.piece
+          const p = (Array.isArray(raw) ? raw[0] : raw) as { name: string; brand: string; images: string[] } | null
           return {
             rental_id:   r.id,
             piece_id:    r.piece_id,
