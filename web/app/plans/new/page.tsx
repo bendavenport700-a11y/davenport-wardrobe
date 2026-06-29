@@ -8,10 +8,46 @@ import { Footer } from '@/components/Footer'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 
 const PLAN_TYPES = [
-  { value: 'event', label: 'Event' },
-  { value: 'vacation', label: 'Vacation' },
-  { value: 'extended_stay', label: 'Extended Stay' },
-  { value: 'season', label: 'Season' },
+  {
+    value: 'event',
+    label: 'Event',
+    desc: 'Wedding, conference, dinner, occasion',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
+      </svg>
+    ),
+  },
+  {
+    value: 'vacation',
+    label: 'Vacation',
+    desc: 'Travel, weekend getaway, trip',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+      </svg>
+    ),
+  },
+  {
+    value: 'extended_stay',
+    label: 'Extended Stay',
+    desc: 'Semester, work assignment, relocation',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+      </svg>
+    ),
+  },
+  {
+    value: 'season',
+    label: 'Season',
+    desc: 'Seasonal rotation, wardrobe refresh',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+      </svg>
+    ),
+  },
 ]
 
 export default function NewPlanPage() {
@@ -60,82 +96,125 @@ export default function NewPlanPage() {
     router.push(`/plans/${data.id}`)
   }
 
-  const input = 'w-full font-sans text-sm border border-sand rounded-xl px-4 py-3 text-navy placeholder-slate/40 focus:outline-none focus:ring-2 focus:ring-navy/15 focus:border-navy/30 transition-all bg-white'
-
   return (
     <>
       <Navbar />
       <main className="pt-16 min-h-screen bg-cream">
-        <div className="max-w-xl mx-auto px-6 py-16">
-          <Link href="/plans" className="font-sans text-sm text-slate hover:text-navy transition-colors mb-8 inline-block">
-            ← My Plans
+        <div className="max-w-lg mx-auto px-6 py-14">
+          <Link href="/plans" className="inline-flex items-center gap-1.5 font-sans text-sm text-slate/60 hover:text-navy transition-colors mb-10">
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+            My Plans
           </Link>
-          <h1 className="font-serif text-4xl font-bold text-navy mb-2">New Plan</h1>
-          <p className="font-sans text-sm text-slate mb-10">
-            Name it, set the dates, then browse pieces to add.
+
+          <h1 className="font-serif text-3xl font-bold text-navy mb-1">New Plan</h1>
+          <p className="font-sans text-sm text-slate/60 mb-10 leading-relaxed">
+            Name it and set the dates. Browse pieces to build out your wardrobe, then add them all to your suitcase when you&apos;re ready.
           </p>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-8">
+
+            {/* Name */}
             <div>
-              <label className="font-sans text-xs uppercase tracking-widest text-slate/50 block mb-2">Name</label>
+              <label className="font-sans text-xs font-semibold uppercase tracking-widest text-slate/40 block mb-3">
+                Plan name
+              </label>
               <input
                 type="text"
                 value={name}
                 onChange={e => setName(e.target.value)}
-                placeholder="e.g. Austin Conference, Summer Rotation, Ski Weekend"
-                className={input}
+                placeholder="Austin Conference, Summer Rotation, Ski Weekend…"
+                className="w-full bg-white border border-sand rounded-2xl px-5 py-4 font-sans text-base text-navy placeholder-slate/30 focus:outline-none focus:ring-2 focus:ring-navy/15 focus:border-navy/40 transition-all"
                 autoFocus
               />
             </div>
 
+            {/* Type */}
             <div>
-              <label className="font-sans text-xs uppercase tracking-widest text-slate/50 block mb-2">Type</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="font-sans text-xs font-semibold uppercase tracking-widest text-slate/40 block mb-3">
+                What kind of plan?
+              </label>
+              <div className="grid grid-cols-2 gap-3">
                 {PLAN_TYPES.map(t => (
                   <button
                     key={t.value}
                     type="button"
                     onClick={() => setType(t.value)}
-                    className={`font-sans text-sm px-4 py-3 rounded-xl border transition-colors text-left ${
+                    className={`text-left p-4 rounded-2xl border transition-all ${
                       type === t.value
-                        ? 'bg-navy text-cream border-navy'
-                        : 'bg-white text-slate border-sand hover:border-navy/25 hover:text-navy'
+                        ? 'bg-navy border-navy text-cream shadow-sm'
+                        : 'bg-white border-sand text-navy hover:border-navy/30 hover:shadow-sm'
                     }`}
                   >
-                    {t.label}
+                    <div className={`mb-2 ${type === t.value ? 'text-cream/70' : 'text-slate/50'}`}>
+                      {t.icon}
+                    </div>
+                    <p className={`font-sans text-sm font-semibold mb-0.5 ${type === t.value ? 'text-cream' : 'text-navy'}`}>
+                      {t.label}
+                    </p>
+                    <p className={`font-sans text-xs leading-snug ${type === t.value ? 'text-cream/55' : 'text-slate/50'}`}>
+                      {t.desc}
+                    </p>
                   </button>
                 ))}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="font-sans text-xs uppercase tracking-widest text-slate/50 block mb-2">Start date <span className="normal-case tracking-normal">(optional)</span></label>
-                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className={input} />
-              </div>
-              <div>
-                <label className="font-sans text-xs uppercase tracking-widest text-slate/50 block mb-2">End date <span className="normal-case tracking-normal">(optional)</span></label>
-                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className={input} />
+            {/* Date range */}
+            <div>
+              <label className="font-sans text-xs font-semibold uppercase tracking-widest text-slate/40 block mb-3">
+                Dates <span className="normal-case font-normal tracking-normal text-slate/30">— optional</span>
+              </label>
+              <div className="bg-white border border-sand rounded-2xl overflow-hidden">
+                <div className="grid grid-cols-2 divide-x divide-sand">
+                  <div className="p-4">
+                    <p className="font-sans text-[10px] uppercase tracking-widest text-slate/40 mb-1.5">Start</p>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={e => setStartDate(e.target.value)}
+                      className="w-full font-sans text-sm text-navy focus:outline-none bg-transparent cursor-pointer"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="font-sans text-[10px] uppercase tracking-widest text-slate/40 mb-1.5">End</p>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={e => setEndDate(e.target.value)}
+                      min={startDate}
+                      className="w-full font-sans text-sm text-navy focus:outline-none bg-transparent cursor-pointer"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
+            {/* Notes */}
             <div>
-              <label className="font-sans text-xs uppercase tracking-widest text-slate/50 block mb-2">Notes <span className="normal-case tracking-normal">(optional)</span></label>
+              <label className="font-sans text-xs font-semibold uppercase tracking-widest text-slate/40 block mb-3">
+                Notes <span className="normal-case font-normal tracking-normal text-slate/30">— optional</span>
+              </label>
               <textarea
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                placeholder="Anything you want to remember about this plan"
-                rows={3}
-                className={`${input} resize-none`}
+                placeholder="Dress code, weather forecast, vibe…"
+                rows={2}
+                className="w-full bg-white border border-sand rounded-2xl px-5 py-4 font-sans text-sm text-navy placeholder-slate/30 focus:outline-none focus:ring-2 focus:ring-navy/15 focus:border-navy/40 transition-all resize-none"
               />
             </div>
 
-            {error && <p className="font-sans text-sm text-red-600">{error}</p>}
+            {error && (
+              <p className="font-sans text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                {error}
+              </p>
+            )}
 
             <button
               type="submit"
               disabled={saving || !name.trim()}
-              className="w-full font-sans text-sm font-medium bg-navy text-cream px-6 py-4 rounded-xl hover:bg-navy/90 transition-colors disabled:opacity-50"
+              className="w-full font-sans text-sm font-semibold bg-navy text-cream px-6 py-4 rounded-2xl hover:bg-navy/90 active:scale-[0.99] transition-all disabled:opacity-50"
             >
               {saving ? 'Creating…' : 'Create Plan →'}
             </button>
