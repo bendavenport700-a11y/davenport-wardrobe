@@ -10,8 +10,18 @@ import { formatCents, formatCentsPerMonth } from '@/lib/format'
 import { calcOrderTotals, HANDLING_FEE_CENTS, DEPOSIT_CENTS } from '@/lib/pricing'
 
 export default function CartPage() {
-  const { items, removeItem } = useCart()
+  const { items, removeItem, loaded: cartLoaded } = useCart()
   const router = useRouter()
+
+  if (!cartLoaded) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-16 min-h-screen" />
+        <Footer />
+      </>
+    )
+  }
 
   if (items.length === 0) {
     return (

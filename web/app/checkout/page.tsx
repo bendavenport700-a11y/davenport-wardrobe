@@ -25,7 +25,7 @@ function CheckoutForm() {
   const router = useRouter()
   const stripe = useStripe()
   const elements = useElements()
-  const { items, clearCart } = useCart()
+  const { items, clearCart, loaded: cartLoaded } = useCart()
 
   const [profile, setProfile] = useState<Profile | null>(null)
   const [accessToken, setAccessToken] = useState<string | null>(null)
@@ -41,6 +41,7 @@ function CheckoutForm() {
   const [zip, setZip]       = useState('')
 
   useEffect(() => {
+    if (!cartLoaded) return
     if (items.length === 0) { router.replace('/cart'); return }
 
     const supabase = createSupabaseBrowser()
@@ -67,7 +68,7 @@ function CheckoutForm() {
       }
       setLoading(false)
     })
-  }, [items, router])
+  }, [cartLoaded, items, router])
 
   const { monthlyTotal, chargeToday, discount, rawMonthly } = calcOrderTotals(items)
   const hasPaymentMethod = !!profile?.stripe_payment_method_id

@@ -36,11 +36,23 @@ export default async function AccountPage() {
 
   const [profileRes, ordersRes] = await Promise.all([
     supabase.from('profiles').select('full_name, email, shipping_address, monthly_total, deposit_status').eq('id', user.id).single(),
-    supabase.from('orders').select('id, status, created_at, first_month_total, total_charged, rentals(id, status, rental_fee_cents, piece_id, pieces(name, brand))').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
+    supabase.from('orders').select('id, status, created_at, first_month_total, total_charged, rental_ids').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
   ])
 
   const profile = profileRes.data
-  const orders = (ordersRes.data ?? []) as any[]
+  const rawOrders = (ordersRes.data ?? []) as any[]
+
+  // orders.rental_ids is uuid[] — not a FK, so PostgREST can't join through it. Fetch separately.
+  const allRentalIds = rawOrders.flatMap((o: any) => o.rental_ids ?? [])
+  const rentalsData = allRentalIds.length > 0
+    ? (await supabase.from('rentals').select('id, status, rental_fee_cents, pieces(name, brand)').in('id', allRentalIds)).data ?? []
+    : []
+
+  const rentalMap = new Map(rentalsData.map((r: any) => [r.id, r]))
+  const orders = rawOrders.map((o: any) => ({
+    ...o,
+    rentals: (o.rental_ids ?? []).map((rid: string) => rentalMap.get(rid)).filter(Boolean),
+  }))
 
   const addr = profile?.shipping_address as { line1?: string; city?: string; state?: string; zip?: string } | null
 

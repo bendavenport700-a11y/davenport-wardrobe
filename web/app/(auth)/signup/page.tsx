@@ -29,7 +29,7 @@ function SignupForm() {
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${location.origin}/auth/callback?next=${next}`,
+        emailRedirectTo: `${location.origin}/auth/callback?next=${next}&terms=1`,
       },
     })
 

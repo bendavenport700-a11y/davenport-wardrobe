@@ -22,6 +22,7 @@ interface CartContextValue {
   removeItem: (piece_id: string, size: string) => void
   clearCart: () => void
   count: number
+  loaded: boolean
 }
 
 const CartContext = createContext<CartContextValue>({
@@ -30,18 +31,21 @@ const CartContext = createContext<CartContextValue>({
   removeItem: () => {},
   clearCart: () => {},
   count: 0,
+  loaded: false,
 })
 
 const STORAGE_KEY = 'davenport_cart'
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([])
+  const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
       if (stored) setItems(JSON.parse(stored))
     } catch {}
+    setLoaded(true)
   }, [])
 
   const persist = (next: CartItem[]) => {
@@ -72,7 +76,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, count: items.length }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, clearCart, count: items.length, loaded }}>
       {children}
     </CartContext.Provider>
   )
