@@ -64,7 +64,9 @@ export function PieceCard({ piece }: { piece: Piece }) {
             </div>
             {piece.sizes_available?.length > 0 && (
               <span className="font-sans text-xs text-slate/60">
-                {piece.sizes_available.length} size{piece.sizes_available.length !== 1 ? 's' : ''}
+                {piece.sizes_available.length <= 4
+                  ? piece.sizes_available.join('  ')
+                  : `${piece.sizes_available.slice(0, 3).join('  ')} +${piece.sizes_available.length - 3}`}
               </span>
             )}
           </div>
