@@ -100,12 +100,12 @@ export default function SuitcaseScreen() {
         {tripsEnabled && (
           <Pressable
             onPress={() => router.push('/trip/new' as any)}
-            accessibilityLabel="Plan a trip instead"
+            accessibilityLabel="Create a plan instead"
             accessibilityRole="button"
             style={{ marginTop: 12, paddingVertical: 12, paddingHorizontal: 24, borderRadius: 14, borderWidth: 1, borderColor: colors.sand + 'AA' }}
           >
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.slate, textAlign: 'center' }}>
-              Building for a trip? Start here →
+              Planning for an event? Create a plan →
             </Text>
           </Pressable>
         )}
