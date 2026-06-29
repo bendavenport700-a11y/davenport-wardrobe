@@ -4,6 +4,7 @@ import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import { formatCents, formatCentsPerMonth } from '@/lib/format'
+import { ActiveRentals } from '@/components/ActiveRentals'
 
 export const revalidate = 0
 
@@ -101,55 +102,47 @@ export default async function AccountPage() {
             </div>
           </div>
 
-          {/* Orders */}
-          <h2 className="font-sans font-semibold text-navy mb-5 text-sm uppercase tracking-wide">Orders</h2>
-          {orders.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-sand p-10 text-center">
-              <p className="font-sans text-slate mb-4">No orders yet.</p>
-              <Link href="/browse" className="inline-block bg-navy text-cream font-sans font-semibold px-6 py-3 rounded-xl hover:bg-navy/90 transition-colors text-sm">
-                Browse pieces →
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {orders.map((order: any) => (
-                <div key={order.id} className="bg-white rounded-2xl border border-sand p-6">
-                  <div className="flex items-start justify-between gap-4 mb-4">
-                    <div>
-                      <p className="font-mono text-xs text-slate mb-1">{order.id.slice(0, 8).toUpperCase()}</p>
-                      <p className="font-sans text-xs text-slate/60">
-                        {new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                      </p>
-                    </div>
-                    <span className={`text-[11px] px-2.5 py-1 rounded-full border font-semibold uppercase tracking-wide ${STATUS_COLOR[order.status] ?? 'bg-gray-50 text-gray-500 border-gray-200'}`}>
-                      {STATUS_LABEL[order.status] ?? order.status}
-                    </span>
-                  </div>
+          {/* Active Rentals — client component handles fetch + return/buyout actions */}
+          <h2 className="font-sans font-semibold text-navy mb-4 text-sm uppercase tracking-wide">Active Rentals</h2>
+          <ActiveRentals />
 
-                  {(order.rentals ?? []).length > 0 && (
-                    <div className="space-y-2 mb-4">
-                      {order.rentals.map((rental: any) => (
-                        <div key={rental.id} className="flex justify-between text-sm font-sans text-slate">
-                          <span>{rental.pieces?.brand} {rental.pieces?.name}</span>
-                          <span>{formatCentsPerMonth(rental.rental_fee_cents)}</span>
-                        </div>
-                      ))}
+          {/* Past Orders */}
+          {orders.length > 0 && (
+            <>
+              <h2 className="font-sans font-semibold text-navy mb-4 mt-10 text-sm uppercase tracking-wide">Past Orders</h2>
+              <div className="space-y-3">
+                {orders.map((order: any) => (
+                  <div key={order.id} className="bg-white rounded-2xl border border-sand p-5">
+                    <div className="flex items-start justify-between gap-4 mb-3">
+                      <div>
+                        <p className="font-mono text-xs text-slate/50 mb-0.5">{order.id.slice(0, 8).toUpperCase()}</p>
+                        <p className="font-sans text-xs text-slate/50">
+                          {new Date(order.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                        </p>
+                      </div>
+                      <span className={`text-[10px] px-2.5 py-1 rounded-full border font-semibold uppercase tracking-wide ${STATUS_COLOR[order.status] ?? 'bg-gray-50 text-gray-500 border-gray-200'}`}>
+                        {STATUS_LABEL[order.status] ?? order.status}
+                      </span>
                     </div>
-                  )}
-
-                  <div className="flex justify-between text-sm font-sans font-semibold text-navy pt-3 border-t border-sand">
-                    <span>Charged</span>
-                    <span>{formatCents(order.total_charged)}</span>
+                    {(order.rentals ?? []).length > 0 && (
+                      <div className="space-y-1.5 mb-3">
+                        {order.rentals.map((rental: any) => (
+                          <div key={rental.id} className="flex justify-between text-sm font-sans text-slate">
+                            <span>{rental.pieces?.brand} {rental.pieces?.name}</span>
+                            <span className="text-slate/60">{formatCentsPerMonth(rental.rental_fee_cents)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-sans font-semibold text-navy pt-3 border-t border-sand">
+                      <span>Charged</span>
+                      <span>{formatCents(order.total_charged)}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </>
           )}
-
-          <p className="font-sans text-xs text-slate/60 text-center mt-10">
-            To return a piece, email{' '}
-            <a href="mailto:returns@davenport.rentals" className="text-navy hover:underline">returns@davenport.rentals</a>
-          </p>
         </div>
       </main>
       <Footer />
