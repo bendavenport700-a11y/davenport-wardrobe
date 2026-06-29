@@ -11,7 +11,6 @@ const NAV_LINKS = [
   { label: 'Browse', href: '/browse' },
   { label: 'Wardrobes', href: '/wardrobes' },
   { label: 'Plans', href: '/plans' },
-  { label: 'How It Works', href: '/#how-it-works' },
   { label: 'Support', href: '/support' },
 ]
 
