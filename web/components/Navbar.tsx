@@ -1,7 +1,11 @@
 'use client'
+
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { createSupabaseBrowser } from '@/lib/supabase-browser'
+import { useCart } from '@/context/CartContext'
+import type { User } from '@supabase/supabase-js'
 
 const NAV_LINKS = [
   { label: 'Browse', href: '/browse' },
@@ -11,8 +15,11 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const { count } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8)
@@ -20,10 +27,25 @@ export function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Hash links belong to the homepage; match by pathname only
+  useEffect(() => {
+    const supabase = createSupabaseBrowser()
+    supabase.auth.getUser().then(({ data }) => setUser(data.user))
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
+
   const isActive = (href: string) => {
     if (href.startsWith('/#')) return pathname === '/'
     return pathname === href
+  }
+
+  async function handleSignOut() {
+    const supabase = createSupabaseBrowser()
+    await supabase.auth.signOut()
+    router.push('/')
+    router.refresh()
   }
 
   return (
@@ -48,36 +70,81 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link
-            href="https://apps.apple.com/app/davenport/id6778844291"
-            className="text-sm font-sans bg-navy text-cream px-5 py-2.5 rounded-lg hover:bg-navy/90 transition-colors font-medium"
-          >
-            Download App
+
+          {/* Cart */}
+          <Link href="/cart" className="relative text-slate hover:text-navy transition-colors">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z" />
+            </svg>
+            {count > 0 && (
+              <span className="absolute -top-2 -right-2 bg-navy text-cream text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {count}
+              </span>
+            )}
           </Link>
+
+          {/* Auth */}
+          {user ? (
+            <div className="flex items-center gap-4">
+              <Link href="/account" className="text-sm font-sans text-slate hover:text-navy transition-colors">
+                Account
+              </Link>
+              <button
+                onClick={handleSignOut}
+                className="text-sm font-sans bg-navy text-cream px-5 py-2.5 rounded-lg hover:bg-navy/90 transition-colors font-medium"
+              >
+                Sign out
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="text-sm font-sans text-slate hover:text-navy transition-colors">
+                Sign in
+              </Link>
+              <Link
+                href="/signup"
+                className="text-sm font-sans bg-navy text-cream px-5 py-2.5 rounded-lg hover:bg-navy/90 transition-colors font-medium"
+              >
+                Get started
+              </Link>
+            </div>
+          )}
         </div>
 
-        {/* Mobile hamburger */}
-        <button
-          className="md:hidden p-2 -mr-2 text-navy"
-          onClick={() => setMenuOpen(o => !o)}
-          aria-label="Toggle menu"
-          aria-expanded={menuOpen}
-        >
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            {menuOpen ? (
-              <>
-                <line x1="4" y1="4" x2="18" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                <line x1="18" y1="4" x2="4" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </>
-            ) : (
-              <>
-                <line x1="3" y1="7" x2="19" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                <line x1="3" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                <line x1="3" y1="17" x2="19" y2="17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              </>
+        {/* Mobile: cart + hamburger */}
+        <div className="md:hidden flex items-center gap-3">
+          <Link href="/cart" className="relative text-slate p-1">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z" />
+            </svg>
+            {count > 0 && (
+              <span className="absolute -top-1 -right-1 bg-navy text-cream text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                {count}
+              </span>
             )}
-          </svg>
-        </button>
+          </Link>
+          <button
+            className="p-2 -mr-2 text-navy"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Toggle menu"
+            aria-expanded={menuOpen}
+          >
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              {menuOpen ? (
+                <>
+                  <line x1="4" y1="4" x2="18" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="18" y1="4" x2="4" y2="18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </>
+              ) : (
+                <>
+                  <line x1="3" y1="7" x2="19" y2="7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="3" y1="12" x2="19" y2="12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                  <line x1="3" y1="17" x2="19" y2="17" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
+                </>
+              )}
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -95,14 +162,41 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <div className="pt-3">
-            <Link
-              href="https://apps.apple.com/app/davenport/id6778844291"
-              onClick={() => setMenuOpen(false)}
-              className="block font-sans text-sm font-medium bg-navy text-cream px-4 py-3.5 rounded-xl text-center"
-            >
-              Download the App
-            </Link>
+          <div className="pt-3 space-y-2">
+            {user ? (
+              <>
+                <Link
+                  href="/account"
+                  onClick={() => setMenuOpen(false)}
+                  className="block font-sans text-sm font-medium text-navy px-4 py-3 rounded-xl border border-navy/20 text-center"
+                >
+                  My Account
+                </Link>
+                <button
+                  onClick={() => { setMenuOpen(false); handleSignOut() }}
+                  className="w-full font-sans text-sm font-medium bg-navy text-cream px-4 py-3.5 rounded-xl text-center"
+                >
+                  Sign out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMenuOpen(false)}
+                  className="block font-sans text-sm font-medium text-navy px-4 py-3 rounded-xl border border-navy/20 text-center"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMenuOpen(false)}
+                  className="block font-sans text-sm font-medium bg-navy text-cream px-4 py-3.5 rounded-xl text-center"
+                >
+                  Get started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

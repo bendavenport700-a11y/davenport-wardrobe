@@ -3,6 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
+import { AddToSuitcase } from '@/components/AddToSuitcase'
 import { getPiece } from '@/lib/supabase'
 import { formatCents, formatCentsPerMonth } from '@/lib/format'
 
@@ -69,25 +70,19 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
                 <p className="font-sans text-xs text-slate">Buyout price drops every month you rent.</p>
               </div>
 
-              {/* Sizes */}
-              {piece.sizes_available?.length > 0 && (
-                <div className="mb-8">
-                  <p className="font-sans text-xs uppercase tracking-widest text-slate mb-3">Available Sizes</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {piece.sizes_available.map((s: string) => (
-                      <span key={s} className="font-sans text-sm border border-navy/20 text-navy px-3 py-1.5 rounded-lg">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Add to suitcase */}
+              <AddToSuitcase piece={{
+                id: piece.id,
+                name: piece.name,
+                brand: piece.brand,
+                images: piece.images ?? [],
+                sizes_available: piece.sizes_available ?? [],
+                rental_fee: piece.rental_fee,
+                buyout_price: piece.buyout_price,
+                wear_count: piece.wear_count,
+              }} />
 
-              <Link
-                href="https://apps.apple.com/app/davenport/id6778844291"
-                className="bg-navy text-cream font-sans font-semibold px-8 py-4 rounded-xl hover:bg-navy/90 transition-colors text-center text-base"
-              >
-                Rent in the App →
-              </Link>
-              <div className="grid grid-cols-2 gap-2 mt-4">
+              <div className="grid grid-cols-2 gap-2 mt-6">
                 {[
                   'Ships in 1–2 weeks',
                   '$75 deposit held, not charged',

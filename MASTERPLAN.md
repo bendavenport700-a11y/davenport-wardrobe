@@ -1,6 +1,6 @@
 # Davenport Wardrobe — Master Plan
 
-> **Last revised:** 2026-06-18 | **Status:** App live on App Store. Post-launch fixes and business logic hardening complete. First real inventory cycle approaching.
+> **Last revised:** 2026-06-28 | **Status:** App live on App Store (Build 27). Admin panel fully deployed. First real inventory cycle underway. Web checkout is the #1 priority for early growth.
 
 ---
 
@@ -266,9 +266,9 @@ All original build phases are complete. This section is a record of what was bui
 | Phase | Status | Summary |
 |---|---|---|
 | 1 — Bootstrap | ✅ Done | Types, constants, utils, stores, nav structure, brand system |
-| 2 — Database | ✅ Done | 9 migrations, all tables, Realtime, seeded inventory |
+| 2 — Database | ✅ Done | 29 migrations, all tables, Realtime, seeded inventory |
 | 3 — Auth | ✅ Done | Login, signup, complete-profile, forgot-password, rental-terms |
-| 3.5 — Admin | ✅ Done | Next.js admin tool, AI product extraction, orders/pieces/wardrobes |
+| 3.5 — Admin | ✅ Done | Next.js admin, AI extraction, full ops panel — roles, orders, rentals, refunds, wardrobes |
 | 4 — Browse | ✅ Done | Home, Browse, Wardrobe Detail, Piece Detail with skeletons + errors |
 | 5 — Suitcase | ✅ Done | Cart, availability check, bundle discount upsell banner |
 | 6 — Stripe | ✅ Done | 11 Edge Functions, cron billing, all secrets set |
@@ -277,10 +277,12 @@ All original build phases are complete. This section is a record of what was bui
 | 9 — Account | ✅ Done | Active rentals, buyout CTA, billing summary, address, sign out |
 | 10 — Polish | ✅ Done | Web parity, retention emails, error/empty/skeleton states everywhere |
 | 11 — Deployment | ✅ Done | Stripe live key set, EAS build submitted to App Store |
+| 26 — Build 26 sweep | ✅ Done | Image loading fix, wardrobe UX, edge function hardening, admin dashboard stats |
+| 27 — Build 27 sweep | ✅ Done | FilterSheet fix, auth fixes, wardrobe cover art, admin full deploy, web .next cleanup |
 
 ---
 
-# PART X — CURRENT STATE (June 2026)
+# PART X — CURRENT STATE (June 28, 2026)
 
 ## What Works Today
 
@@ -290,23 +292,37 @@ All original build phases are complete. This section is a record of what was bui
 - Account screen with active rentals — buyout, return, swap actions ✅
 - Buyout available at any rental stage (before delivery, mid-rental, after months) ✅
 - Customer refund request in-app — emails admin, 30-day window enforced ✅
-- Admin tool — order management, inventory, unit inventory view, refunds ✅
-- Admin: non-return buyout charge (`admin-charge-nonreturn`) ✅
-- Admin: excess damage charge beyond deposit (`charge-damage`) ✅
-- Admin: deposit capture/release with partial-capture handling ✅
-- Admin: refund function with proper JWT auth (security fixed) ✅
+- Admin tool (davenport-admin.vercel.app) — full ops panel ✅
+  - Orders, rentals, pieces, wardrobes, pricing, announcements, app settings
+  - Role-based access: admin (full) vs catalog (pieces + wardrobes only)
+  - Non-return charge, excess damage charge, deposit capture/release, refund
+  - Wardrobe editor with piece image mosaic and tag management
 - Rental terms — rolling 30-day billing, non-return buyout, damage excess, refund policy ✅
-- Web site at davenport.rentals ✅
+- Web site at davenport.rentals (browse-only, no checkout yet) ✅
 - Force update gating via Supabase `app_config` table ✅
 - Sign in with Apple live ✅
 - Per-unit inventory tracking (piece_units) ✅
 
+## Feature Flags (flip in Supabase `app_settings` table)
+
+| Flag | Current | What it unlocks |
+|---|---|---|
+| `womens_enabled` | `false` | Gender toggle in profile, women's browse filter |
+| `trips_enabled` | `false` | Trips tab in app — plan outfits by trip/occasion |
+
 ## What's Live
 
-- App Store approved and live ✅
+- App Store approved and live (v1.0.3 / Build 27) ✅
+- Admin panel deployed to Vercel ✅
 - Supabase URL Configuration set (Site URL + `davenport://**` redirect) ✅
 - Sign in with Apple live ✅
 - Apple Pay in Stripe Payment Sheet live ✅
+
+## Immediate Next Priorities
+
+1. **Web checkout** (Phase 18) — let customers order from davenport.rentals without the app
+2. **Women's inventory** — add pieces + create wardrobes, then flip `womens_enabled`
+3. **Trips polish** — review UX, connect to suitcase flow, then flip `trips_enabled`
 
 ---
 
@@ -335,16 +351,55 @@ All original build phases are complete. This section is a record of what was bui
 
 ## Phase 13 — Women's Expansion
 
-**Goal:** Open inventory and marketing to women. No major tech required — mostly inventory and copy.
+**Goal:** Open inventory and marketing to women. The tech is already built and gated — this is primarily an inventory and content play.
 
-**Strategic note (June 2026):** Women's is coming sooner than originally planned. Women are the audience most attached to their clothes and most naturally suited to rental — more occasion-specific needs, higher outfit variety, stronger cultural habit of wardrobe refresh. The long-term vision is a "his and hers" experience: two distinct but complementary sides of Davenport that share the same rental platform. Men's launches first to build the operational foundation. Women's follows as soon as inventory budget allows. These are not two products — they are one platform serving both.
+**Strategic note (June 2026):** Women's is the next major growth lever. Women are the audience most attached to their clothes and most naturally suited to rental — more occasion-specific needs, higher outfit variety, stronger cultural habit of wardrobe refresh. The long-term vision is a "his and hers" experience: two distinct but complementary sides of Davenport that share the same platform. Men's launches first to build the operational foundation. Women's follows as soon as inventory budget allows.
 
+**What's already built (just needs to be turned on):**
+- `womens_enabled` feature flag in `app_settings` table — flip to `true` to unlock
+- Gender preference selector in complete-profile screen (hidden until `womens_enabled`)
+- Gender filter on browse already wired to `gender_preference` from profile
+- `gender` field on wardrobes and pieces already exists — just add women's content in admin
+- Wardrobe cards and browse are fully gender-aware once pieces are added
+
+**What still needs to happen:**
 - [ ] Add first batch of women's pieces in admin (workwear, going out, casual)
-- [ ] Create "Women's Wardrobe" collection in admin
+- [ ] Create women's wardrobes in admin — tag them correctly (occasion, season, style)
+- [ ] Set `womens_enabled = true` in Supabase `app_settings` table to unlock the gender toggle in the app
 - [ ] Update homepage copy to be gender-neutral (remove male-coded language)
 - [ ] Add women's use cases to the homepage ticker and flyer copy
 - [ ] Redesign 2 flyers for women-first messaging (see FLYERS.md)
-- [ ] Consider "Shop Men's / Shop Women's" top-level nav split once both inventories are live
+- [ ] Consider "Shop Men's / Shop Women's" top-level nav split once both inventories are substantial
+
+**Estimated effort to unlock:** ~1 hour of admin work (add inventory + flip flag). No new code needed.
+
+## Phase 13.5 — Trips Feature
+
+**Goal:** Let customers plan outfits for specific trips or occasions — a suitcase with a purpose and a date attached to it.
+
+**What's already built (gated behind feature flag):**
+- `trips_enabled` feature flag in `app_settings` — currently `false`
+- Full trips tab in the app (`app/trips.tsx`, hidden from nav when disabled)
+- Trip creation flow (`app/trip/new.tsx`) — name, type, occasion, dates
+- Trip detail screen (`app/trip/[id].tsx`) — view pieces in a trip
+- Component library: `TripCard`, `TripItemRow`, `TripPickerSheet`, `OccasionPicker`, `TripTypeSelector`
+- DB migration 025 — trips table exists in Supabase
+- Hooks: `useTrip`, `useTrips` — data layer is complete
+
+**What still needs to happen before turning on:**
+- [ ] Review the trip creation UX — make sure the flow feels natural and guides the customer
+- [ ] Connect trips to the suitcase: "Plan this as a trip" option when building a suitcase
+- [ ] "Add to trip" action from piece detail and wardrobe screens
+- [ ] Trip-based packing list view — see all pieces in a trip with their rental status
+- [ ] Test the full flow end-to-end before flipping `trips_enabled = true`
+- [ ] Consider: trip sharing (send a link to the trip — social/gifting angle)
+- [ ] Marketing: "Pack smarter. Rent by the trip." angle for flyers and web copy
+
+**Strategic value:** Trips are a natural retention hook — a customer building a trip is committing to multiple pieces and a time window. They also drive multi-piece orders (the primary growth lever per Part IV).
+
+**Estimated effort to finish and turn on:** 1–2 sessions of polish and testing.
+
+---
 
 ## Phase 14 — Growth & Retention
 
@@ -472,30 +527,31 @@ Critical bugs and business logic gaps addressed before first customer orders:
 
 ---
 
-## Phase 18 — Web Checkout (Option A)
+## Phase 18 — Web Checkout ⭐ TOP PRIORITY
 
-**Goal:** Let customers order directly from davenport.rentals without the app. Full parity with the mobile checkout flow.
+**Goal:** Let customers order directly from davenport.rentals without downloading the app.
 
-**Why it matters:** The website is already browsable and well-designed. Making it transactional turns a marketing page into a real sales channel — especially important for desktop users and anyone who discovers Davenport through a web search or link.
+**Why this is the #1 priority right now:** At early stages, asking someone to download an app is a major barrier to that first order. Anyone who finds Davenport through a web search, a flyer link, a text from a friend, or an Instagram bio can land on the website and immediately order — no App Store, no install required. The website is already beautiful and browsable. Making it transactional could meaningfully accelerate early customer acquisition.
 
 **What to build:**
 - [ ] Auth pages on the web (`/login`, `/signup`) — Supabase auth already exists; just need web UI
-- [ ] Web suitcase — localStorage cart synced to Supabase session once authenticated
-- [ ] `/cart` page — shows selected pieces + sizes, bundle discount applied
-- [ ] `/checkout` page — Stripe Elements (card collection) wired to existing `create-setup-intent` and `confirm-order` edge functions
-- [ ] `/checkout/confirmation` — order confirmation page
-- [ ] Size selector on `/piece/[id]` — currently display-only; needs "Add to suitcase" button
-- [ ] Web navbar updates — cart count badge + account link
+- [ ] "Add to suitcase" button on `/piece/[id]` piece detail — currently display-only
+- [ ] Web suitcase state — localStorage cart, syncs to Supabase once authenticated
+- [ ] `/cart` page — selected pieces + sizes, bundle discount shown, handling fee
+- [ ] `/checkout` page — Stripe Elements wired to existing `create-setup-intent` + `confirm-order` edge functions (same functions the app uses — no duplication)
+- [ ] `/checkout/confirmation` — order confirmation page with order details
+- [ ] `/account` page — active rentals, billing summary, return requests
+- [ ] Web navbar: cart count badge + account link when logged in
 
-**Existing infrastructure that carries over:**
-- All 11 Stripe edge functions work independently of mobile vs web
-- Supabase auth (magic link + Google + Apple via web OAuth) works on both
-- Brand system (`colors`, fonts) consistent between web and app
-- Order, piece, and wardrobe data models unchanged
+**Existing infrastructure that carries over (no changes needed):**
+- All Stripe edge functions are platform-agnostic — they work from web or mobile
+- Supabase auth supports web OAuth (magic link, Google, Apple) out of the box
+- Brand system, colors, and typography are already shared between web and app
+- Order, piece, and wardrobe data models are unchanged
 
-**Effort estimate:** ~2–3 sessions. Auth + cart are the hard parts. Checkout follows the same flow as the mobile app.
+**Effort estimate:** 2–3 sessions. Auth + cart are the hard parts. Checkout follows the same logic as the app.
 
-**Do not start until:** App Store is live and generating orders. The web checkout is a growth channel, not a launch blocker.
+**Sequencing note:** Start with auth + "Add to suitcase" + cart first. Get a working end-to-end flow before polishing the account page. The account page is nice to have but not required for the first order.
 
 ## Phase 18 — Long-Term Vision
 
