@@ -73,7 +73,7 @@ export async function getWardrobe(slug: string) {
 export async function getPiecesByWardrobe(wardrobeId: string) {
   const { data } = await supabase
     .from('pieces')
-    .select('id, name, brand, images, rental_fee, buyout_price, wear_count, category, sizes_available, is_featured, is_available, description, color, condition')
+    .select(PIECE_COLS)
     .eq('wardrobe_id', wardrobeId)
     .eq('is_available', true)
     .eq('is_draft', false)

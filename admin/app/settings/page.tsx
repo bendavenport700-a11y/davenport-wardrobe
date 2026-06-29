@@ -92,7 +92,7 @@ export default async function SettingsPage() {
               </span>
             </div>
             <p className="text-sm text-gray-500 leading-relaxed max-w-md">
-              When enabled, shows the &quot;Plan a Trip&quot; entry point on Home and Account, and lets users build packing lists from the catalog.
+              When enabled, shows the &quot;Create a Plan&quot; entry point on Home and Account, and lets users build packing lists from the catalog.
             </p>
           </div>
 
@@ -112,7 +112,7 @@ export default async function SettingsPage() {
                   : 'bg-navy text-white hover:bg-navy/90'
               }`}
             >
-              {tripsEnabled ? 'Disable' : 'Enable Trips'}
+              {tripsEnabled ? 'Disable' : 'Enable Plans'}
             </button>
           </form>
         </div>
@@ -120,9 +120,9 @@ export default async function SettingsPage() {
         <div className="border-t border-gray-50 pt-4 space-y-1.5">
           <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">What this controls</p>
           <ul className="text-xs text-gray-500 space-y-1 leading-relaxed">
-            <li>→ &quot;Plan a Trip&quot; card on the Home screen</li>
-            <li>→ &quot;My Trips&quot; section on the Account screen</li>
-            <li>→ &quot;Building for a trip?&quot; prompt on the empty Suitcase screen</li>
+            <li>→ &quot;Create a Plan&quot; card on the Home screen</li>
+            <li>→ &quot;My Plans&quot; section on the Account screen</li>
+            <li>→ &quot;Planning for an event?&quot; prompt on the empty Suitcase screen</li>
           </ul>
         </div>
       </div>
