@@ -10,12 +10,20 @@ export function Footer() {
             <p className="font-serif text-2xl font-bold text-cream mb-1">Ready to start?</p>
             <p className="font-sans text-sm text-cream/60">Browse pieces, build your suitcase, and rent monthly.</p>
           </div>
-          <Link
-            href="https://apps.apple.com/app/davenport/id6778844291"
-            className="shrink-0 bg-cream text-navy font-sans font-semibold text-sm px-7 py-3.5 rounded-xl hover:bg-cream/90 transition-colors"
-          >
-            Download on the App Store
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+            <Link
+              href="/browse"
+              className="bg-cream text-navy font-sans font-semibold text-sm px-7 py-3.5 rounded-xl hover:bg-cream/90 transition-colors whitespace-nowrap"
+            >
+              Shop the collection →
+            </Link>
+            <Link
+              href="https://apps.apple.com/app/davenport/id6778844291"
+              className="font-sans text-xs text-cream/35 hover:text-cream/60 transition-colors whitespace-nowrap"
+            >
+              Download on App Store
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -25,7 +33,7 @@ export function Footer() {
           <p className="font-serif text-lg font-bold tracking-[0.35em] mb-3">DAVENPORT</p>
           <p className="text-sm text-cream/50 leading-relaxed">
             Wardrobe flexibility.<br />
-            Fairfield County, CT · Est. 2026
+            Est. 2026
           </p>
         </div>
         <div className="space-y-2.5">

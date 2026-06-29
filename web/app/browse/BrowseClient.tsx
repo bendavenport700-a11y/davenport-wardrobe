@@ -179,14 +179,14 @@ export function BrowseClient({ pieces }: { pieces: Piece[] }) {
         {filtered.length > 0 && (
           <div className="mt-16 text-center border-t border-sand pt-12">
             <p className="font-sans text-sm text-slate mb-4">
-              Ready to rent? Download the app to add pieces to your suitcase.
+              Don&apos;t see what you&apos;re looking for?
             </p>
-            <Link
-              href="https://apps.apple.com/app/davenport/id6778844291"
-              className="inline-block bg-navy text-cream font-sans font-medium text-sm px-8 py-3.5 rounded-xl hover:bg-navy/90 transition-colors"
+            <a
+              href="mailto:support@davenport.rentals?subject=Inventory Request"
+              className="inline-block font-sans text-sm text-navy border border-navy/20 px-8 py-3.5 rounded-xl hover:bg-navy/5 transition-colors"
             >
-              Download on the App Store
-            </Link>
+              Request a piece →
+            </a>
           </div>
         )}
       </div>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: 'Rent premium wardrobe pieces monthly. Try before you commit. Buy at a lower price if you love it — or return it. No commitment.',
   openGraph: {
     title: 'Davenport — Rent. Wear. Own if you want to.',
-    description: 'Premium clothing rental for Fairfield County. Try before you commit.',
+    description: 'Rent premium menswear monthly. Try before you commit. Buy at a lower price if you love it — or return it.',
     url: 'https://davenport.rentals',
     siteName: 'Davenport',
     type: 'website',
