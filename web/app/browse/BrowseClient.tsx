@@ -11,6 +11,7 @@ interface Piece {
   rental_fee: number
   buyout_price: number
   wear_count: number
+  discount_pct?: number
   category: string
   sizes_available: string[]
   color?: string | null

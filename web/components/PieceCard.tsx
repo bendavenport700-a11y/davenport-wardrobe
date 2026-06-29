@@ -10,20 +10,25 @@ interface Piece {
   rental_fee: number
   buyout_price: number
   wear_count: number
+  discount_pct?: number
   category: string
   sizes_available: string[]
 }
 
 function conditionLabel(wears: number) {
   if (wears === 0)  return 'Pristine'
-  if (wears <= 5)   return 'Seasoned'
-  if (wears <= 10)  return 'Refined'
+  if (wears <= 5)   return 'Excellent'
+  if (wears <= 10)  return 'Well-Worn'
   return 'Veteran'
 }
 
 export function PieceCard({ piece }: { piece: Piece }) {
   const image = piece.images?.[0]
-  const rental = formatCents(piece.rental_fee)
+  const onSale = (piece.discount_pct ?? 0) > 0
+  const discountedFee = onSale
+    ? Math.round(piece.rental_fee * (1 - (piece.discount_pct ?? 0) / 100))
+    : null
+  const rental = formatCents(discountedFee ?? piece.rental_fee)
 
   return (
     <Link href={`/piece/${piece.id}`} className="group block">
@@ -51,6 +56,14 @@ export function PieceCard({ piece }: { piece: Piece }) {
               </span>
             </div>
           )}
+          {/* Sale badge */}
+          {onSale && (
+            <div className="absolute top-2.5 right-2.5">
+              <span className="text-[10px] font-sans font-bold bg-accent text-cream px-2.5 py-1 rounded-full tracking-wide">
+                {piece.discount_pct}% OFF
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Info */}
@@ -58,9 +71,14 @@ export function PieceCard({ piece }: { piece: Piece }) {
           <p className="text-xs font-sans text-slate/70 uppercase tracking-wider mb-0.5">{piece.brand}</p>
           <p className="font-sans text-sm font-semibold text-navy leading-snug mb-3 line-clamp-1">{piece.name}</p>
           <div className="flex items-center justify-between">
-            <div>
+            <div className="flex items-baseline gap-2">
               <span className="font-serif text-xl font-bold text-navy">{rental}</span>
               <span className="font-sans text-xs text-slate">/mo</span>
+              {onSale && (
+                <span className="font-sans text-xs text-slate/50 line-through">
+                  {formatCents(piece.rental_fee)}/mo
+                </span>
+              )}
             </div>
             {piece.sizes_available?.length > 0 && (
               <span className="font-sans text-xs text-slate/60">

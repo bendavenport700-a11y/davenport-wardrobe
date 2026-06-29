@@ -11,8 +11,8 @@ export const formatCentsPerMonth = (cents: number | null | undefined): string =>
 
 export function wearTierLabel(wearCount: number): string {
   if (wearCount === 0)  return 'Pristine'
-  if (wearCount <= 5)   return 'Seasoned'
-  if (wearCount <= 10)  return 'Refined'
+  if (wearCount <= 5)   return 'Excellent'
+  if (wearCount <= 10)  return 'Well-Worn'
   return 'Veteran'
 }
 

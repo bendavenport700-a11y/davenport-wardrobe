@@ -75,6 +75,7 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
     is_featured:     piece?.is_featured ?? false,
     is_draft:        piece?.is_draft ?? true,
     is_available:    piece?.is_available ?? true,
+    discount_pct:    piece?.discount_pct?.toString() ?? '0',
   })
 
   function set<K extends keyof typeof fields>(key: K, value: typeof fields[K]) {
@@ -160,6 +161,7 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
       is_featured:     fields.is_featured,
       is_draft:        fields.is_draft,
       is_available:    fields.is_available,
+      discount_pct:    Math.min(90, Math.max(0, parseInt(fields.discount_pct) || 0)),
     }
 
     const returnTo = fields.wardrobe_id ? `/wardrobes/${fields.wardrobe_id}` : '/pieces'
@@ -526,6 +528,28 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
               className="w-4 h-4 accent-navy" />
             <span className="text-sm text-gray-700">Available for rent</span>
           </label>
+        </div>
+      </section>
+
+      {/* Sale discount */}
+      <section className="bg-white rounded-xl border border-gray-100 p-5">
+        <p className="font-semibold text-navy mb-1">Sale Discount</p>
+        <p className="text-xs text-gray-400 mb-3">% off the rental fee shown to customers. 0 = no sale. Buyout price is unaffected.</p>
+        <div className="flex items-center gap-3">
+          <input
+            type="number"
+            min="0"
+            max="90"
+            value={fields.discount_pct}
+            onChange={e => set('discount_pct', e.target.value)}
+            className="w-24 border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
+          />
+          <span className="text-sm text-gray-500">% off rental</span>
+          {parseInt(fields.discount_pct) > 0 && (
+            <span className="text-xs font-medium bg-orange-100 text-orange-700 px-2 py-1 rounded-full">
+              Sale badge will show
+            </span>
+          )}
         </div>
       </section>
 

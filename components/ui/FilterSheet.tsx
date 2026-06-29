@@ -30,8 +30,8 @@ interface FilterSheetProps {
 const WEAR_OPTIONS: { value: WearFilter; label: string; sub?: string }[] = [
   { value: 'any',  label: 'Any condition' },
   { value: 'new',  label: 'Pristine',  sub: '0 wears' },
-  { value: '1-5',  label: 'Seasoned',  sub: '1–5 wears' },
-  { value: '6-10', label: 'Refined',   sub: '6–10 wears' },
+  { value: '1-5',  label: 'Excellent',  sub: '1–5 wears' },
+  { value: '6-10', label: 'Well-Worn', sub: '6–10 wears' },
   { value: '10+',  label: 'Veteran',   sub: '11+ wears' },
 ]
 

@@ -173,7 +173,7 @@ export default function BrowseScreen() {
 
   type FilterTag = { key: string; label: string; clear: () => void }
   const activeFilterTags: FilterTag[] = [
-    ...(wearFilter !== 'any'  ? [{ key: 'wear',     label: wearFilter === 'new' ? 'Pristine' : wearFilter === '1-5' ? 'Seasoned' : wearFilter === '6-10' ? 'Refined' : 'Veteran', clear: () => setWearFilter('any') }] : []),
+    ...(wearFilter !== 'any'  ? [{ key: 'wear',     label: wearFilter === 'new' ? 'Pristine' : wearFilter === '1-5' ? 'Excellent' : wearFilter === '6-10' ? 'Well-Worn' : 'Veteran', clear: () => setWearFilter('any') }] : []),
     ...(brand                 ? [{ key: 'brand',    label: brand,                      clear: () => setBrand(null) }] : []),
     ...(season                ? [{ key: 'season',   label: season,                     clear: () => setSeason(null) }] : []),
     ...(categoryGroup         ? [{ key: 'category', label: categoryGroup,               clear: () => { setCategoryGroup(null); setSize(null) } }] : []),

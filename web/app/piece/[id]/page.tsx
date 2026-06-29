@@ -12,8 +12,8 @@ export const revalidate = 300
 
 function conditionLabel(wears: number) {
   if (wears === 0)  return 'Pristine'
-  if (wears <= 5)   return 'Seasoned'
-  if (wears <= 10)  return 'Refined'
+  if (wears <= 5)   return 'Excellent'
+  if (wears <= 10)  return 'Well-Worn'
   return 'Veteran'
 }
 
@@ -22,7 +22,11 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
   if (!piece) notFound()
 
   const image = piece.images?.[0]
-  const rental = formatCentsPerMonth(piece.rental_fee)
+  const onSale = (piece.discount_pct ?? 0) > 0
+  const discountedFee = onSale
+    ? Math.round((piece.rental_fee ?? 0) * (1 - (piece.discount_pct ?? 0) / 100))
+    : null
+  const rental = formatCentsPerMonth(discountedFee ?? piece.rental_fee)
   const buyout = formatCents(piece.buyout_price)
 
   return (
@@ -62,7 +66,21 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
               <div className="bg-sand/50 rounded-2xl p-6 mb-6 space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="font-sans text-sm text-slate">Monthly rental</span>
-                  <span className="font-serif text-2xl font-bold text-navy">{rental}</span>
+                  <div className="flex items-baseline gap-2">
+                    {onSale && (
+                      <span className="font-sans text-sm text-slate/50 line-through">
+                        {formatCentsPerMonth(piece.rental_fee)}
+                      </span>
+                    )}
+                    <span className={`font-serif text-2xl font-bold ${onSale ? 'text-accent' : 'text-navy'}`}>
+                      {rental}
+                    </span>
+                    {onSale && (
+                      <span className="text-[10px] font-sans font-bold bg-accent text-cream px-2 py-0.5 rounded-full">
+                        {piece.discount_pct}% OFF
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex justify-between items-center pt-2 border-t border-sand">
                   <span className="font-sans text-sm text-slate">Buy outright today</span>

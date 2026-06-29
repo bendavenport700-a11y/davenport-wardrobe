@@ -24,6 +24,7 @@ import { WardrobeCard } from '@/components/wardrobe/WardrobeCard'
 import { WardrobeCardSkeleton, PieceCardSkeleton } from '@/components/ui/Skeleton'
 import { PieceCard } from '@/components/piece/PieceCard'
 import { HowItWorksStrip } from '@/components/home/HowItWorksStrip'
+import { ReadyToOwnShelf } from '@/components/home/ReadyToOwnShelf'
 import { colors } from '@/constants/colors'
 import { layout } from '@/constants/layout'
 
@@ -298,6 +299,11 @@ export default function HomeScreen() {
           </View>
         )}
 
+      </View>
+
+      {/* Ready to Own shelf */}
+      <View style={{ paddingTop: 4, paddingBottom: 24 }}>
+        <ReadyToOwnShelf />
       </View>
 
       {/* Create a Plan */}

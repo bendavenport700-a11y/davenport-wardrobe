@@ -13,11 +13,16 @@ interface PieceCardProps {
 }
 
 export function PieceCard({ piece, index = 0 }: PieceCardProps) {
+  const onSale = (piece.discount_pct ?? 0) > 0
+  const discountedFee = onSale
+    ? Math.round((piece.rental_fee ?? 0) * (1 - (piece.discount_pct ?? 0) / 100))
+    : null
+
   return (
     <Animated.View entering={FadeInDown.delay(index * 50).springify()} style={{ flex: 1, margin: 6 }}>
       <Pressable
         onPress={() => router.push({ pathname: '/piece/[id]', params: { id: piece.id } } as any)}
-        accessibilityLabel={`${piece.brand} ${piece.name}, ${formatCentsPerMonth(piece.rental_fee)}`}
+        accessibilityLabel={`${piece.brand} ${piece.name}, ${formatCentsPerMonth(discountedFee ?? piece.rental_fee)}`}
         style={({ pressed }) => ({ opacity: pressed ? 0.88 : 1 })}
       >
         <View style={{
@@ -47,7 +52,19 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
                 </Text>
               </View>
             </View>
-            {!piece.is_available && (
+            {/* Sale badge — top right */}
+            {onSale && (
+              <View style={{
+                position: 'absolute', top: 9, right: 9,
+                backgroundColor: colors.accent, borderRadius: 20,
+                paddingHorizontal: 8, paddingVertical: 3,
+              }}>
+                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 9.5, color: colors.cream, letterSpacing: 0.3 }}>
+                  {piece.discount_pct}% OFF
+                </Text>
+              </View>
+            )}
+            {!piece.is_available && !onSale && (
               <View style={{
                 position: 'absolute', top: 10, right: 10,
                 backgroundColor: 'rgba(15,20,35,0.62)', borderRadius: 6,
@@ -74,9 +91,20 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
             }} numberOfLines={2}>
               {piece.name}
             </Text>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy, marginTop: 6 }}>
-              {formatCentsPerMonth(piece.rental_fee)}
-            </Text>
+            {onSale ? (
+              <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 6 }}>
+                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.accent }}>
+                  {formatCentsPerMonth(discountedFee)}
+                </Text>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.gray400, textDecorationLine: 'line-through' }}>
+                  {formatCentsPerMonth(piece.rental_fee)}
+                </Text>
+              </View>
+            ) : (
+              <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy, marginTop: 6 }}>
+                {formatCentsPerMonth(piece.rental_fee)}
+              </Text>
+            )}
           </View>
         </View>
       </Pressable>

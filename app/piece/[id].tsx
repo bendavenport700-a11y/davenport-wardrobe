@@ -212,13 +212,13 @@ export default function PieceDetailScreen() {
       color: colors.success,
     },
     {
-      label: 'Seasoned',
+      label: 'Excellent',
       range: '1–5 wears',
       count: selectedSizeUnits.filter(u => u.wear_count >= 1 && u.wear_count <= 5).length,
       color: colors.navy,
     },
     {
-      label: 'Refined',
+      label: 'Well-Worn',
       range: '6–10 wears',
       count: selectedSizeUnits.filter(u => u.wear_count >= 6 && u.wear_count <= 10).length,
       color: colors.slate,

@@ -81,6 +81,7 @@ export interface Piece {
   images: string[]
   tags: string[]
   gender: 'men' | 'women' | 'unisex'
+  discount_pct: number
   is_available: boolean
   is_featured: boolean
   is_draft: boolean
