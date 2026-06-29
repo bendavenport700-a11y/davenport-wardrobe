@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { PieceCard } from '@/components/PieceCard'
@@ -18,23 +17,14 @@ export default async function WardrobePage({ params }: { params: { slug: string 
       <Navbar />
       <main className="pt-16">
         {/* Hero */}
-        <div className="relative h-64 md:h-96 bg-navy overflow-hidden">
-          {wardrobe.cover_image_url && (
-            <Image
-              src={wardrobe.cover_image_url}
-              alt={wardrobe.name}
-              fill
-              className="object-cover opacity-60"
-              sizes="100vw"
-            />
-          )}
+        <div className="relative h-64 md:h-80 bg-navy overflow-hidden">
           <div className="absolute inset-0 flex flex-col justify-end p-8 md:p-12">
-            <Link href="/browse" className="font-sans text-sm text-cream/60 hover:text-cream mb-3 inline-block transition-colors">
-              ← All Pieces
+            <Link href="/wardrobes" className="font-sans text-sm text-cream/50 hover:text-cream mb-4 inline-block transition-colors">
+              ← All Wardrobes
             </Link>
             <h1 className="font-serif text-4xl md:text-6xl font-bold text-cream">{wardrobe.name}</h1>
             {wardrobe.description && (
-              <p className="font-sans text-cream/70 text-lg mt-2 max-w-xl">{wardrobe.description}</p>
+              <p className="font-sans text-cream/60 text-base mt-2 max-w-xl">{wardrobe.description}</p>
             )}
           </div>
         </div>

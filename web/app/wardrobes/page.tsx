@@ -42,24 +42,18 @@ export default async function WardrobesPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {wardrobes.map((w: any) => (
+              {wardrobes.map((w: any, i: number) => (
                 <Link key={w.id} href={`/wardrobe/${w.slug}`} className="group block">
-                  <div className="aspect-[3/4] rounded-2xl overflow-hidden bg-navy relative">
-                    {w.cover_image_url && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={w.cover_image_url}
-                        alt={w.name}
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700 opacity-70"
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/20 to-transparent" />
-                    <div className="absolute bottom-0 left-0 right-0 p-7">
-                      <h2 className="font-serif text-xl font-bold text-cream leading-tight">{w.name}</h2>
+                  <div className={`aspect-[3/4] rounded-2xl overflow-hidden relative flex flex-col justify-between p-8 ${i % 2 === 0 ? 'bg-navy' : 'bg-[#1f3560]'}`}>
+                    <p className="font-sans text-[10px] uppercase tracking-[0.4em] text-cream/25">
+                      {String(i + 1).padStart(2, '0')}
+                    </p>
+                    <div>
+                      <h2 className="font-serif text-2xl font-bold text-cream leading-tight mb-3">{w.name}</h2>
                       {w.description && (
-                        <p className="font-sans text-sm text-cream/55 mt-1.5 line-clamp-2 leading-snug">{w.description}</p>
+                        <p className="font-sans text-sm text-cream/50 line-clamp-3 leading-relaxed">{w.description}</p>
                       )}
-                      <p className="font-sans text-xs text-gold/70 mt-3 tracking-wide">Browse wardrobe →</p>
+                      <p className="font-sans text-xs text-cream/30 group-hover:text-cream/60 transition-colors mt-6 tracking-wide">Browse wardrobe →</p>
                     </div>
                   </div>
                 </Link>
