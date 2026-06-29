@@ -369,15 +369,15 @@ export default function AccountScreen() {
           </View>
         )}
 
-        {/* My Trips */}
+        {/* My Plans */}
         {tripsEnabled && <View style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate, letterSpacing: 1.4, textTransform: 'uppercase' }}>
-              My Trips{trips && trips.length > 0 ? ` (${trips.length})` : ''}
+              My Plans{trips && trips.length > 0 ? ` (${trips.length})` : ''}
             </Text>
             <Pressable onPress={() => router.push('/trips' as any)} hitSlop={12}>
               <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.navy + 'AA' }}>
-                {(trips?.length ?? 0) > 0 ? 'See all →' : 'Plan a trip →'}
+                {(trips?.length ?? 0) > 0 ? 'See all →' : 'New Plan →'}
               </Text>
             </Pressable>
           </View>
@@ -400,11 +400,11 @@ export default function AccountScreen() {
               })}
             >
               <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: colors.navy + '0D', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="airplane-outline" size={18} color={colors.navy} />
+                <Ionicons name="list-outline" size={18} color={colors.navy} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>Plan a trip</Text>
-                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, marginTop: 1 }}>Build a packing list from the catalog</Text>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>Create a plan</Text>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, marginTop: 1 }}>Curate pieces for a trip, event, or season</Text>
               </View>
               <Ionicons name="chevron-forward" size={14} color={colors.gray400} />
             </Pressable>

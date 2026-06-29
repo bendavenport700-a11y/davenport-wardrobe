@@ -12,16 +12,28 @@ import { colors } from '@/constants/colors'
 import { layout } from '@/constants/layout'
 
 const DEFAULT_NAMES: Record<TripType, string> = {
-  event: 'My Event',
-  vacation: 'Vacation',
+  event:         'My Event',
+  vacation:      'Vacation',
   extended_stay: 'Extended Stay',
-  season: 'Fall Semester',
+  season:        'Fall Semester',
 }
 
-const STEP_TITLES = ['What kind of trip?', 'Tell us about it', "What's on the agenda?"]
+const STEP_TITLES = ['What kind of plan?', 'Name it', "What's on the agenda?"]
 const TOTAL_STEPS = 3
 
-export default function NewTripScreen() {
+const inputStyle = {
+  backgroundColor: colors.white,
+  borderRadius: 14,
+  borderWidth: 1,
+  borderColor: colors.sand + '90',
+  paddingHorizontal: 16,
+  paddingVertical: 14,
+  fontFamily: 'Inter-Regular' as const,
+  fontSize: 15,
+  color: colors.navy,
+}
+
+export default function NewPlanScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuthStore()
   const { mutateAsync: createTrip, isPending } = useCreateTrip()
@@ -33,9 +45,9 @@ export default function NewTripScreen() {
   const [step, setStep] = useState(0)
   const [tripType, setTripType] = useState<TripType | null>(null)
   const [name, setName] = useState('')
-  const [destination, setDestination] = useState('')
   const [startDate, setStartDate] = useState('')
   const [endDate, setEndDate] = useState('')
+  const [notes, setNotes] = useState('')
   const [occasions, setOccasions] = useState<string[]>([])
 
   if (!session) return null
@@ -63,23 +75,24 @@ export default function NewTripScreen() {
     if (!session?.user.id || !tripType) return
     try {
       const trip = await createTrip({
-        user_id: session.user.id,
-        name: name.trim() || DEFAULT_NAMES[tripType],
-        type: tripType,
-        destination: destination.trim() || null,
+        user_id:    session.user.id,
+        name:       name.trim() || DEFAULT_NAMES[tripType],
+        type:       tripType,
         start_date: startDate.trim() || null,
-        end_date: endDate.trim() || null,
-        occasions: occasions.length > 0 ? occasions : null,
+        end_date:   endDate.trim() || null,
+        occasions:  occasions.length > 0 ? occasions : null,
+        notes:      notes.trim() || null,
       })
       router.replace({ pathname: '/trip/[id]', params: { id: trip.id } } as any)
     } catch {
-      Alert.alert('Something went wrong', 'Could not create your trip. Please try again.')
+      Alert.alert('Something went wrong', 'Could not create your plan. Please try again.')
     }
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
       <View style={{ flex: 1, backgroundColor: colors.cream }}>
+
         {/* Header */}
         <View style={{
           paddingTop: insets.top + 16,
@@ -102,13 +115,13 @@ export default function NewTripScreen() {
               {STEP_TITLES[step]}
             </Text>
           </View>
-          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate }}>
+          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate + '80' }}>
             {step + 1} / {TOTAL_STEPS}
           </Text>
         </View>
 
         {/* Progress bar */}
-        <View style={{ height: 2, backgroundColor: colors.gray200, marginHorizontal: layout.screenPadding }}>
+        <View style={{ height: 2, backgroundColor: colors.sand + '60', marginHorizontal: layout.screenPadding }}>
           <View style={{
             height: 2,
             backgroundColor: colors.navy,
@@ -122,103 +135,90 @@ export default function NewTripScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Step 0: Trip type */}
+
+          {/* Step 0: Plan type */}
           {step === 0 && (
             <TripTypeSelector value={tripType} onChange={handleTypeSelect} />
           )}
 
-          {/* Step 1: Details */}
+          {/* Step 1: Name + dates + notes */}
           {step === 1 && tripType && (
             <View style={{ gap: 20 }}>
+              {/* Name */}
               <View style={{ gap: 8 }}>
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>Trip name</Text>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.slate, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Plan name
+                </Text>
                 <TextInput
                   value={name}
                   onChangeText={setName}
                   placeholder={DEFAULT_NAMES[tripType]}
                   placeholderTextColor={colors.gray400}
-                  style={{
-                    backgroundColor: colors.white,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: colors.sand + '80',
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    fontFamily: 'Inter-Regular',
-                    fontSize: 15,
-                    color: colors.navy,
-                  }}
+                  style={inputStyle}
+                  autoFocus
                 />
               </View>
 
+              {/* Date range */}
               <View style={{ gap: 8 }}>
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
-                  Destination <Text style={{ color: colors.slate, fontFamily: 'Inter-Regular' }}>(optional)</Text>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.slate, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Dates{' '}
+                  <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate + '70', textTransform: 'none', letterSpacing: 0 }}>
+                    — optional
+                  </Text>
+                </Text>
+                <View style={{
+                  backgroundColor: colors.white, borderRadius: 14,
+                  borderWidth: 1, borderColor: colors.sand + '90',
+                  overflow: 'hidden',
+                }}>
+                  <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flex: 1, padding: 14, borderRightWidth: 1, borderRightColor: colors.sand + '60' }}>
+                      <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.slate + '80', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+                        Start
+                      </Text>
+                      <TextInput
+                        value={startDate}
+                        onChangeText={setStartDate}
+                        placeholder="Jun 29, 2026"
+                        placeholderTextColor={colors.gray400}
+                        style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.navy, padding: 0 }}
+                        keyboardType="default"
+                      />
+                    </View>
+                    <View style={{ flex: 1, padding: 14 }}>
+                      <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.slate + '80', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+                        End
+                      </Text>
+                      <TextInput
+                        value={endDate}
+                        onChangeText={setEndDate}
+                        placeholder="Jul 4, 2026"
+                        placeholderTextColor={colors.gray400}
+                        style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.navy, padding: 0 }}
+                        keyboardType="default"
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Notes */}
+              <View style={{ gap: 8 }}>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.slate, textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Notes{' '}
+                  <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate + '70', textTransform: 'none', letterSpacing: 0 }}>
+                    — optional
+                  </Text>
                 </Text>
                 <TextInput
-                  value={destination}
-                  onChangeText={setDestination}
-                  placeholder="Nashville, TN"
+                  value={notes}
+                  onChangeText={setNotes}
+                  placeholder="Dress code, weather, vibe…"
                   placeholderTextColor={colors.gray400}
-                  style={{
-                    backgroundColor: colors.white,
-                    borderRadius: 12,
-                    borderWidth: 1,
-                    borderColor: colors.sand + '80',
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    fontFamily: 'Inter-Regular',
-                    fontSize: 15,
-                    color: colors.navy,
-                  }}
+                  style={{ ...inputStyle, minHeight: 80, textAlignVertical: 'top' }}
+                  multiline
                 />
-              </View>
-
-              <View style={{ flexDirection: 'row', gap: 12 }}>
-                <View style={{ flex: 1, gap: 8 }}>
-                  <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
-                    Start date <Text style={{ color: colors.slate, fontFamily: 'Inter-Regular' }}>(optional)</Text>
-                  </Text>
-                  <TextInput
-                    value={startDate}
-                    onChangeText={setStartDate}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.gray400}
-                    style={{
-                      backgroundColor: colors.white,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.sand + '80',
-                      paddingHorizontal: 16,
-                      paddingVertical: 14,
-                      fontFamily: 'Inter-Regular',
-                      fontSize: 15,
-                      color: colors.navy,
-                    }}
-                  />
-                </View>
-                <View style={{ flex: 1, gap: 8 }}>
-                  <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: colors.navy }}>
-                    End date <Text style={{ color: colors.slate, fontFamily: 'Inter-Regular' }}>(optional)</Text>
-                  </Text>
-                  <TextInput
-                    value={endDate}
-                    onChangeText={setEndDate}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor={colors.gray400}
-                    style={{
-                      backgroundColor: colors.white,
-                      borderRadius: 12,
-                      borderWidth: 1,
-                      borderColor: colors.sand + '80',
-                      paddingHorizontal: 16,
-                      paddingVertical: 14,
-                      fontFamily: 'Inter-Regular',
-                      fontSize: 15,
-                      color: colors.navy,
-                    }}
-                  />
-                </View>
               </View>
             </View>
           )}
@@ -227,7 +227,7 @@ export default function NewTripScreen() {
           {step === 2 && tripType && (
             <View style={{ gap: 16 }}>
               <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, lineHeight: 21 }}>
-                Select everything you'll need to dress for. We'll help you browse the right pieces.
+                Select what you'll need to dress for — we'll show the right pieces.
               </Text>
               <OccasionPicker
                 tripType={tripType}
@@ -236,6 +236,7 @@ export default function NewTripScreen() {
               />
             </View>
           )}
+
         </ScrollView>
 
         {/* Footer CTA */}
@@ -269,11 +270,12 @@ export default function NewTripScreen() {
                 fontSize: 16,
                 color: canAdvance() ? colors.cream : colors.gray400,
               }}>
-                {step === TOTAL_STEPS - 1 ? 'Create Trip →' : 'Continue →'}
+                {step === TOTAL_STEPS - 1 ? 'Create Plan →' : 'Continue →'}
               </Text>
             )}
           </Pressable>
         </View>
+
       </View>
     </KeyboardAvoidingView>
   )

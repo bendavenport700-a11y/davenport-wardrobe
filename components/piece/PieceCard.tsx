@@ -36,6 +36,17 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
               style={{ width: '100%', height: '100%' }}
               transition={300}
             />
+            {/* Condition badge — top left */}
+            <View style={{ position: 'absolute', top: 9, left: 9 }}>
+              <View style={{
+                backgroundColor: piece.wear_count === 0 ? colors.navy : 'rgba(11,21,35,0.55)',
+                borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3,
+              }}>
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 9.5, color: colors.cream, letterSpacing: 0.2 }}>
+                  {wearTierLabel(piece.wear_count)}
+                </Text>
+              </View>
+            </View>
             {!piece.is_available && (
               <View style={{
                 position: 'absolute', top: 10, right: 10,
@@ -63,22 +74,9 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
             }} numberOfLines={2}>
               {piece.name}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
-              <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy }}>
-                {formatCentsPerMonth(piece.rental_fee)}
-              </Text>
-              <View style={{
-                backgroundColor: piece.wear_count === 0 ? colors.navy + '12' : colors.slate + '10',
-                borderRadius: 20, paddingHorizontal: 7, paddingVertical: 2.5,
-              }}>
-                <Text style={{
-                  fontFamily: 'Inter-Medium', fontSize: 9.5,
-                  color: piece.wear_count === 0 ? colors.navy : colors.slate,
-                }}>
-                  {wearTierLabel(piece.wear_count)}
-                </Text>
-              </View>
-            </View>
+            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy, marginTop: 6 }}>
+              {formatCentsPerMonth(piece.rental_fee)}
+            </Text>
           </View>
         </View>
       </Pressable>

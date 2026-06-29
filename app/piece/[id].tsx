@@ -693,7 +693,7 @@ export default function PieceDetailScreen() {
             </Pressable>
           )}
 
-          {/* Add to Trip — secondary CTA, only shown when trips feature is on and user is signed in */}
+          {/* Save to Plan — secondary CTA, only shown when trips feature is on and user is signed in */}
           {tripsEnabled && session && (
             <Pressable
               onPress={() => {
@@ -709,7 +709,7 @@ export default function PieceDetailScreen() {
               }}
             >
               <Ionicons
-                name="airplane-outline"
+                name="calendar-outline"
                 size={15}
                 color={selectedSize ? colors.navy : colors.gray400}
               />
@@ -717,7 +717,7 @@ export default function PieceDetailScreen() {
                 fontFamily: 'Inter-Medium', fontSize: 14,
                 color: selectedSize ? colors.navy : colors.gray400,
               }}>
-                {selectedSize ? 'Add to Trip' : 'Select a Size First'}
+                {selectedSize ? 'Save to Plan' : 'Select a Size First'}
               </Text>
             </Pressable>
           )}

@@ -4,51 +4,45 @@ import { router } from 'expo-router'
 import type { Trip } from '@/types'
 import { colors } from '@/constants/colors'
 
-const TRIP_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
-  event: 'airplane-outline',
-  vacation: 'sunny-outline',
-  extended_stay: 'home-outline',
-  season: 'school-outline',
-}
-
-const TRIP_LABELS: Record<string, string> = {
-  event: 'Event',
-  vacation: 'Vacation',
+const TYPE_LABELS: Record<string, string> = {
+  event:         'Event',
+  vacation:      'Vacation',
   extended_stay: 'Extended Stay',
-  season: 'Season / School',
+  season:        'Season',
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  planning: colors.slate,
-  active: colors.accent,
-  ordered: colors.info,
-  complete: colors.success,
+const TYPE_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
+  event:         'calendar-outline',
+  vacation:      'airplane-outline',
+  extended_stay: 'home-outline',
+  season:        'sunny-outline',
 }
 
-function tripDateLabel(trip: Trip): string {
+function formatDateRange(trip: Trip): string | null {
   if (trip.start_date && trip.end_date) {
     const start = new Date(trip.start_date + 'T00:00:00Z')
     const end = new Date(trip.end_date + 'T00:00:00Z')
-    const days = Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1
     const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-    return `${fmt.format(start)} – ${fmt.format(end)} · ${days}d`
+    return `${fmt.format(start)} – ${fmt.format(end)}`
   }
   if (trip.start_date) {
     const d = new Date(trip.start_date + 'T00:00:00Z')
     return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d)
   }
-  return TRIP_LABELS[trip.type] ?? trip.type
+  return null
 }
 
 export function TripCard({ trip }: { trip: Trip }) {
+  const dateRange = formatDateRange(trip)
+
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/trip/[id]', params: { id: trip.id } } as any)}
       accessibilityRole="button"
-      accessibilityLabel={`View trip: ${trip.name}`}
+      accessibilityLabel={`View plan: ${trip.name}`}
       style={({ pressed }) => ({
         backgroundColor: colors.white,
-        borderRadius: 16,
+        borderRadius: 18,
         padding: 16,
         borderWidth: 1,
         borderColor: colors.sand + '80',
@@ -58,31 +52,39 @@ export function TripCard({ trip }: { trip: Trip }) {
         opacity: pressed ? 0.9 : 1,
       })}
     >
+      {/* Icon bubble */}
       <View style={{
-        width: 44, height: 44, borderRadius: 12,
+        width: 46, height: 46, borderRadius: 13,
         backgroundColor: colors.navy + '0D',
         alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
       }}>
-        <Ionicons name={TRIP_ICONS[trip.type] ?? 'airplane-outline'} size={20} color={colors.navy} />
+        <Ionicons name={TYPE_ICONS[trip.type] ?? 'calendar-outline'} size={21} color={colors.navy} />
       </View>
-      <View style={{ flex: 1, gap: 2 }}>
+
+      {/* Text */}
+      <View style={{ flex: 1, gap: 3 }}>
         <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.navy, letterSpacing: -0.2 }} numberOfLines={1}>
           {trip.name}
         </Text>
-        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate }}>
-          {tripDateLabel(trip)}{trip.destination ? ` · ${trip.destination}` : ''}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{
+            backgroundColor: colors.sand + '80',
+            borderRadius: 20, paddingHorizontal: 7, paddingVertical: 2,
+          }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.slate, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+              {TYPE_LABELS[trip.type] ?? trip.type}
+            </Text>
+          </View>
+          {dateRange && (
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate }}>
+              {dateRange}
+            </Text>
+          )}
+        </View>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{
-          width: 7, height: 7, borderRadius: 3.5,
-          backgroundColor: STATUS_COLORS[trip.status] ?? colors.slate,
-        }} />
-        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textTransform: 'capitalize' }}>
-          {trip.status}
-        </Text>
-        <Ionicons name="chevron-forward" size={13} color={colors.gray400} />
-      </View>
+
+      <Ionicons name="chevron-forward" size={14} color={colors.gray400} />
     </Pressable>
   )
 }
