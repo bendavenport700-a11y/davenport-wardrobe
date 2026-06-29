@@ -104,7 +104,7 @@ export function TripItemRow({ item, onRemove }: Props) {
         <Pressable
           onPress={() => onRemove(item)}
           hitSlop={12}
-          accessibilityLabel="Remove from trip"
+          accessibilityLabel="Remove from plan"
           style={{ padding: 4 }}
         >
           <Ionicons name="close" size={18} color={colors.gray400} />

@@ -5,7 +5,7 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInRight, FadeOutLeft, FadeInLeft, FadeOutRight, Layout } from 'react-native-reanimated'
+import Animated, { FadeInRight, FadeOutLeft, Layout } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '@/store/authStore'
 import { useCreateTrip } from '@/hooks/useTrips'
