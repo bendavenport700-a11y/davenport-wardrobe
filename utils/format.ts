@@ -26,10 +26,10 @@ export function wearTierDescription(wearCount: number): string {
 export const wearCountLabel = (n: number): string => wearTierDescription(n)
 
 export const conditionLabel = (c: string): string =>
-  ({ new: 'Pristine · never worn', like_new: 'Seasoned · dry cleaned', good: 'Refined · dry cleaned' }[c] ?? c)
+  ({ new: 'Pristine · never worn', like_new: 'Excellent · dry cleaned', good: 'Well-Worn · dry cleaned' }[c] ?? c)
 
 export const conditionShort = (c: string): string =>
-  ({ new: 'Pristine', like_new: 'Seasoned', good: 'Refined' }[c] ?? c)
+  ({ new: 'Pristine', like_new: 'Excellent', good: 'Well-Worn' }[c] ?? c)
 
 export const conditionBadgeLabel = (condition: string, wearCount: number): string =>
   wearTierLabel(wearCount)

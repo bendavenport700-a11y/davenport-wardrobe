@@ -38,7 +38,7 @@ export function RentalStatusBadge({ status }: { status: string }) {
 
 export function ConditionBadge({ condition }: { condition: string }) {
   const colors = { new: 'bg-green-100 text-green-800', like_new: 'bg-emerald-100 text-emerald-700', good: 'bg-blue-100 text-blue-700' }
-  const labels: Record<string, string> = { new: 'Pristine', like_new: 'Seasoned', good: 'Refined / Veteran' }
+  const labels: Record<string, string> = { new: 'Pristine', like_new: 'Excellent', good: 'Well-Worn / Veteran' }
   return (
     <span className={`inline-flex px-2.5 py-0.5 rounded-full text-[11px] font-medium tracking-wide ${colors[condition as keyof typeof colors] ?? 'bg-gray-100'}`}>
       {labels[condition] ?? condition.replace('_', ' ')}

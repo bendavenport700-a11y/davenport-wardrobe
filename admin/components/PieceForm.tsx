@@ -290,8 +290,8 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
           <Field label="Condition" hint="Auto-set from wear count on save">
             <select value={fields.condition} onChange={e => set('condition', e.target.value as typeof fields.condition)} className={input}>
               <option value="new">Pristine (0 wears)</option>
-              <option value="like_new">Seasoned (1–3 wears)</option>
-              <option value="good">Refined / Veteran (4+ wears)</option>
+              <option value="like_new">Excellent (1–5 wears)</option>
+              <option value="good">Well-Worn / Veteran (6+ wears)</option>
             </select>
           </Field>
         </div>

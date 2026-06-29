@@ -30,8 +30,8 @@ async function getPieceUnits(pieceId: string) {
 
 const CONDITION_LABEL: Record<string, string> = {
   new:      'Pristine',
-  like_new: 'Seasoned',
-  good:     'Refined / Veteran',
+  like_new: 'Excellent',
+  good:     'Well-Worn / Veteran',
 }
 
 const CONDITION_COLOR: Record<string, string> = {
