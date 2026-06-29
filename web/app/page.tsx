@@ -209,12 +209,17 @@ export default async function HomePage() {
         {wardrobes.length > 0 && (
           <section className="py-24 px-8 md:px-16 bg-sand/25">
             <div className="max-w-6xl mx-auto">
-              <div className="mb-12">
-                <p className="font-sans text-[11px] uppercase tracking-[0.4em] text-slate/40 mb-3">Curated collections</p>
-                <h2 className="font-serif text-3xl md:text-4xl font-bold text-navy">The Wardrobes</h2>
-                <p className="font-sans text-sm text-slate mt-3 max-w-sm leading-relaxed">
-                  Curated collections built around how you actually live. Pick a wardrobe or mix and match.
-                </p>
+              <div className="mb-12 flex items-end justify-between gap-4">
+                <div>
+                  <p className="font-sans text-[11px] uppercase tracking-[0.4em] text-slate/40 mb-3">Curated collections</p>
+                  <h2 className="font-serif text-3xl md:text-4xl font-bold text-navy">The Wardrobes</h2>
+                  <p className="font-sans text-sm text-slate mt-3 max-w-sm leading-relaxed">
+                    Curated collections built around how you actually live. Pick a wardrobe or mix and match.
+                  </p>
+                </div>
+                <Link href="/wardrobes" className="font-sans text-sm text-slate hover:text-navy transition-colors whitespace-nowrap pb-1">
+                  See all →
+                </Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
                 {wardrobes.map(w => (
