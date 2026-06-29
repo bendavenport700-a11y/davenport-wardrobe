@@ -49,11 +49,17 @@ export function PlanClient({ plan, items: initialItems }: { plan: Plan; items: P
   const [addingAll, setAddingAll] = useState(false)
   const [addedAll, setAddedAll] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [planError, setPlanError] = useState<string | null>(null)
 
   async function removeItem(itemId: string) {
     const supabase = createSupabaseBrowser()
-    await supabase.from('trip_items').delete().eq('id', itemId)
-    setItems(prev => prev.filter(i => i.id !== itemId))
+    const prev = items
+    setItems(p => p.filter(i => i.id !== itemId))
+    const { error } = await supabase.from('trip_items').delete().eq('id', itemId)
+    if (error) {
+      setItems(prev)
+      setPlanError('Could not remove piece. Try again.')
+    }
   }
 
   async function addAllToSuitcase() {
@@ -81,8 +87,14 @@ export function PlanClient({ plan, items: initialItems }: { plan: Plan; items: P
   async function deletePlan() {
     if (!confirm('Delete this plan? This cannot be undone.')) return
     setDeleting(true)
+    setPlanError(null)
     const supabase = createSupabaseBrowser()
-    await supabase.from('trips').delete().eq('id', plan.id)
+    const { error } = await supabase.from('trips').delete().eq('id', plan.id)
+    if (error) {
+      setDeleting(false)
+      setPlanError('Could not delete plan. Try again.')
+      return
+    }
     router.push('/plans')
   }
 
@@ -198,6 +210,12 @@ export function PlanClient({ plan, items: initialItems }: { plan: Plan; items: P
             )
           })}
         </div>
+      )}
+
+      {planError && (
+        <p className="font-sans text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mt-6">
+          {planError}
+        </p>
       )}
 
       {/* Browse + delete */}

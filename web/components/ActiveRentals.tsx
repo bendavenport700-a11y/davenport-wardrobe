@@ -55,19 +55,21 @@ function formatNextBilling(dateStr: string): string {
 export function ActiveRentals() {
   const [rentals, setRentals] = useState<Rental[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [returning, setReturning] = useState<string | null>(null)
   const [returnError, setReturnError] = useState<string | null>(null)
 
   const load = useCallback(async () => {
     const supabase = createSupabaseBrowser()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { data } = await supabase
+    if (!user) { setLoading(false); return }
+    const { data, error } = await supabase
       .from('rentals')
       .select('id, status, rental_fee_cents, size, next_billing_date, buyout_price_snapshot, created_at, tracking_number, carrier, pieces(name, brand, images)')
       .eq('user_id', user.id)
       .in('status', ACTIVE_STATUSES)
       .order('created_at', { ascending: false })
+    if (error) { setLoadError(true); setLoading(false); return }
     setRentals((data ?? []) as unknown as Rental[])
     setLoading(false)
   }, [])
@@ -118,6 +120,17 @@ export function ActiveRentals() {
         {[1, 2].map(i => (
           <div key={i} className="bg-white rounded-2xl border border-sand h-24 animate-pulse" />
         ))}
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="bg-white rounded-2xl border border-sand p-6 text-center">
+        <p className="font-sans text-sm text-slate/60 mb-3">Couldn&apos;t load your rentals.</p>
+        <button onClick={() => { setLoadError(false); setLoading(true); load() }} className="font-sans text-sm text-navy underline underline-offset-2">
+          Try again
+        </button>
       </div>
     )
   }

@@ -39,6 +39,7 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
   const { mutateAsync: addItem } = useAddTripItem()
   const [adding, setAdding] = useState<string | null>(null)
   const [done, setDone] = useState<string | null>(null)
+  const [addError, setAddError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
 
   const translateY = useSharedValue(700)
@@ -64,9 +65,12 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
   async function handleSelect(tripId: string) {
     if (adding) return
     setAdding(tripId)
+    setAddError(null)
     try {
       await addItem({ trip_id: tripId, piece_id: piece.id, size })
       setDone(tripId)
+    } catch {
+      setAddError('Something went wrong. Try again.')
     } finally {
       setAdding(null)
     }
@@ -154,6 +158,12 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
                 })
             )}
           </ScrollView>
+
+          {addError && (
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: '#dc2626', textAlign: 'center', marginBottom: 8, paddingHorizontal: 4 }}>
+              {addError}
+            </Text>
+          )}
 
           <View style={[s.footer, { paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
             <Pressable
