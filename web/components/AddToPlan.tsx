@@ -18,6 +18,7 @@ export function AddToPlan({ pieceId, sizesAvailable }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [savedPlanName, setSavedPlanName] = useState('')
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [userId, setUserId] = useState<string | null | undefined>(undefined)
 
   useEffect(() => {
@@ -47,16 +48,21 @@ export function AddToPlan({ pieceId, sizesAvailable }: Props) {
     }
     if (!selectedPlan || !selectedSize) return
     setSaving(true)
+    setSaveError(null)
     const supabase = createSupabaseBrowser()
-    await supabase.from('trip_items').insert({
+    const { error } = await supabase.from('trip_items').insert({
       trip_id: selectedPlan,
       piece_id: pieceId,
       size: selectedSize,
       sort_order: 0,
     })
+    setSaving(false)
+    if (error) {
+      setSaveError('Could not save to plan. Try again.')
+      return
+    }
     const planName = plans.find(p => p.id === selectedPlan)?.name ?? 'plan'
     setSavedPlanName(planName)
-    setSaving(false)
     setSaved(true)
     setOpen(false)
   }
@@ -149,6 +155,9 @@ export function AddToPlan({ pieceId, sizesAvailable }: Props) {
                   + New plan
                 </a>
               </div>
+              {saveError && (
+                <p className="font-sans text-xs text-red-600">{saveError}</p>
+              )}
             </>
           )}
         </div>

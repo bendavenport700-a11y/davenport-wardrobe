@@ -42,7 +42,7 @@ export default function TripDetailScreen() {
   const addToSuitcase = useSuitcaseStore(s => s.addItem)
 
   function handleRemove(item: TripItem) {
-    Alert.alert('Remove from trip?', `Remove ${item.piece?.name ?? 'this piece'} from your packing list?`, [
+    Alert.alert('Remove from plan?', `Remove ${item.piece?.name ?? 'this piece'} from your packing list?`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Remove',
@@ -58,7 +58,7 @@ export default function TripDetailScreen() {
     const unsizedCount = items.filter(i => i.piece && !i.size).length
 
     if (items.length === 0) {
-      Alert.alert('Empty packing list', 'Add some pieces to your trip first.')
+      Alert.alert('Empty packing list', 'Add some pieces to your plan first.')
       return
     }
 
@@ -109,7 +109,7 @@ export default function TripDetailScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: colors.cream, alignItems: 'center', justifyContent: 'center', padding: layout.screenPadding }}>
         <Text style={{ fontFamily: 'Inter-Regular', fontSize: 15, color: colors.slate, textAlign: 'center', marginBottom: 16 }}>
-          Couldn't load this trip.
+          Couldn't load this plan.
         </Text>
         <Pressable onPress={() => router.back()} style={{ padding: 8 }}>
           <Text style={{ fontFamily: 'Inter-Medium', fontSize: 15, color: colors.navy }}>← Go back</Text>
@@ -186,7 +186,7 @@ export default function TripDetailScreen() {
               <View style={{ backgroundColor: colors.white, borderRadius: 16, padding: 24, alignItems: 'center', gap: 10, borderWidth: 1, borderColor: colors.sand + '80' }}>
                 <Ionicons name="shirt-outline" size={28} color={colors.gray400} />
                 <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, textAlign: 'center', lineHeight: 21 }}>
-                  Your packing list is empty. Browse pieces and add them to this trip.
+                  Your packing list is empty. Browse pieces and add them to this plan.
                 </Text>
               </View>
             ) : (
@@ -216,7 +216,7 @@ export default function TripDetailScreen() {
             >
               <Ionicons name="add" size={16} color={colors.navy} />
               <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>
-                Browse pieces for this trip
+                Browse pieces for this plan
               </Text>
             </Pressable>
           </View>

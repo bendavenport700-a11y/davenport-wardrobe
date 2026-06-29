@@ -300,13 +300,13 @@ export default function HomeScreen() {
 
       </View>
 
-      {/* Plan a Trip */}
+      {/* Create a Plan */}
       {tripsEnabled && (
         <View style={{ marginHorizontal: layout.screenPadding, marginBottom: 20 }}>
           <Pressable
             onPress={() => router.push('/trip/new' as any)}
             accessibilityRole="button"
-            accessibilityLabel="Plan a trip"
+            accessibilityLabel="Create a plan"
             style={({ pressed }) => ({
               backgroundColor: colors.ink,
               borderRadius: 16,
@@ -318,14 +318,14 @@ export default function HomeScreen() {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: colors.sand + '15', alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name="airplane-outline" size={22} color={colors.sand} />
+                <Ionicons name="calendar-outline" size={22} color={colors.sand} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: 'Inter-Bold', fontSize: 16, color: colors.cream, letterSpacing: -0.3 }}>
-                  Plan a Trip
+                  Create a Plan
                 </Text>
                 <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.sand, marginTop: 2 }}>
-                  Build a packing list from the catalog
+                  Curate pieces for a trip, event, or season
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.sand + '80'} />

@@ -19,10 +19,10 @@ const TRIP_LABELS: Record<string, string> = {
 }
 
 const TRIP_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
-  event:        'airplane-outline',
-  vacation:     'sunny-outline',
+  event:        'calendar-outline',
+  vacation:     'airplane-outline',
   extended_stay:'home-outline',
-  season:       'school-outline',
+  season:       'sunny-outline',
 }
 
 interface Props {
@@ -91,7 +91,7 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
           <View style={s.handle} />
 
           <View style={s.header}>
-            <Text style={s.title}>Add to Trip</Text>
+            <Text style={s.title}>Save to Plan</Text>
             <Pressable onPress={onClose} hitSlop={12}>
               <Ionicons name="close" size={20} color={colors.slate} />
             </Pressable>
@@ -110,13 +110,13 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
               <ActivityIndicator color={colors.navy} style={{ marginTop: 20 }} />
             ) : activeTripCount === 0 ? (
               <View style={s.emptyBox}>
-                <Ionicons name="airplane-outline" size={24} color={colors.gray400} style={{ marginBottom: 8 }} />
-                <Text style={s.emptyText}>No active trips yet.</Text>
+                <Ionicons name="calendar-outline" size={24} color={colors.gray400} style={{ marginBottom: 8 }} />
+                <Text style={s.emptyText}>No active plans yet.</Text>
                 <Pressable
                   onPress={() => { onClose(); router.push('/trip/new' as any) }}
                   style={s.newTripBtn}
                 >
-                  <Text style={s.newTripText}>Plan a Trip →</Text>
+                  <Text style={s.newTripText}>Create a Plan →</Text>
                 </Pressable>
               </View>
             ) : (
@@ -171,7 +171,7 @@ export function TripPickerSheet({ visible, onClose, userId, piece, size }: Props
               style={s.newTripBtnFull}
             >
               <Ionicons name="add" size={15} color={colors.navy} />
-              <Text style={s.newTripFullText}>Plan a new trip</Text>
+              <Text style={s.newTripFullText}>Create a new plan</Text>
             </Pressable>
           </View>
         </Animated.View>
