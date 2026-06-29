@@ -68,6 +68,9 @@ export default async function AccountPage() {
                 <p className="font-sans text-sm text-slate mt-1">{profile.full_name}</p>
               )}
             </div>
+            <Link href="/plans" className="font-sans text-sm text-navy border border-navy/20 px-5 py-2.5 rounded-xl hover:bg-navy/5 transition-colors">
+              My Plans →
+            </Link>
           </div>
 
           {/* Profile summary */}

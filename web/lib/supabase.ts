@@ -19,13 +19,14 @@ export async function getFeaturedPieces() {
   return data ?? []
 }
 
-export async function getAllPieces() {
-  const { data } = await supabase
+export async function getAllPieces(gender?: string) {
+  let q = supabase
     .from('pieces')
     .select(PIECE_COLS)
     .eq('is_available', true)
     .eq('is_draft', false)
-    .order('created_at', { ascending: false })
+  if (gender && gender !== 'all') q = q.eq('gender', gender)
+  const { data } = await q.order('created_at', { ascending: false })
   return data ?? []
 }
 

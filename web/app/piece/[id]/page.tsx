@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { AddToSuitcase } from '@/components/AddToSuitcase'
+import { AddToPlan } from '@/components/AddToPlan'
 import { getPiece } from '@/lib/supabase'
 import { formatCents, formatCentsPerMonth } from '@/lib/format'
 
@@ -81,6 +82,7 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
                 buyout_price: piece.buyout_price,
                 wear_count: piece.wear_count,
               }} />
+              <AddToPlan pieceId={piece.id} sizesAvailable={piece.sizes_available ?? []} />
 
               <div className="grid grid-cols-2 gap-2 mt-6">
                 {[
