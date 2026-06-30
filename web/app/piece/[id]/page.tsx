@@ -26,7 +26,8 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
   const discountedFee = onSale
     ? Math.round((piece.rental_fee ?? 0) * (1 - (piece.discount_pct ?? 0) / 100))
     : null
-  const rental = formatCentsPerMonth(discountedFee ?? piece.rental_fee)
+  const effectiveFee = discountedFee ?? piece.rental_fee
+  const rental = formatCentsPerMonth(effectiveFee)
   const buyout = formatCents(piece.buyout_price)
 
   return (
@@ -96,7 +97,7 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
                 brand: piece.brand,
                 images: piece.images ?? [],
                 sizes_available: piece.sizes_available ?? [],
-                rental_fee: piece.rental_fee,
+                rental_fee: effectiveFee,
                 buyout_price: piece.buyout_price,
                 wear_count: piece.wear_count,
               }} />

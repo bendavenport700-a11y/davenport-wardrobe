@@ -25,6 +25,7 @@ interface PlanItem {
     brand: string
     images: string[] | null
     rental_fee: number
+    discount_pct: number | null
     buyout_price: number
     condition: string
     wear_count: number
@@ -66,10 +67,14 @@ export function PlanClient({ plan, items: initialItems }: { plan: Plan; items: P
     setAddingAll(true)
     for (const item of items) {
       if (!item.pieces) continue
+      const disc = item.pieces.discount_pct ?? 0
+      const effectiveFee = disc > 0
+        ? Math.round(item.pieces.rental_fee * (1 - disc / 100))
+        : item.pieces.rental_fee
       addItem({
         piece_id: item.pieces.id,
         size: item.size,
-        rental_fee_cents: item.pieces.rental_fee,
+        rental_fee_cents: effectiveFee,
         wear_count_at_rental: item.pieces.wear_count,
         buyout_price_snapshot: item.pieces.buyout_price,
         piece: {

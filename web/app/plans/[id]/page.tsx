@@ -20,7 +20,7 @@ export default async function PlanPage({ params }: { params: { id: string } }) {
       .single(),
     supabase
       .from('trip_items')
-      .select('id, size, sort_order, pieces(id, name, brand, images, rental_fee, buyout_price, condition, wear_count, sizes_available)')
+      .select('id, size, sort_order, pieces(id, name, brand, images, rental_fee, discount_pct, buyout_price, condition, wear_count, sizes_available)')
       .eq('trip_id', params.id)
       .order('sort_order'),
   ])

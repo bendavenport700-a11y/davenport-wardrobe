@@ -45,7 +45,7 @@ function NavigationGuard() {
 }
 
 export default function RootLayout() {
-  const { setSession, setProfile, setHydrated } = useAuthStore()
+  const { setSession, setProfile, setHydrated, hydrated } = useAuthStore()
 
   const [fontsLoaded, fontError] = useFonts({
     'PlayfairDisplay-Bold': require('@/assets/fonts/PlayfairDisplay-Bold.ttf'),
@@ -56,8 +56,11 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontError) console.error('Font load error:', fontError)
-    if (fontsLoaded || fontError) SplashScreen.hideAsync()
-  }, [fontsLoaded, fontError])
+    // Wait for auth hydration too — hiding the splash as soon as fonts load (but
+    // before we know if there's a session) flashes the wrong route for a frame,
+    // which only "fixes itself" when the app is backgrounded/foregrounded.
+    if ((fontsLoaded || fontError) && hydrated) SplashScreen.hideAsync()
+  }, [fontsLoaded, fontError, hydrated])
 
   useEffect(() => {
     // Track the last UID we fetched a profile for to avoid duplicate fetches when
@@ -138,7 +141,7 @@ export default function RootLayout() {
     return () => { subscription.unsubscribe(); linkingSub.remove() }
   }, [setSession, setProfile, setHydrated])
 
-  if (!fontsLoaded && !fontError) return null
+  if ((!fontsLoaded && !fontError) || !hydrated) return null
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,6 +1,6 @@
 # Davenport Wardrobe — Master Plan
 
-> **Last revised:** 2026-06-28 | **Status:** App live on App Store (Build 27). Admin panel fully deployed. First real inventory cycle underway. Web checkout is the #1 priority for early growth.
+> **Last revised:** 2026-06-30 | **Status:** App live on App Store (Build 27), prepping for Build 28. Admin panel fully deployed. Web checkout is now built (auth, cart, Stripe checkout, account) — needs an end-to-end real-order test pass, not net-new construction. Plans (Trips) is live (`trips_enabled = true`). LLC formation is pending review — next major push after Build 28 polish is marketing.
 
 ---
 
@@ -308,7 +308,7 @@ All original build phases are complete. This section is a record of what was bui
 | Flag | Current | What it unlocks |
 |---|---|---|
 | `womens_enabled` | `false` | Gender toggle in profile, women's browse filter |
-| `trips_enabled` | `false` | Trips tab in app — plan outfits by trip/occasion |
+| `trips_enabled` | `true` | Plans tab in app + web — plan outfits by trip/occasion (live as of June 2026) |
 
 ## What's Live
 
@@ -459,10 +459,10 @@ Critical bugs and business logic gaps addressed before first customer orders:
 
 ## Quick Ops Checklist (do these when you have 5 minutes)
 
-- [ ] **Enable leaked password protection** — Supabase Dashboard → project `rjplmjtydknascuqvyzq` → Authentication → Sign In / Up → Password → toggle on "Leaked Password Protection" → Save.
-- [ ] **Set ADMIN_EMAIL env var** — Supabase Edge Function secrets → add `ADMIN_EMAIL=your@email.com` so refund request notifications reach you.
-- [ ] **Run migrations 017–019** — orders status constraints and billing_events type. Run via Supabase Dashboard → SQL Editor or `supabase db push`.
-- [ ] **Deploy new edge functions** — `admin-charge-nonreturn`, `charge-damage`, `request-refund` need to be deployed: `supabase functions deploy admin-charge-nonreturn && supabase functions deploy charge-damage && supabase functions deploy request-refund`.
+- [ ] **Enable leaked password protection** — Supabase Dashboard → project `rjplmjtydknascuqvyzq` → Authentication → Sign In / Up → Password → toggle on "Leaked Password Protection" → Save. *(manual UI click — cannot be done via CLI)*
+- [x] **Set ADMIN_EMAIL env var** — ✅ Done 2026-06-30 via `supabase secrets set ADMIN_EMAIL=bendavenport700@gmail.com`.
+- [x] **Run migrations 017–019** — ✅ Already applied (project is now at migration 031).
+- [x] **Deploy new edge functions** — ✅ `admin-charge-nonreturn`, `charge-damage`, `request-refund` all ACTIVE (confirmed via list_edge_functions 2026-06-30).
 
 ---
 
@@ -527,29 +527,26 @@ Critical bugs and business logic gaps addressed before first customer orders:
 
 ---
 
-## Phase 18 — Web Checkout ⭐ TOP PRIORITY
+## Phase 18 — Web Checkout ✅ Built, needs end-to-end real-order verification ⭐ NEXT
 
 **Goal:** Let customers order directly from davenport.rentals without downloading the app.
 
-**Why this is the #1 priority right now:** At early stages, asking someone to download an app is a major barrier to that first order. Anyone who finds Davenport through a web search, a flyer link, a text from a friend, or an Instagram bio can land on the website and immediately order — no App Store, no install required. The website is already beautiful and browsable. Making it transactional could meaningfully accelerate early customer acquisition.
+**Status as of 2026-06-30:** All the pages exist — `web/app/(auth)/login`, `(auth)/signup`, `auth/callback`, `cart`, `checkout`, `checkout/confirmation`, `account` are all built and committed (see commits `f6b3f20 Web checkout: auth, cart, Stripe checkout, account page` and `e5a7e9f Fix web checkout bugs found in post-build review`). This phase is **not net-new construction** — it's a verification and polish pass:
 
-**What to build:**
-- [ ] Auth pages on the web (`/login`, `/signup`) — Supabase auth already exists; just need web UI
-- [ ] "Add to suitcase" button on `/piece/[id]` piece detail — currently display-only
-- [ ] Web suitcase state — localStorage cart, syncs to Supabase once authenticated
-- [ ] `/cart` page — selected pieces + sizes, bundle discount shown, handling fee
-- [ ] `/checkout` page — Stripe Elements wired to existing `create-setup-intent` + `confirm-order` edge functions (same functions the app uses — no duplication)
-- [ ] `/checkout/confirmation` — order confirmation page with order details
-- [ ] `/account` page — active rentals, billing summary, return requests
-- [ ] Web navbar: cart count badge + account link when logged in
+- [ ] Walk the full flow live: sign up → confirm email → browse → add to suitcase → cart → checkout with a real card → confirmation → account shows the rental
+- [ ] Confirm Stripe is in live mode on web (not accidentally test keys) and a real charge succeeds
+- [ ] Confirm returning-customer path (saved payment method) skips card entry correctly
+- [ ] Check mobile-web responsiveness on the checkout/cart pages specifically
+- [ ] Confirm order confirmation email sends (Resend) and admin notification email sends
+- [ ] Cross-check against Phase "App/Web Feature Parity" below — same copy, same flow steps, same pricing display as the app
+
+**Why this is the priority right now:** At early stages, asking someone to download an app is a major barrier to that first order. The infrastructure is done — what's left is making sure it actually works end-to-end for a real paying customer, since it hasn't been confirmed live since the post-build bug-fix pass.
 
 **Existing infrastructure that carries over (no changes needed):**
 - All Stripe edge functions are platform-agnostic — they work from web or mobile
 - Supabase auth supports web OAuth (magic link, Google, Apple) out of the box
 - Brand system, colors, and typography are already shared between web and app
 - Order, piece, and wardrobe data models are unchanged
-
-**Effort estimate:** 2–3 sessions. Auth + cart are the hard parts. Checkout follows the same logic as the app.
 
 **Sequencing note:** Start with auth + "Add to suitcase" + cart first. Get a working end-to-end flow before polishing the account page. The account page is nice to have but not required for the first order.
 
@@ -755,6 +752,84 @@ This cleaning standard is mentioned on the website and is part of the brand trus
 - [ ] Confirm LLC is registered and in good standing (see Phase 19 for full legal checklist)
 - [ ] Open a dedicated business bank account if not already done
 - [ ] EIN on file — separate from personal taxes
+
+---
+
+---
+
+# PART XIII — AI ROUTINES
+
+**Architecture (confirmed working as of 2026-06-30):** All routines live in a single `davenport-routines` Supabase Edge Function. pg_cron calls `call_routine('<name>')` on schedule, which HTTP POSTs to the function with `{"routine":"<name>"}`. The function uses the Anthropic SDK and Supabase JS client directly — no `mcp__` tools, no external curl. CCR triggers (Claude Code Remote) are confirmed broken: network egress to Supabase is blocked in spawned sessions, so they never complete. All CCR triggers have been deleted. Do NOT create new CCR triggers — add routines as new cases in `supabase/functions/davenport-routines/index.ts` and add a pg_cron job.
+
+| Routine | Schedule | Job | Status (as of 2026-06-30) |
+|---|---|---|---|
+| Wardrobe Sorter | hourly :30 | Assigns unassigned pieces to one of the 6 wardrobes only on clear fit | ✅ Firing — 0 pieces missing wardrobe_id |
+| Description Writer | daily 7am | Writes on-brand descriptions for pieces with null/short descriptions | ✅ Firing — all pieces have descriptions |
+| Tag & Category Manager | daily 6am | Audits category alignment, flags invalid categories | ✅ Firing — 30 pieces all valid |
+| Inventory QA | daily 8am | Checks missing images, stale drafts, unassigned pieces, inventory totals | ✅ Firing — all checks passed |
+| Error Monitor | hourly :00 | Stuck orders, rentals billing after completion, available pieces with no units | ✅ Firing — all clear |
+| Featured Rotation | weekly Mon 10am | Rotates featured shelf to 4-6 pieces, spreads brands, prefers low wear-count | ✅ Firing — trimmed to 6 pieces |
+| Daily Content Prompts | daily 7am | 3 social scripts (TikTok, IG Reel, IG Post) from live inventory → `content_prompts` with `category='social_video'` | ✅ Firing — 3 rows written 2026-06-30 |
+| Daily Marketing Ideas | daily 7:05am | 3 actionable marketing ideas (flyer, partnership, email, etc.) → `content_prompts` with `category='marketing_idea'` | ✅ Firing — 3 rows written 2026-06-30 (constraint fix applied: `content_prompts_platform_check` updated to include marketing platform values) |
+| Sweeper | every 6h | Broader health checks beyond Error Monitor: overdue billing, return SLA breaches (>7 days in return_requested), active renters without deposit held, active renters with no payment method, daily routine scheduler silence check | ✅ Built and firing — ran clean 2026-06-30 |
+
+**Content Studio admin page** (`/content`): Shows today's social scripts + today's marketing ideas, mark-as-used for each, 2-column history grid for previous days. Both sections fully wired to `content_prompts` table with category filter.
+
+---
+
+# PART XIV — BUILD 28 PREP
+
+## Cold-start splash screen bug — ✅ FIXED 2026-06-30
+
+**The bug:** App required backgrounding and foregrounding on first open to render correctly — otherwise showed the wrong screen briefly.
+
+**Root cause:** `app/_layout.tsx` called `SplashScreen.hideAsync()` as soon as fonts finished loading, but the routing decision in `useProtectedRoute` doesn't fire until `hydrated` (set after the async `supabase.auth.getSession()` call resolves). The splash was hiding before the app knew whether there was a session, exposing a one-frame flash of the wrong route before the redirect caught up. Backgrounding/foregrounding masked it by forcing a re-render.
+
+**Fix applied:** `app/_layout.tsx` now waits for both `(fontsLoaded || fontError)` AND `hydrated` before calling `SplashScreen.hideAsync()`, and the early-return guard also waits for `hydrated`. `npx tsc --noEmit` passes clean. ✅ **Confirmed working 2026-06-30** — tested on iOS simulator cold launch, app went directly to correct authenticated home screen without background/foreground trick.
+
+## Changelog since the Plans/Trips feature began (commit `4501d6f`, chronological)
+
+This is everything that shipped in the run the user referred to as "since build 20ish / since we started adding trips and plans":
+
+1. Add Plans feature + women's infrastructure (gender column, trips table wiring, feature flags)
+2. Web account: active rentals with Return and Buy action buttons
+3. Remove 'How It Works' from navbar
+4. PieceCard: show actual sizes instead of count
+5. Plans: redesign listing and creation pages for better UX
+6. Fix error handling across trips/plans and active rentals
+7. App: Plans UI aligned with web — condition badge, type grid, copy
+8. Full Trip→Plan rename sweep + AddToPlan error handling
+9. Suitcase: last "trip" copy → "plan" in empty state
+10. Rebuild Create Plan screen — 2-step, pixel-perfect layout, no date bugs
+11. Pre-build cleanup sweep for Build 27
+12. Three workstreams: condition labels, Ready to Own shelf, admin sale discount
+13. Fix remaining Seasoned/Refined references in admin and app utils
+14. Sweep fixes: getPiecesByWardrobe discount_pct, admin settings copy
+15. Admin wear_count field + web sale badge fix + remove size tags
+16. Admin Content Studio page added (`/content`) — daily TikTok/IG prompts
+17. Splash screen cold-start fix — confirmed on simulator 2026-06-30
+18. Web checkout parity pass — discount bug fixed on piece page + plan "Add All", rental terms rewritten, refund request button added to web account page
+19. AI routines migrated from CCR triggers (broken) to Edge Function + pg_cron (confirmed working) — all 9 routines firing including new Daily Marketing Ideas and Sweeper
+
+Net effect: Plans/Trips shipped end to end and is now live (`trips_enabled = true`), web checkout was fully built (not just browsing), pricing/condition/discount admin bugs from the original backlog were closed out, and the AI routines were rebuilt to actually function in spawned sessions.
+
+## App / Web feature parity audit — ✅ DONE 2026-06-30
+
+Full parity pass completed. Fixes applied:
+- **Discount bug (web piece page)** — `web/app/piece/[id]/page.tsx` was passing undiscounted `rental_fee` to cart. Fixed to use `effectiveFee = discountedFee ?? piece.rental_fee`.
+- **Discount bug (web plan page)** — `web/app/plans/[id]/PlanClient.tsx` "Add All" was also using undiscounted price. Fixed to apply `discount_pct` before building cart item.
+- **Rental terms** — `web/app/rental-terms/page.tsx` had wrong billing copy ("1st of each month"), missing Refund Requests section, missing Non-Return section. Rewrote to match `app/rental-terms.tsx` exactly (13 sections, rolling 30-day billing copy, all subsections).
+- **Refund request** — app has "Request Refund" button on order screen. Web account page now has `RefundButton` component wired to `request-refund` edge function, visible for eligible orders (≤30 days, not already refunded/cancelled).
+
+## Admin Content Studio expansion — ✅ DONE 2026-06-30
+
+`admin/app/content/page.tsx` fully rebuilt with two sections:
+1. **Today's Social Scripts** — 3 TikTok/IG Reel/IG Post scripts, mark-as-used, history grid
+2. **Today's Marketing Ideas** — 3 actionable ideas (flyer, partnership, email, etc.), mark-as-done, history grid
+
+`content_prompts` table extended with `category TEXT NOT NULL DEFAULT 'social_video'`. Platform check constraint updated to include marketing platform values. Both routines confirmed writing rows on schedule.
+
+## Standing Sweeper routine — ✅ BUILT 2026-06-30 (see Part XIII)
 
 ---
 

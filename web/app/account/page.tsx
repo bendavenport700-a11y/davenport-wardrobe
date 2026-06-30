@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer'
 import { createSupabaseServer } from '@/lib/supabase-server'
 import { formatCents, formatCentsPerMonth } from '@/lib/format'
 import { ActiveRentals } from '@/components/ActiveRentals'
+import { RefundButton } from '@/components/RefundButton'
 
 export const revalidate = 0
 
@@ -134,10 +135,15 @@ export default async function AccountPage() {
                         ))}
                       </div>
                     )}
-                    <div className="flex justify-between text-sm font-sans font-semibold text-navy pt-3 border-t border-sand">
+                    <div className="flex items-center justify-between text-sm font-sans font-semibold text-navy pt-3 border-t border-sand">
                       <span>Charged</span>
                       <span>{formatCents(order.total_charged)}</span>
                     </div>
+                    {(() => {
+                      const daysSince = Math.floor((Date.now() - new Date(order.created_at).getTime()) / 86400000)
+                      const canRefund = daysSince <= 30 && !['refunded', 'refund_requested', 'cancelled'].includes(order.status)
+                      return canRefund ? <RefundButton orderId={order.id} /> : null
+                    })()}
                   </div>
                 ))}
               </div>

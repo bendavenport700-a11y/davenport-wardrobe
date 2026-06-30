@@ -25,6 +25,8 @@ const ICONS = {
   announcements: 'M3.5 7.5h3l5.5-4v11l-5.5-4h-3a1 1 0 01-1-1v-2a1 1 0 011-1zM6.5 14.5v2.5M15 6.5a4 4 0 010 7',
   team:          'M13 11a4 4 0 10-6 0M10 11v6M7 17h6M15.5 8a3 3 0 010 5.5',
   appsettings:   'M10 2.5a2 2 0 012 2v.3a5.5 5.5 0 011.3.76l.26-.15a2 2 0 012.73.73 2 2 0 01-.73 2.73l-.26.15a5.6 5.6 0 010 1.48l.26.15a2 2 0 01.73 2.73 2 2 0 01-2.73.73l-.26-.15A5.5 5.5 0 0112 15.2v.3a2 2 0 01-4 0v-.3a5.5 5.5 0 01-1.3-.76l-.26.15a2 2 0 01-2.73-.73 2 2 0 01.73-2.73l.26-.15a5.6 5.6 0 010-1.48l-.26-.15A2 2 0 013.44 6.6a2 2 0 012.73-.73l.26.15A5.5 5.5 0 018 5.3V5a2 2 0 012-2.5zM10 8a2 2 0 100 4 2 2 0 000-4z',
+  content:       'M15.5 3.5h-11A1.5 1.5 0 003 5v10a1.5 1.5 0 001.5 1.5h11A1.5 1.5 0 0017 15V5a1.5 1.5 0 00-1.5-1.5zM7 8h6M7 11h4M12.5 14.5l3-3-3-3',
+  routines:      'M10 3v3M10 14v3M3 10h3M14 10h3M5.5 5.5l2 2M12.5 12.5l2 2M14.5 5.5l-2 2M7.5 12.5l-2 2M10 7a3 3 0 100 6 3 3 0 000-6z',
   signout:       'M12.5 3.5h3a1.5 1.5 0 011.5 1.5v10a1.5 1.5 0 01-1.5 1.5h-3M8.5 13.5L12 10l-3.5-3.5M12 10H3',
 }
 
@@ -33,9 +35,11 @@ const ICONS = {
 type NavItem = { href: string; label: string; icon: keyof typeof ICONS }
 
 const OPERATIONS: NavItem[] = [
-  { href: '/',        label: 'Dashboard', icon: 'dashboard' },
-  { href: '/orders',  label: 'Orders',    icon: 'orders' },
-  { href: '/rentals', label: 'Rentals',   icon: 'rentals' },
+  { href: '/',         label: 'Dashboard', icon: 'dashboard' },
+  { href: '/orders',   label: 'Orders',    icon: 'orders' },
+  { href: '/rentals',  label: 'Rentals',   icon: 'rentals' },
+  { href: '/content',  label: 'Content',   icon: 'content' },
+  { href: '/routines', label: 'Routines',  icon: 'routines' },
 ]
 
 const CATALOG: NavItem[] = [
