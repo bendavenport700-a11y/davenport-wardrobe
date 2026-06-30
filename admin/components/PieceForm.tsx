@@ -75,6 +75,7 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
     is_featured:     piece?.is_featured ?? false,
     is_draft:        piece?.is_draft ?? true,
     is_available:    piece?.is_available ?? true,
+    wear_count:      piece?.wear_count?.toString() ?? '0',
     discount_pct:    piece?.discount_pct?.toString() ?? '0',
   })
 
@@ -161,6 +162,7 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
       is_featured:     fields.is_featured,
       is_draft:        fields.is_draft,
       is_available:    fields.is_available,
+      wear_count:      Math.max(0, parseInt(fields.wear_count) || 0),
       discount_pct:    Math.min(90, Math.max(0, parseInt(fields.discount_pct) || 0)),
     }
 
@@ -287,7 +289,20 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
               {COLORS.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </Field>
-          <Field label="Condition" hint="Auto-set from wear count on save">
+          <Field label="Wear Count" hint="Number of times previously rented — sets condition tier and pricing">
+            <input
+              type="number"
+              min="0"
+              value={fields.wear_count}
+              onChange={e => {
+                set('wear_count', e.target.value)
+                const n = parseInt(e.target.value) || 0
+                set('condition', n === 0 ? 'new' : n <= 5 ? 'like_new' : 'good')
+              }}
+              className={input}
+            />
+          </Field>
+          <Field label="Condition" hint="Auto-set when you change wear count">
             <select value={fields.condition} onChange={e => set('condition', e.target.value as typeof fields.condition)} className={input}>
               <option value="new">Pristine (0 wears)</option>
               <option value="like_new">Excellent (1–5 wears)</option>

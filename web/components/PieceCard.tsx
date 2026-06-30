@@ -70,21 +70,12 @@ export function PieceCard({ piece }: { piece: Piece }) {
         <div className="p-4">
           <p className="text-xs font-sans text-slate/70 uppercase tracking-wider mb-0.5">{piece.brand}</p>
           <p className="font-sans text-sm font-semibold text-navy leading-snug mb-3 line-clamp-1">{piece.name}</p>
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline gap-2">
-              <span className="font-serif text-xl font-bold text-navy">{rental}</span>
-              <span className="font-sans text-xs text-slate">/mo</span>
-              {onSale && (
-                <span className="font-sans text-xs text-slate/50 line-through">
-                  {formatCents(piece.rental_fee)}/mo
-                </span>
-              )}
-            </div>
-            {piece.sizes_available?.length > 0 && (
-              <span className="font-sans text-xs text-slate/60">
-                {piece.sizes_available.length <= 4
-                  ? piece.sizes_available.join('  ')
-                  : `${piece.sizes_available.slice(0, 3).join('  ')} +${piece.sizes_available.length - 3}`}
+          <div className="flex items-baseline gap-2">
+            <span className="font-serif text-xl font-bold text-navy">{rental}</span>
+            <span className="font-sans text-xs text-slate">/mo</span>
+            {onSale && (
+              <span className="font-sans text-xs text-slate/50 line-through">
+                {formatCents(piece.rental_fee)}/mo
               </span>
             )}
           </div>

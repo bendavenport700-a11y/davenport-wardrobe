@@ -16,6 +16,8 @@ interface PieceInput {
   gender?: 'men' | 'women' | 'unisex'
   cost_price: number
   base_rental_rate: number
+  wear_count?: number
+  discount_pct?: number
   images: string[]
   wardrobe_id: string | null
   source_url: string | null
@@ -26,7 +28,7 @@ interface PieceInput {
 }
 
 /** Reconcile piece_units to match desired quantities, then sync sizes_available + is_available. */
-async function syncPieceUnits(pieceId: string, targetQty: Record<string, number>): Promise<{ error?: string }> {
+async function syncPieceUnits(pieceId: string, targetQty: Record<string, number>, initialWearCount = 0): Promise<{ error?: string }> {
   // Fetch all existing units for this piece
   const { data: existingUnits, error: fetchErr } = await supabaseAdmin
     .from('piece_units')
@@ -50,7 +52,7 @@ async function syncPieceUnits(pieceId: string, targetQty: Record<string, number>
 
     if (diff > 0) {
       // Add new units
-      const rows = Array.from({ length: diff }, () => ({ piece_id: pieceId, size, is_available: true }))
+      const rows = Array.from({ length: diff }, () => ({ piece_id: pieceId, size, is_available: true, wear_count: initialWearCount }))
       const { error } = await supabaseAdmin.from('piece_units').insert(rows)
       if (error) return { error: error.message }
     } else if (diff < 0) {
@@ -89,7 +91,7 @@ export async function createPiece(input: PieceInput, sizeQty: Record<string, num
     .single()
   if (error) return { error: error.message }
 
-  const syncErr = await syncPieceUnits(data.id, sizeQty)
+  const syncErr = await syncPieceUnits(data.id, sizeQty, input.wear_count ?? 0)
   if (syncErr.error) return { error: syncErr.error }
 
   revalidatePath('/pieces')
@@ -101,7 +103,7 @@ export async function updatePiece(id: string, input: Partial<PieceInput>, sizeQt
   if (error) return { error: error.message }
 
   if (sizeQty) {
-    const syncErr = await syncPieceUnits(id, sizeQty)
+    const syncErr = await syncPieceUnits(id, sizeQty, input.wear_count ?? 0)
     if (syncErr.error) return { error: syncErr.error }
   }
 
