@@ -19,6 +19,7 @@ interface Profile {
   shipping_address: { line1: string; line2?: string; city: string; state: string; zip: string } | null
   stripe_payment_method_id: string | null
   deposit_status: string
+  active_rental_count: number
 }
 
 function CheckoutForm() {
@@ -51,7 +52,7 @@ function CheckoutForm() {
 
       const { data } = await supabase
         .from('profiles')
-        .select('full_name, shipping_address, stripe_payment_method_id, deposit_status')
+        .select('full_name, shipping_address, stripe_payment_method_id, deposit_status, active_rental_count')
         .eq('id', session.user.id)
         .single()
 
@@ -70,7 +71,7 @@ function CheckoutForm() {
     })
   }, [cartLoaded, items, router])
 
-  const { monthlyTotal, chargeToday, discount, rawMonthly } = calcOrderTotals(items)
+  const { monthlyTotal, chargeToday, discount, rawMonthly } = calcOrderTotals(items, profile?.active_rental_count ?? 0)
   const hasPaymentMethod = !!profile?.stripe_payment_method_id
   const needsAddress = !profile?.shipping_address
   const depositAlreadyHeld = profile?.deposit_status === 'held'
