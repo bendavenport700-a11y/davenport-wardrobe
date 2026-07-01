@@ -122,7 +122,7 @@ export default async function ContentPage() {
                         <span className="text-[10px] font-bold text-gray-400">{meta.emoji} {meta.label}</span>
                         <span className="text-[10px] text-green-600">✓ Used</span>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{prompt.prompt_text}</p>
+                      <p className="text-xs text-gray-500">{prompt.prompt_text}</p>
                     </div>
                   )
                 })}
@@ -185,7 +185,7 @@ export default async function ContentPage() {
                         <span className="text-[10px] font-bold text-gray-400">{meta.emoji} {meta.label}</span>
                         <span className="text-[10px] text-green-600">✓ Done</span>
                       </div>
-                      <p className="text-xs text-gray-500 line-clamp-2">{prompt.prompt_text}</p>
+                      <p className="text-xs text-gray-500">{prompt.prompt_text}</p>
                     </div>
                   )
                 })}
@@ -217,7 +217,7 @@ export default async function ContentPage() {
                           </span>
                           {prompt.used && <span className="text-[10px] text-green-500">✓</span>}
                         </div>
-                        <p className="text-xs text-gray-600 line-clamp-2">{prompt.prompt_text}</p>
+                        <p className="text-xs text-gray-600 ">{prompt.prompt_text}</p>
                       </div>
                     )
                   })}
@@ -242,7 +242,7 @@ export default async function ContentPage() {
                           </span>
                           {prompt.used && <span className="text-[10px] text-green-500">✓</span>}
                         </div>
-                        <p className="text-xs text-gray-600 line-clamp-2">{prompt.prompt_text}</p>
+                        <p className="text-xs text-gray-600 ">{prompt.prompt_text}</p>
                       </div>
                     )
                   })}
