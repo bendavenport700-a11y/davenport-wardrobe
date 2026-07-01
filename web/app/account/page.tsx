@@ -37,7 +37,7 @@ export default async function AccountPage() {
   if (!user) redirect('/login?next=/account')
 
   const [profileRes, ordersRes] = await Promise.all([
-    supabase.from('profiles').select('full_name, email, shipping_address, monthly_total, deposit_status').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, email, shipping_address, monthly_total, deposit_status, deposit_amount').eq('id', user.id).single(),
     supabase.from('orders').select('id, status, created_at, first_month_total, total_charged, rental_ids').eq('user_id', user.id).order('created_at', { ascending: false }).limit(10),
   ])
 
@@ -99,7 +99,11 @@ export default async function AccountPage() {
             ) : null}
             <div className="bg-white rounded-2xl border border-sand p-5">
               <p className="font-sans text-xs uppercase tracking-widest text-slate mb-2">Deposit</p>
-              <p className="font-sans text-sm text-navy capitalize">{profile?.deposit_status === 'held' ? '✓ $75 held' : profile?.deposit_status ?? 'None'}</p>
+              <p className="font-sans text-sm text-navy capitalize">
+                {profile?.deposit_status === 'held'
+                  ? `✓ ${formatCents(profile.deposit_amount ?? 7500)} held`
+                  : profile?.deposit_status ?? 'None'}
+              </p>
             </div>
           </div>
 

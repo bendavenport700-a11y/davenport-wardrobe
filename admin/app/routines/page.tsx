@@ -15,6 +15,8 @@ const ROUTINE_SCHEDULES: Record<string, string> = {
   'Error Monitor':            'Hourly',
   'Featured Rotation':        'Weekly · Mon 10am',
   'Daily Content Prompts':    'Daily · 7am',
+  'Daily Marketing Ideas':    'Daily · 7:05am',
+  'Sweeper':                  'Hourly',
 }
 
 function timeAgo(iso: string) {

@@ -18,9 +18,9 @@ async function getOrders(status?: string) {
   return (data ?? []) as OrderWithProfile[]
 }
 
-const STATUS_FILTERS = ['', 'confirmed', 'sourcing', 'packaged', 'shipped', 'delivered', 'complete', 'refund_requested', 'refunded']
+const STATUS_FILTERS = ['', 'pending', 'confirmed', 'sourcing', 'packaged', 'shipped', 'delivered', 'complete', 'refund_requested', 'refunded']
 const STATUS_LABELS: Record<string, string> = {
-  '': 'All', confirmed: 'Confirmed', sourcing: 'Sourcing', packaged: 'Packaged',
+  '': 'All', pending: 'Pending', confirmed: 'Confirmed', sourcing: 'Sourcing', packaged: 'Packaged',
   shipped: 'Shipped', delivered: 'Delivered', complete: 'Complete',
   refund_requested: 'Refund Req.', refunded: 'Refunded',
 }

@@ -73,6 +73,7 @@ function CheckoutForm() {
   const { monthlyTotal, chargeToday, discount, rawMonthly } = calcOrderTotals(items)
   const hasPaymentMethod = !!profile?.stripe_payment_method_id
   const needsAddress = !profile?.shipping_address
+  const depositAlreadyHeld = profile?.deposit_status === 'held'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -279,10 +280,12 @@ function CheckoutForm() {
                     <span>Handling</span>
                     <span>{formatCents(HANDLING_FEE_CENTS)}</span>
                   </div>
-                  <div className="flex justify-between text-slate">
-                    <span>Deposit (hold)</span>
-                    <span>{formatCents(DEPOSIT_CENTS)}</span>
-                  </div>
+                  {!depositAlreadyHeld && (
+                    <div className="flex justify-between text-slate">
+                      <span>Deposit (hold)</span>
+                      <span>{formatCents(DEPOSIT_CENTS)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between font-bold text-navy text-base pt-2 border-t border-sand">
                     <span>Charged today</span>
                     <span>{formatCents(chargeToday)}</span>

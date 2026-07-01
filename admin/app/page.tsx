@@ -14,7 +14,7 @@ async function getStats() {
 
   const totalPieces     = (pieces.data ?? []).filter(p => !p.is_draft).length
   const availPieces     = (pieces.data ?? []).filter(p => p.is_available && !p.is_draft).length
-  const pendingOrders   = (orders.data ?? []).filter(o => ['confirmed', 'sourcing', 'packaged'].includes(o.status)).length
+  const pendingOrders   = (orders.data ?? []).filter(o => ['pending', 'confirmed', 'sourcing', 'packaged'].includes(o.status)).length
   const activeRentals   = (rentals.data ?? []).filter(r => !TERMINAL_STATUSES.includes(r.status)).length
   const pendingReturns  = (rentals.data ?? []).filter(r => r.status === 'return_requested').length
 
