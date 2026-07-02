@@ -19,58 +19,55 @@ function buildPrompt(piece: InventoryPiece): string {
   const price = `$${priceDollars}/mo`
   const isNew = piece.wear_count === 0
 
-  return `You're helping me build a Canva graphic and Instagram caption for a new inventory drop at Davenport Wardrobe — a premium menswear rental in Connecticut.
+  return `Help me create a Canva graphic and Instagram caption for a new piece that just landed at Davenport Wardrobe — a menswear rental in Connecticut. Rent monthly, buy at a discount if you love it.
 
-NEW PIECE:
-• Brand: ${piece.brand}
-• Item: ${piece.name}
-• Category: ${piece.category}
-• Rental rate: ${price}
-• Condition: ${isNew ? 'Brand new — tags still on' : 'Pristine'}
+PIECE:
+• ${piece.brand} ${piece.name}
+• ${piece.category}
+• ${price} to rent
+• ${isNew ? 'Brand new — tags still on' : 'Pristine'}
 
-PHOTO: I'm using the product photo as-is — just the garment on a clean background. Do NOT describe or suggest adding a person. The photo is already chosen.
+The photo is already chosen — just the garment on a clean background. Don't suggest adding a person or changing the photo.
 
 ---
 
-Give me the full post in two labeled sections:
+SECTION 1 — CANVA LAYOUT
+Here's the structure I'm using in Canva. Fill in each part:
 
-SECTION 1 — CANVA TEXT OVERLAY
-Use this exact layout structure (I'm building it in Canva):
+HEADLINE: NEW INVENTORY
+(Big, bold, top of the graphic. Always "NEW INVENTORY" — no variations.)
 
-TOP HEADLINE: NEW INVENTORY (bold, large — or "NEW INVENTORY ALERT", use one or the other)
+BRAND LINE: JUST ADDED: ${piece.brand.toUpperCase()}
+(Right below the headline.)
 
-BRAND LINE (directly below headline): JUST ADDED: ${piece.brand.toUpperCase()}
+INFO BOX — two columns below the photo:
+Left side (hanger icon):
+  RENT FOR ${price}
+  ${isNew ? 'Brand new. Tags on.' : 'Pristine condition.'}
 
-INFO BOX (two columns, sits below the photo):
-• Left column — Hanger icon + rental line:
-  Line 1: RENT FOR ${price}
-  Line 2: ${isNew ? 'Brand new. Tags on.' : 'Pristine condition.'}
-• Right column — Tag icon + buyout line:
-  Line 1: LOVE IT?
-  Line 2: BUY IT AT A DISCOUNT.
+Right side (tag icon):
+  Write a short 2-line phrase about how you can rent it first and buy it later if you love it — something like "Rent it. Love it. Buy it." or "Try it first. Own it for less." Keep it punchy, 2 lines, conversational. Not corporate. Write a fresh version each time.
 
-FEATURE STRIP (three short phrases in a row below the info box — write fresh copy each time, keep the 3-column structure):
-• [Benefit about variety/newness, e.g. "New styles every month"]
-• [Benefit about flexibility, e.g. "Swap or cancel anytime"]
-• [Benefit about no commitment, e.g. "No long-term commitments"]
-Change the exact wording to feel fresh — don't reuse the same phrases every post.
+FEATURE STRIP — three short phrases in a row:
+Each one should be a quick benefit of renting. Write fresh copy every time, don't repeat the same phrases post to post. Keep it tight — 3–5 words each.
+Examples of the vibe (don't copy these exactly): "New styles every month" / "Swap or cancel anytime" / "No long-term commitment"
 
-CTA BAR (bottom strip, dark background):
-[Punchy 4–5 word tagline — write a new one each time]. LINK IN BIO TO GET STARTED. →
-Example format: "Look good. Spend less." — write a fresh version, same structure.
+BOTTOM BAR:
+A short punchy line — 4 to 6 words — followed by: LINK IN BIO TO GET STARTED →
+The short line should feel like something a real person would say, not an ad slogan. Write a new one each time.
 
 ---
 
 SECTION 2 — INSTAGRAM CAPTION
-Keep it short — 3 lines max, no hashtags.
+3 lines, no hashtags. Keep it short and real — not polished ad copy.
 
-Line 1: [Announce the drop — name the brand and item, make it feel like news]
-Line 2: [Price + one key detail — e.g. "${price}. ${isNew ? 'Tags still on.' : 'Pristine.'}  Love it? Buy it at a discount."]
-Line 3: Download Davenport. Link in bio.
+Line 1: What just dropped and why it's worth looking at (name the brand)
+Line 2: The price, the condition, and the rent-to-own angle in one or two sentences
+Line 3: Download the Davenport app or shop at davenport.rentals — mention both.
 
 ---
 
-Brand voice: Direct, premium, real. Like a stylish friend texting you about a find — not a brand account.`
+Write like a real person, not a marketing team. Short sentences. Nothing that sounds like it came from a template.`
 }
 
 function PieceCard({
