@@ -19,45 +19,45 @@ function buildPrompt(piece: InventoryPiece): string {
   const price = `$${priceDollars}/mo`
   const isNew = piece.wear_count === 0
 
-  return `Using the product photo I attached, create a social media graphic for Davenport Wardrobe — a menswear rental in Connecticut.
+  return `I'm attaching two images: the product photo and the Davenport logo (navy square with a silver D). Create a social media graphic using both.
 
-PIECE DETAILS:
+PIECE:
 • ${piece.brand} ${piece.name}
 • ${piece.category}
 • ${price}/mo to rent
 • ${isNew ? 'Brand new — tags still on' : 'Pristine'}
 
-Build the graphic exactly like this:
+Build the graphic with this exact layout:
 
 BACKGROUND: Cream or off-white
 
-HEADLINE (top, large bold navy text): NEW INVENTORY
-SUB-LINE (below headline, centered with dashes): — JUST ADDED: ${piece.brand.toUpperCase()} —
+HEADLINE (large, bold, dark navy): NEW INVENTORY
+SUB-LINE (centered, below headline, with em-dashes): — JUST ADDED: ${piece.brand.toUpperCase()} —
 
-PHOTO: Use the product photo I attached. Center it. No people added. Keep the clean background.
+PHOTO: Use the product photo I attached. Center it. Do not add a person or change the background.
 
-INFO BOX (below photo, full-width bordered rectangle, two columns):
+DAVENPORT LOGO: Place it small in the bottom-left or bottom-right corner of the graphic.
+
+INFO BOX (full-width bordered box below the photo, two columns):
 Left column — hanger icon:
   RENT FOR ${price}
   ${isNew ? 'Brand new. Tags on.' : 'Pristine condition.'}
 Right column — tag icon:
-  LOVE IT?
-  BUY IT AT A DISCOUNT.
+  Write a short 2-line phrase in this spirit: rent it first, wear it, then decide — buy it or send it back. No commitment. Something like "Rent it. Wear it." / "Buy it or send it back." — write a fresh version each time, keep it short and real.
 
-FEATURE STRIP (below info box, three columns with small icons):
-Write 3 short benefit phrases — fresh copy each time, 3–5 words each.
-Examples of the style (don't reuse these): "Fresh finds, always rotating" / "Swap pieces when you want" / "No closet commitment"
+FEATURE STRIP (three columns below the info box, small icons, mixed case):
+Write 3 short phrases — fresh every time, 4–6 words each. These should subtly explain why renting beats buying outright. Think along the lines of: trying before committing, rotating your wardrobe without the cost, no long-term ties. Don't copy these examples exactly — write new ones each time. Style reference: "Fresh finds, always rotating" / "Swap when you're ready" / "No closet commitment"
 
-BOTTOM BAR (dark navy background):
-Left side: a punchy 4–6 word tagline — write a new one each time, something someone would actually say
-Right side: LINK IN BIO TO GET STARTED →
+BOTTOM BAR (dark navy background, two sides):
+Left: a short punchy line — 4 to 6 words, something real, write a new one each time
+Right: Download the app or visit davenport.rentals
 
 ---
 
-After the graphic, also give me the INSTAGRAM CAPTION on its own (not in the image):
-3 lines, no hashtags.
-Line 1: What just dropped, name the brand
-Line 2: ${price}/mo. ${isNew ? 'Brand new, tags on.' : 'Pristine.'} Rent it. Love it. Buy it at a discount.
+After the graphic, give me the INSTAGRAM CAPTION separately (not in the image):
+3 lines, no hashtags, keep it short.
+Line 1: What just dropped — name the brand and item
+Line 2: ${price}/mo. ${isNew ? 'Tags still on.' : 'Pristine.'} Rent it, wear it, buy it if you love it — or send it back.
 Line 3: Download the Davenport app or shop at davenport.rentals`
 }
 
