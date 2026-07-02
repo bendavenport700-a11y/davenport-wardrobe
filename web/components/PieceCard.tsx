@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCents } from '@/lib/format'
+import { formatCentsPerMonth } from '@/lib/format'
 
 interface Piece {
   id: string
@@ -28,7 +28,6 @@ export function PieceCard({ piece }: { piece: Piece }) {
   const discountedFee = onSale
     ? Math.round(piece.rental_fee * (1 - (piece.discount_pct ?? 0) / 100))
     : null
-  const rental = formatCents(discountedFee ?? piece.rental_fee)
 
   return (
     <Link href={`/piece/${piece.id}`} className="group block">
@@ -67,18 +66,23 @@ export function PieceCard({ piece }: { piece: Piece }) {
         </div>
 
         {/* Info */}
-        <div className="p-4">
-          <p className="text-xs font-sans text-slate/70 uppercase tracking-wider mb-0.5">{piece.brand}</p>
-          <p className="font-sans text-sm font-semibold text-navy leading-snug mb-3 line-clamp-1">{piece.name}</p>
-          <div className="flex items-baseline gap-2">
-            <span className="font-serif text-xl font-bold text-navy">{rental}</span>
-            <span className="font-sans text-xs text-slate">/mo</span>
-            {onSale && (
-              <span className="font-sans text-xs text-slate/50 line-through">
-                {formatCents(piece.rental_fee)}/mo
+        <div className="px-3 pt-2.5 pb-3">
+          <p className="text-[10px] font-sans text-slate/60 uppercase tracking-widest mb-0.5">{piece.brand}</p>
+          <p className="font-sans text-[13px] font-bold text-navy leading-snug mb-1.5 line-clamp-2">{piece.name}</p>
+          {onSale ? (
+            <div className="flex items-baseline gap-1.5 mt-1.5">
+              <span className="font-serif text-[17px] font-bold text-accent">
+                {formatCentsPerMonth(discountedFee)}
               </span>
-            )}
-          </div>
+              <span className="font-sans text-[11px] text-slate/40 line-through">
+                {formatCentsPerMonth(piece.rental_fee)}
+              </span>
+            </div>
+          ) : (
+            <p className="font-serif text-[17px] font-bold text-navy mt-1.5">
+              {formatCentsPerMonth(discountedFee ?? piece.rental_fee)}
+            </p>
+          )}
         </div>
       </div>
     </Link>

@@ -1,7 +1,7 @@
 import { View, Text, Pressable } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import type { Trip } from '@/types'
+import type { TripWithCount } from '@/hooks/useTrips'
 import { colors } from '@/constants/colors'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -11,29 +11,26 @@ const TYPE_LABELS: Record<string, string> = {
   season:        'Season',
 }
 
-const TYPE_ICONS: Record<string, React.ComponentProps<typeof Ionicons>['name']> = {
-  event:         'calendar-outline',
-  vacation:      'airplane-outline',
-  extended_stay: 'home-outline',
-  season:        'sunny-outline',
+type TypeColor = { bg: string; text: string }
+const TYPE_COLORS: Record<string, TypeColor> = {
+  event:         { bg: colors.gold + '22', text: colors.gold },
+  vacation:      { bg: '#EFF6FF',          text: '#1D4ED8' },
+  extended_stay: { bg: colors.sand,        text: colors.slate },
+  season:        { bg: '#F0FDF4',          text: '#15803D' },
 }
 
-function formatDateRange(trip: Trip): string | null {
-  if (trip.start_date && trip.end_date) {
-    const start = new Date(trip.start_date + 'T00:00:00Z')
-    const end = new Date(trip.end_date + 'T00:00:00Z')
-    const fmt = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' })
-    return `${fmt.format(start)} – ${fmt.format(end)}`
-  }
-  if (trip.start_date) {
-    const d = new Date(trip.start_date + 'T00:00:00Z')
-    return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(d)
-  }
+function formatDateRange(start: string | null, end: string | null): string | null {
+  const fmt = (d: string) =>
+    new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  if (start && end) return `${fmt(start)} – ${fmt(end)}`
+  if (start) return `From ${fmt(start)}`
+  if (end) return `Until ${fmt(end)}`
   return null
 }
 
-export function TripCard({ trip }: { trip: Trip }) {
-  const dateRange = formatDateRange(trip)
+export function TripCard({ trip }: { trip: TripWithCount }) {
+  const dateRange = formatDateRange(trip.start_date, trip.end_date)
+  const typeColor = TYPE_COLORS[trip.type] ?? { bg: colors.sand, text: colors.slate }
 
   return (
     <Pressable
@@ -43,45 +40,62 @@ export function TripCard({ trip }: { trip: Trip }) {
       style={({ pressed }) => ({
         backgroundColor: colors.white,
         borderRadius: 18,
-        padding: 16,
+        padding: 18,
         borderWidth: 1,
         borderColor: colors.sand + '80',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 14,
-        opacity: pressed ? 0.9 : 1,
+        gap: 16,
+        opacity: pressed ? 0.88 : 1,
       })}
     >
-      {/* Icon bubble */}
+      {/* Piece count bubble — matches web */}
       <View style={{
-        width: 46, height: 46, borderRadius: 13,
-        backgroundColor: colors.navy + '0D',
+        width: 52, height: 52, borderRadius: 14,
+        backgroundColor: colors.sand + '99',
         alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
-        <Ionicons name={TYPE_ICONS[trip.type] ?? 'calendar-outline'} size={21} color={colors.navy} />
+        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 20, color: colors.navy, lineHeight: 22 }}>
+          {trip.item_count}
+        </Text>
+        <Text style={{
+          fontFamily: 'Inter-Medium', fontSize: 8,
+          color: colors.slate + '80',
+          textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 1,
+        }}>
+          {trip.item_count === 1 ? 'piece' : 'pieces'}
+        </Text>
       </View>
 
-      {/* Text */}
-      <View style={{ flex: 1, gap: 3 }}>
-        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 15, color: colors.navy, letterSpacing: -0.2 }} numberOfLines={1}>
-          {trip.name}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      {/* Plan info */}
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 17, color: colors.navy, letterSpacing: -0.2, flexShrink: 1 }} numberOfLines={1}>
+            {trip.name}
+          </Text>
           <View style={{
-            backgroundColor: colors.sand + '80',
-            borderRadius: 20, paddingHorizontal: 7, paddingVertical: 2,
+            backgroundColor: typeColor.bg,
+            borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2.5, flexShrink: 0,
           }}>
-            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.slate, textTransform: 'uppercase', letterSpacing: 0.6 }}>
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 9, color: typeColor.text, textTransform: 'uppercase', letterSpacing: 0.8 }}>
               {TYPE_LABELS[trip.type] ?? trip.type}
             </Text>
           </View>
-          {dateRange && (
-            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate }}>
+        </View>
+
+        {dateRange ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            <Ionicons name="calendar-outline" size={11} color={colors.slate + '70'} />
+            <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate + '80' }}>
               {dateRange}
             </Text>
-          )}
-        </View>
+          </View>
+        ) : (
+          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.gray400 }}>
+            No dates set
+          </Text>
+        )}
       </View>
 
       <Ionicons name="chevron-forward" size={14} color={colors.gray400} />

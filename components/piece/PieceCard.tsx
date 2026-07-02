@@ -3,7 +3,7 @@ import { Image } from 'expo-image'
 import { router } from 'expo-router'
 import Animated, { FadeInDown } from 'react-native-reanimated'
 import { colors } from '@/constants/colors'
-import { formatCentsPerMonth, wearTierLabel } from '@/utils/format'
+import { formatCentsPerMonth } from '@/utils/format'
 import { DEFAULT_BLURHASH } from '@/constants/layout'
 import type { Piece } from '@/types'
 
@@ -41,17 +41,16 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
               style={{ width: '100%', height: '100%' }}
               transition={300}
             />
-            {/* Condition badge — top left */}
-            <View style={{ position: 'absolute', top: 9, left: 9 }}>
-              <View style={{
-                backgroundColor: piece.wear_count === 0 ? colors.navy : 'rgba(11,21,35,0.55)',
-                borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3,
-              }}>
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 9.5, color: colors.cream, letterSpacing: 0.2 }}>
-                  {wearTierLabel(piece.wear_count)}
-                </Text>
+            {/* Condition badge — top left, Pristine only */}
+            {piece.wear_count === 0 && (
+              <View style={{ position: 'absolute', top: 9, left: 9 }}>
+                <View style={{ backgroundColor: colors.navy, borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ fontFamily: 'Inter-Medium', fontSize: 9.5, color: colors.cream, letterSpacing: 0.2 }}>
+                    Pristine
+                  </Text>
+                </View>
               </View>
-            </View>
+            )}
             {/* Sale badge — top right */}
             {onSale && (
               <View style={{
@@ -93,7 +92,7 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
             </Text>
             {onSale ? (
               <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6, marginTop: 6 }}>
-                <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.accent }}>
+                <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 17, color: colors.accent }}>
                   {formatCentsPerMonth(discountedFee)}
                 </Text>
                 <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.gray400, textDecorationLine: 'line-through' }}>
@@ -101,7 +100,7 @@ export function PieceCard({ piece, index = 0 }: PieceCardProps) {
                 </Text>
               </View>
             ) : (
-              <Text style={{ fontFamily: 'Inter-Bold', fontSize: 14, color: colors.navy, marginTop: 6 }}>
+              <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 17, color: colors.navy, marginTop: 6 }}>
                 {formatCentsPerMonth(piece.rental_fee)}
               </Text>
             )}

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
-import { View, Text, TextInput, Pressable, FlatList, ScrollView, Linking } from 'react-native'
+import { View, Text, TextInput, Pressable, FlatList, ScrollView, Linking, StyleSheet } from 'react-native'
+import { BlurView } from 'expo-blur'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { router } from 'expo-router'
@@ -12,7 +13,7 @@ import { useTabBarStore } from '@/store/tabBarStore'
 import { useWardrobes } from '@/hooks/useWardrobes'
 import { PieceCard } from '@/components/piece/PieceCard'
 import { PieceCardSkeleton } from '@/components/ui/Skeleton'
-import { FilterBar, categoryGroupToList } from '@/components/ui/FilterBar'
+import { CATEGORY_GROUPS, categoryGroupToList, sizesForGroup } from '@/components/ui/FilterBar'
 import { FilterSheet } from '@/components/ui/FilterSheet'
 import { GenderToggle } from '@/components/ui/GenderToggle'
 import { ErrorState } from '@/components/ui/ErrorState'
@@ -41,6 +42,8 @@ function BrowseWardrobeCard({ wardrobe }: { wardrobe: Wardrobe }) {
       return imgs
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: 300,
   })
 
   const hero = images[0] ?? wardrobe.cover_image_url ?? null
@@ -126,7 +129,6 @@ export default function BrowseScreen() {
   const [viewMode,       setViewMode]       = useState<ViewMode>('pieces')
   const [search,         setSearch]         = useState('')
   const [debouncedSearch, setDebounced]     = useState('')
-  const [occasionFilter, setOccasionFilter] = useState<string | null>(null)
   const [categoryGroup,  setCategoryGroup]  = useState<string | null>(null)
   const [size,           setSize]           = useState<string | null>(null)
   const [brand,          setBrand]          = useState<string | null>(null)
@@ -150,35 +152,28 @@ export default function BrowseScreen() {
 
   const clearFilters = () => {
     if (searchTimer.current) clearTimeout(searchTimer.current)
-    setOccasionFilter(null)
     setCategoryGroup(null); setSize(null)
     setBrand(null); setSeason(null)
     setSearch(''); setDebounced('')
     setWearFilter('any'); setSortBy('newest')
   }
 
-  const categoryList    = categoryGroupToList(categoryGroup)
-  const filterTags      = [occasionFilter, season].filter(Boolean) as string[]
+  const categoryList = categoryGroupToList(categoryGroup)
+  const filterTags   = [season].filter(Boolean) as string[]
 
-  const hasActiveFilters = !!(occasionFilter || categoryGroup || size || debouncedSearch || wearFilter !== 'any' || sortBy !== 'newest' || brand || season)
+  const hasActiveFilters = !!(categoryGroup || size || debouncedSearch || wearFilter !== 'any' || sortBy !== 'newest' || brand || season)
 
   const advancedFilterCount = [
-    categoryGroup !== null,
-    size !== null,
     wearFilter !== 'any',
-    sortBy !== 'newest',
     brand !== null,
     season !== null,
   ].filter(Boolean).length
 
   type FilterTag = { key: string; label: string; clear: () => void }
   const activeFilterTags: FilterTag[] = [
-    ...(wearFilter !== 'any'  ? [{ key: 'wear',     label: wearFilter === 'new' ? 'Pristine' : wearFilter === '1-5' ? 'Excellent' : wearFilter === '6-10' ? 'Well-Worn' : 'Veteran', clear: () => setWearFilter('any') }] : []),
-    ...(brand                 ? [{ key: 'brand',    label: brand,                      clear: () => setBrand(null) }] : []),
-    ...(season                ? [{ key: 'season',   label: season,                     clear: () => setSeason(null) }] : []),
-    ...(categoryGroup         ? [{ key: 'category', label: categoryGroup,               clear: () => { setCategoryGroup(null); setSize(null) } }] : []),
-    ...(size                  ? [{ key: 'size',     label: `Size ${size}`,             clear: () => setSize(null) }] : []),
-    ...(sortBy !== 'newest'   ? [{ key: 'sort',     label: sortBy === 'price_asc' ? 'Price ↑' : 'Price ↓', clear: () => setSortBy('newest') }] : []),
+    ...(wearFilter !== 'any' ? [{ key: 'wear',   label: wearFilter === 'new' ? 'Pristine' : wearFilter === '1-5' ? 'Excellent' : wearFilter === '6-10' ? 'Well-Worn' : 'Veteran', clear: () => setWearFilter('any') }] : []),
+    ...(brand                ? [{ key: 'brand',  label: brand,                                                                                                                      clear: () => setBrand(null) }] : []),
+    ...(season               ? [{ key: 'season', label: season,                                                                                                                     clear: () => setSeason(null) }] : []),
   ]
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage, isFetchingNextPage } = usePieces({
@@ -215,6 +210,29 @@ export default function BrowseScreen() {
             fontFamily: 'Inter-Regular', fontSize: 15, color: colors.navy,
           }}
         />
+      </View>
+
+      {/* Sort row */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 }}>
+        <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate + 'AA', marginRight: 2 }}>Sort:</Text>
+        {([
+          { value: 'newest'     as SortOption, label: 'Newest' },
+          { value: 'price_asc'  as SortOption, label: 'Price ↑' },
+          { value: 'price_desc' as SortOption, label: 'Price ↓' },
+        ] as const).map(opt => (
+          <Pressable
+            key={opt.value}
+            onPress={() => setSortBy(opt.value)}
+            style={{
+              paddingHorizontal: 11, paddingVertical: 5, borderRadius: 16,
+              backgroundColor: sortBy === opt.value ? colors.navy : 'transparent',
+            }}
+          >
+            <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: sortBy === opt.value ? colors.cream : colors.slate }}>
+              {opt.label}
+            </Text>
+          </Pressable>
+        ))}
       </View>
 
       {/* Filters button + active tags */}
@@ -265,16 +283,21 @@ export default function BrowseScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.cream }}>
 
-      {/* Sticky header */}
+      {/* Sticky header — frosted glass */}
       <View style={{
-        paddingTop: insets.top + 10, paddingHorizontal: layout.screenPadding,
-        paddingBottom: 12, backgroundColor: colors.cream,
+        overflow: 'hidden',
         borderBottomWidth: 1, borderBottomColor: colors.sand + '55',
       }}>
+        <BlurView intensity={80} tint="light" style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: '#F5F0E875' }]} />
+        <View style={{
+          paddingTop: insets.top + 10, paddingHorizontal: layout.screenPadding,
+          paddingBottom: 12,
+        }}>
 
         {/* Title row + segmented control */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 28, color: colors.navy, letterSpacing: -0.8 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 30, color: colors.navy, letterSpacing: -0.5 }}>
             Browse
           </Text>
 
@@ -315,13 +338,62 @@ export default function BrowseScreen() {
           </View>
         )}
 
-        {/* Occasion pills — pieces mode only */}
+        {/* Category chips — pieces mode only */}
         {viewMode === 'pieces' && (
-          <FilterBar
-            selectedOccasion={occasionFilter}
-            onOccasionChange={setOccasionFilter}
-          />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+            {CATEGORY_GROUPS.map(({ label }) => {
+              const active = label === 'All' ? !categoryGroup : categoryGroup === label
+              return (
+                <Pressable
+                  key={label}
+                  onPress={() => { setCategoryGroup(label === 'All' ? null : label); setSize(null) }}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${label} category`}
+                  accessibilityState={{ selected: active }}
+                  style={{
+                    paddingHorizontal: 16, paddingVertical: 7, borderRadius: 20,
+                    backgroundColor: active ? colors.navy : colors.white,
+                    borderWidth: 1, borderColor: active ? colors.navy : colors.sand + 'CC',
+                  }}
+                >
+                  <Text style={{ fontFamily: 'Inter-Medium', fontSize: 13, color: active ? colors.cream : colors.slate }}>
+                    {label}
+                  </Text>
+                </Pressable>
+              )
+            })}
+          </ScrollView>
         )}
+
+        {/* Size chips — appear when a category is selected */}
+        {viewMode === 'pieces' && categoryGroup && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingTop: 8, paddingBottom: 2 }}>
+            <Pressable
+              onPress={() => setSize(null)}
+              style={{
+                paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20,
+                backgroundColor: !size ? colors.navy : colors.white,
+                borderWidth: 1, borderColor: !size ? colors.navy : colors.sand + 'CC',
+              }}
+            >
+              <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: !size ? colors.cream : colors.slate }}>All</Text>
+            </Pressable>
+            {sizesForGroup(categoryGroup).map(s => (
+              <Pressable
+                key={s}
+                onPress={() => setSize(size === s ? null : s)}
+                style={{
+                  paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20,
+                  backgroundColor: size === s ? colors.navy : colors.white,
+                  borderWidth: 1, borderColor: size === s ? colors.navy : colors.sand + 'CC',
+                }}
+              >
+                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: size === s ? colors.cream : colors.slate }}>{s}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+        )}
+        </View>
       </View>
 
       {/* Main content */}
@@ -334,7 +406,7 @@ export default function BrowseScreen() {
           </ScrollView>
         ) : wardrobes.length === 0 ? (
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: layout.screenPadding }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, color: colors.navy, textAlign: 'center', letterSpacing: -0.3 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, textAlign: 'center', letterSpacing: -0.3 }}>
               No wardrobes yet.
             </Text>
           </View>
@@ -358,7 +430,7 @@ export default function BrowseScreen() {
         <>
           <View style={{ paddingHorizontal: layout.screenPadding }}>{ListHeader}</View>
           <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: layout.screenPadding, gap: 16 }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, color: colors.navy, textAlign: 'center', letterSpacing: -0.3 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.navy, textAlign: 'center', letterSpacing: -0.3 }}>
               {hasActiveFilters ? 'No pieces match your filters.' : "We're still building inventory."}
             </Text>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, textAlign: 'center', lineHeight: 21 }}>

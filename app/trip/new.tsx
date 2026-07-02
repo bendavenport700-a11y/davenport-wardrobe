@@ -1,11 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View, Text, ScrollView, Pressable, TextInput,
   Alert, ActivityIndicator, KeyboardAvoidingView, Platform, useWindowDimensions,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Animated, { FadeInRight, FadeOutLeft, Layout } from 'react-native-reanimated'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuthStore } from '@/store/authStore'
 import { useCreateTrip } from '@/hooks/useTrips'
@@ -16,10 +15,10 @@ import { layout } from '@/constants/layout'
 // ── Data ──────────────────────────────────────────────────────────────────────
 
 const TYPES = [
-  { type: 'event'        as TripType, icon: 'calendar-outline'  as const, label: 'Event',         sub: 'Wedding, dinner, conference' },
-  { type: 'vacation'     as TripType, icon: 'airplane-outline'  as const, label: 'Vacation',      sub: 'Trip, weekend getaway' },
-  { type: 'extended_stay'as TripType, icon: 'home-outline'      as const, label: 'Extended Stay', sub: 'Semester, work assignment' },
-  { type: 'season'       as TripType, icon: 'sunny-outline'     as const, label: 'Season',        sub: 'Seasonal wardrobe refresh' },
+  { type: 'event'         as TripType, icon: 'calendar-outline'  as const, label: 'Event',         sub: 'Wedding, conference, dinner, occasion' },
+  { type: 'vacation'      as TripType, icon: 'airplane-outline'  as const, label: 'Vacation',      sub: 'Travel, weekend getaway, trip' },
+  { type: 'extended_stay' as TripType, icon: 'home-outline'      as const, label: 'Extended Stay', sub: 'Semester, work assignment, relocation' },
+  { type: 'season'        as TripType, icon: 'sunny-outline'     as const, label: 'Season',        sub: 'Seasonal rotation, wardrobe refresh' },
 ] as const
 
 const DEFAULT_NAMES: Record<TripType, string> = {
@@ -32,53 +31,42 @@ const DEFAULT_NAMES: Record<TripType, string> = {
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 export default function NewPlanScreen() {
-  const insets   = useSafeAreaInsets()
+  const insets = useSafeAreaInsets()
   const { width: screenWidth } = useWindowDimensions()
   const { session } = useAuthStore()
   const { mutateAsync: createTrip, isPending } = useCreateTrip()
-  const nameRef = useRef<TextInput>(null)
+
+  const [tripType, setTripType] = useState<TripType | null>(null)
+  const [name,     setName]     = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate,   setEndDate]   = useState('')
 
   useEffect(() => {
     if (!session) router.replace('/(auth)/login' as any)
   }, [session])
 
-  const [step,     setStep]     = useState(0)
-  const [tripType, setTripType] = useState<TripType | null>(null)
-  const [name,     setName]     = useState('')
-
   if (!session) return null
 
-  // Card width: screen minus horizontal padding, split into 2 with gap
-  const cardGap  = 12
   const sidePad  = layout.screenPadding
+  const cardGap  = 10
   const cardWidth = (screenWidth - sidePad * 2 - cardGap) / 2
-
-  function handleTypeSelect(type: TripType) {
-    setTripType(type)
-    if (!name) setName(DEFAULT_NAMES[type])
-    // Small delay so user sees the selection highlight before advancing
-    setTimeout(() => {
-      setStep(1)
-      setTimeout(() => nameRef.current?.focus(), 350)
-    }, 160)
-  }
 
   async function handleCreate() {
     if (!session?.user.id || !tripType) return
     const trimmed = name.trim()
     try {
       const trip = await createTrip({
-        user_id: session.user.id,
-        name:    trimmed || DEFAULT_NAMES[tripType],
-        type:    tripType,
+        user_id:    session.user.id,
+        name:       trimmed || DEFAULT_NAMES[tripType],
+        type:       tripType,
+        start_date: startDate.trim() || null,
+        end_date:   endDate.trim()   || null,
       })
       router.replace({ pathname: '/trip/[id]', params: { id: trip.id } } as any)
     } catch {
       Alert.alert('Something went wrong', 'Could not create your plan. Please try again.')
     }
   }
-
-  const selectedMeta = TYPES.find(t => t.type === tripType)
 
   return (
     <KeyboardAvoidingView
@@ -87,7 +75,7 @@ export default function NewPlanScreen() {
     >
       <View style={{ flex: 1, backgroundColor: colors.cream }}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <View style={{
           paddingTop: insets.top + 16,
           paddingHorizontal: sidePad,
@@ -95,58 +83,67 @@ export default function NewPlanScreen() {
           flexDirection: 'row',
           alignItems: 'center',
           gap: 12,
+          borderBottomWidth: 1,
+          borderBottomColor: colors.sand + '55',
         }}>
           <Pressable
-            onPress={() => step === 0 ? router.back() : setStep(0)}
+            onPress={() => router.back()}
             hitSlop={16}
             accessibilityRole="button"
-            accessibilityLabel={step === 0 ? 'Close' : 'Back'}
+            accessibilityLabel="Close"
           >
-            <Ionicons
-              name={step === 0 ? 'close' : 'arrow-back'}
-              size={22}
-              color={colors.navy}
-            />
+            <Ionicons name="close" size={22} color={colors.navy} />
           </Pressable>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.navy, letterSpacing: -0.3, flex: 1 }}>
+            New Plan
+          </Text>
+        </View>
 
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.navy, letterSpacing: -0.4 }}>
-              {step === 0 ? 'What kind of plan?' : 'Name your plan'}
+        {/* Scrollable form body */}
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ padding: sidePad, paddingTop: 28, paddingBottom: 60, gap: 28 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+
+          {/* Plan name */}
+          <View style={{ gap: 8 }}>
+            <Text style={{
+              fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate,
+              textTransform: 'uppercase', letterSpacing: 1.4,
+            }}>
+              Plan name
             </Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder={tripType ? DEFAULT_NAMES[tripType] : 'Austin Conference, Summer Rotation, Ski Trip…'}
+              placeholderTextColor={colors.gray400}
+              returnKeyType="next"
+              style={{
+                backgroundColor: colors.white,
+                borderRadius: 16,
+                borderWidth: 1.5,
+                borderColor: colors.sand + '90',
+                paddingHorizontal: 18,
+                paddingVertical: 16,
+                fontFamily: 'Inter-Regular',
+                fontSize: 17,
+                color: colors.navy,
+                letterSpacing: -0.2,
+              }}
+            />
           </View>
 
-          {/* Step dots */}
-          <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center' }}>
-            {[0, 1].map(i => (
-              <View key={i} style={{
-                width: i === step ? 18 : 6,
-                height: 6,
-                borderRadius: 3,
-                backgroundColor: i === step ? colors.navy : colors.sand + '80',
-              }} />
-            ))}
-          </View>
-        </View>
-
-        {/* Progress bar */}
-        <View style={{ height: 2, backgroundColor: colors.sand + '50', marginHorizontal: sidePad, borderRadius: 1 }}>
-          <Animated.View layout={Layout.springify()} style={{
-            height: 2,
-            backgroundColor: colors.navy,
-            borderRadius: 1,
-            width: step === 0 ? '50%' : '100%',
-          }} />
-        </View>
-
-        {/* ── Step 0: Type selector ── */}
-        {step === 0 && (
-          <Animated.ScrollView
-            entering={FadeInRight.duration(220)}
-            exiting={FadeOutLeft.duration(180)}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: sidePad, paddingTop: 22, paddingBottom: 60, gap: cardGap }}
-            showsVerticalScrollIndicator={false}
-          >
+          {/* Type cards */}
+          <View style={{ gap: 10 }}>
+            <Text style={{
+              fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate,
+              textTransform: 'uppercase', letterSpacing: 1.4,
+            }}>
+              What kind of plan?
+            </Text>
             <View style={{ flexDirection: 'row', gap: cardGap }}>
               {TYPES.slice(0, 2).map(opt => (
                 <TypeCard
@@ -154,7 +151,10 @@ export default function NewPlanScreen() {
                   opt={opt}
                   selected={tripType === opt.type}
                   width={cardWidth}
-                  onPress={() => handleTypeSelect(opt.type)}
+                  onPress={() => {
+                    setTripType(opt.type)
+                    if (!name) setName(DEFAULT_NAMES[opt.type])
+                  }}
                 />
               ))}
             </View>
@@ -165,134 +165,119 @@ export default function NewPlanScreen() {
                   opt={opt}
                   selected={tripType === opt.type}
                   width={cardWidth}
-                  onPress={() => handleTypeSelect(opt.type)}
+                  onPress={() => {
+                    setTripType(opt.type)
+                    if (!name) setName(DEFAULT_NAMES[opt.type])
+                  }}
                 />
               ))}
             </View>
+          </View>
 
+          {/* Dates — optional */}
+          <View style={{ gap: 10 }}>
             <Text style={{
-              fontFamily: 'Inter-Regular', fontSize: 12,
-              color: colors.slate + '60', textAlign: 'center', marginTop: 8,
+              fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate,
+              textTransform: 'uppercase', letterSpacing: 1.4,
             }}>
-              Tap to select — you'll name it next
+              Dates{' '}
+              <Text style={{ fontFamily: 'Inter-Regular', textTransform: 'none', letterSpacing: 0, color: colors.slate + '70' }}>
+                — optional
+              </Text>
             </Text>
-          </Animated.ScrollView>
-        )}
-
-        {/* ── Step 1: Name + create ── */}
-        {step === 1 && (
-          <Animated.ScrollView
-            entering={FadeInRight.duration(220)}
-            exiting={FadeOutLeft.duration(180)}
-            style={{ flex: 1 }}
-            contentContainerStyle={{ padding: sidePad, paddingTop: 28, paddingBottom: 60, gap: 20 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Selected type recap */}
-            {selectedMeta && (
-              <Pressable
-                onPress={() => setStep(0)}
-                style={{
-                  flexDirection: 'row', alignItems: 'center', gap: 10,
-                  backgroundColor: colors.navy + '08',
-                  borderRadius: 14, padding: 14,
-                  borderWidth: 1, borderColor: colors.navy + '15',
-                  alignSelf: 'flex-start',
-                }}
-              >
-                <View style={{
-                  width: 32, height: 32, borderRadius: 9,
-                  backgroundColor: colors.navy, alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Ionicons name={selectedMeta.icon} size={16} color={colors.cream} />
-                </View>
-                <Text style={{ fontFamily: 'Inter-Medium', fontSize: 14, color: colors.navy }}>
-                  {selectedMeta.label}
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.slate + '90', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  Start
                 </Text>
-                <Ionicons name="chevron-down" size={13} color={colors.navy + '60'} />
-              </Pressable>
-            )}
-
-            {/* Name input */}
-            <View style={{ gap: 8 }}>
-              <Text style={{
-                fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate,
-                textTransform: 'uppercase', letterSpacing: 1.2,
-              }}>
-                Plan name
-              </Text>
-              <TextInput
-                ref={nameRef}
-                value={name}
-                onChangeText={setName}
-                placeholder={tripType ? DEFAULT_NAMES[tripType] : 'Name this plan'}
-                placeholderTextColor={colors.gray400}
-                returnKeyType="done"
-                onSubmitEditing={handleCreate}
-                style={{
-                  backgroundColor: colors.white,
-                  borderRadius: 16,
-                  borderWidth: 1.5,
-                  borderColor: colors.sand + '90',
-                  paddingHorizontal: 18,
-                  paddingVertical: 16,
-                  fontFamily: 'Inter-Regular',
-                  fontSize: 18,
-                  color: colors.navy,
-                  letterSpacing: -0.2,
-                }}
-              />
-              <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate + '60' }}>
-                You can add dates and pieces after creating.
-              </Text>
+                <TextInput
+                  value={startDate}
+                  onChangeText={setStartDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.gray400}
+                  keyboardType="numbers-and-punctuation"
+                  returnKeyType="next"
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: colors.sand + '90',
+                    paddingHorizontal: 14,
+                    paddingVertical: 13,
+                    fontFamily: 'Inter-Regular',
+                    fontSize: 15,
+                    color: colors.navy,
+                  }}
+                />
+              </View>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={{ fontFamily: 'Inter-Regular', fontSize: 11, color: colors.slate + '90', textTransform: 'uppercase', letterSpacing: 1 }}>
+                  End
+                </Text>
+                <TextInput
+                  value={endDate}
+                  onChangeText={setEndDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor={colors.gray400}
+                  keyboardType="numbers-and-punctuation"
+                  returnKeyType="done"
+                  onSubmitEditing={handleCreate}
+                  style={{
+                    backgroundColor: colors.white,
+                    borderRadius: 12,
+                    borderWidth: 1.5,
+                    borderColor: colors.sand + '90',
+                    paddingHorizontal: 14,
+                    paddingVertical: 13,
+                    fontFamily: 'Inter-Regular',
+                    fontSize: 15,
+                    color: colors.navy,
+                  }}
+                />
+              </View>
             </View>
-          </Animated.ScrollView>
-        )}
+          </View>
 
-        {/* ── Footer CTA (step 1 only) ── */}
-        {step === 1 && (
-          <Animated.View
-            entering={FadeInRight.delay(60).duration(220)}
-            style={{
-              paddingHorizontal: sidePad,
-              paddingBottom: insets.bottom + 20,
-              paddingTop: 14,
-              borderTopWidth: 1,
-              borderTopColor: colors.sand + '50',
-              backgroundColor: colors.cream,
-            }}
+        </ScrollView>
+
+        {/* Footer CTA */}
+        <View style={{
+          paddingHorizontal: sidePad,
+          paddingBottom: insets.bottom + 20,
+          paddingTop: 14,
+          borderTopWidth: 1,
+          borderTopColor: colors.sand + '50',
+          backgroundColor: colors.cream,
+        }}>
+          <Pressable
+            onPress={handleCreate}
+            disabled={isPending || !tripType}
+            accessibilityRole="button"
+            style={({ pressed }) => ({
+              backgroundColor: tripType ? colors.navy : colors.gray200,
+              borderRadius: 16,
+              paddingVertical: 17,
+              alignItems: 'center',
+              flexDirection: 'row',
+              justifyContent: 'center',
+              gap: 8,
+              opacity: pressed ? 0.88 : 1,
+            })}
           >
-            <Pressable
-              onPress={handleCreate}
-              disabled={isPending || !name.trim()}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                backgroundColor: name.trim() ? colors.navy : colors.gray200,
-                borderRadius: 16,
-                paddingVertical: 17,
-                alignItems: 'center',
-                flexDirection: 'row',
-                justifyContent: 'center',
-                gap: 8,
-                opacity: pressed ? 0.88 : 1,
-              })}
-            >
-              {isPending ? (
-                <ActivityIndicator color={colors.cream} />
-              ) : (
-                <Text style={{
-                  fontFamily: 'Inter-Medium',
-                  fontSize: 16,
-                  color: name.trim() ? colors.cream : colors.gray400,
-                  letterSpacing: -0.1,
-                }}>
-                  Create Plan →
-                </Text>
-              )}
-            </Pressable>
-          </Animated.View>
-        )}
+            {isPending ? (
+              <ActivityIndicator color={colors.cream} />
+            ) : (
+              <Text style={{
+                fontFamily: 'Inter-Medium',
+                fontSize: 16,
+                color: tripType ? colors.cream : colors.gray400,
+                letterSpacing: -0.1,
+              }}>
+                Create Plan →
+              </Text>
+            )}
+          </Pressable>
+        </View>
 
       </View>
     </KeyboardAvoidingView>
@@ -326,7 +311,6 @@ function TypeCard({
         backgroundColor: selected ? colors.navy : colors.white,
         opacity: pressed ? 0.85 : 1,
         gap: 14,
-        // Subtle shadow on unselected
         shadowColor: colors.navy,
         shadowOpacity: selected ? 0 : 0.06,
         shadowRadius: 8,

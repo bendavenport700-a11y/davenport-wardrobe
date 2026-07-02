@@ -15,6 +15,7 @@ export default function TabLayout() {
           <Tabs.Screen name="index"    options={{ title: 'Home' }} />
           <Tabs.Screen name="pieces"   options={{ title: 'Browse' }} />
           <Tabs.Screen name="suitcase" options={{ title: 'Suitcase' }} />
+          <Tabs.Screen name="plans"    options={{ title: 'Plans' }} />
           <Tabs.Screen name="account"  options={{ title: 'Account' }} />
         </Tabs>
       </View>
@@ -30,6 +31,7 @@ export default function TabLayout() {
         <Tabs.Screen name="index"    options={{ title: 'Home' }} />
         <Tabs.Screen name="pieces"   options={{ title: 'Browse' }} />
         <Tabs.Screen name="suitcase" options={{ title: 'Suitcase' }} />
+        <Tabs.Screen name="plans"    options={{ title: 'Plans' }} />
         <Tabs.Screen name="account"  options={{ title: 'Account' }} />
       </Tabs>
     </View>

@@ -30,6 +30,8 @@ function useWardrobePreviews(wardrobeId: string) {
       return imgs
     },
     staleTime: 5 * 60 * 1000,
+    retry: 2,
+    retryDelay: 300,
   })
 }
 
@@ -60,7 +62,7 @@ export function WardrobeCard({ wardrobe }: WardrobeCardProps) {
           style={{ width: '100%', height: '100%' }}
           contentFit="cover"
           placeholder={DEFAULT_BLURHASH}
-          transition={600}
+          transition={300}
         />
 
         {/* Dark gradient overlay */}

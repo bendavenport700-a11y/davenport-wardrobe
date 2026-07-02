@@ -52,7 +52,6 @@ export interface Piece {
   gender: PieceGender
   discount_pct: number
   is_available: boolean
-  is_featured: boolean
   is_draft: boolean
   source_url: string | null
   source_retailer: string | null

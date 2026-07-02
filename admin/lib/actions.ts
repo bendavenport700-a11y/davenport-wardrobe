@@ -22,7 +22,6 @@ interface PieceInput {
   wardrobe_id: string | null
   source_url: string | null
   source_retailer: string | null
-  is_featured: boolean
   is_draft: boolean
   is_available?: boolean
 }
@@ -177,6 +176,7 @@ export async function shipOrder(
   tracking: string,
   carrier: string,
 ): Promise<{ error?: string }> {
+  if (!tracking?.trim()) return { error: 'Tracking number is required before marking as shipped.' }
   const now = new Date().toISOString()
   const { error: orderErr } = await supabaseAdmin.from('orders').update({ status: 'shipped' }).eq('id', orderId)
   if (orderErr) return { error: orderErr.message }
@@ -186,7 +186,47 @@ export async function shipOrder(
   }
   revalidatePath('/orders')
   revalidatePath(`/orders/${orderId}`)
+
+  // Fire shipping notification — non-blocking, failure doesn't surface to admin UI
+  sendShippingNotification(orderId, tracking, carrier).catch(err =>
+    console.error('Shipping notification failed (non-fatal):', err)
+  )
+
   return {}
+}
+
+async function sendShippingNotification(orderId: string, tracking: string, carrier: string) {
+  const { data: order } = await supabaseAdmin
+    .from('orders')
+    .select('user_id, profile:profiles(email, full_name)')
+    .eq('id', orderId)
+    .single()
+  if (!order) return
+
+  const profile = (order as any).profile as { email: string; full_name: string | null } | null
+  if (!profile?.email) return
+
+  const fnBase = process.env.SUPABASE_FUNCTIONS_URL
+    ?? process.env.NEXT_PUBLIC_SUPABASE_URL!.replace('.supabase.co', '.functions.supabase.co')
+
+  await fetch(`${fnBase}/v1/send-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}`,
+    },
+    body: JSON.stringify({
+      to: profile.email,
+      template: 'order_shipped',
+      user_id: (order as any).user_id,
+      data: {
+        name: profile.full_name ?? '',
+        tracking_number: tracking,
+        carrier,
+        order_id: orderId,
+      },
+    }),
+  })
 }
 
 export async function markOrderDelivered(orderId: string, rentalIds: string[]): Promise<{ error?: string }> {

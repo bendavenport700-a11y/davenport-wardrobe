@@ -124,7 +124,7 @@ export default function SuitcaseScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.cream }}>
       <ScrollView
-        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: layout.screenPadding, paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: layout.screenPadding, paddingBottom: insets.bottom + 200 }}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onScroll={e => {
@@ -203,26 +203,6 @@ export default function SuitcaseScreen() {
           />
         </View>
 
-        {/* Checkout CTA */}
-        <Pressable
-          onPress={() => {
-            if (!session) { router.push('/(auth)/login' as any); return }
-            router.push('/checkout' as any)
-          }}
-          accessibilityLabel={session ? 'Proceed to checkout' : 'Sign in to checkout'}
-          accessibilityRole="button"
-          style={{ marginTop: 20, backgroundColor: colors.navy, borderRadius: 14, padding: 18, alignItems: 'center' }}>
-          <Text style={{ fontFamily: 'Inter-Medium', fontSize: 17, color: colors.cream, letterSpacing: 0.2 }}>
-            {session ? 'Proceed to Checkout →' : 'Sign In to Checkout →'}
-          </Text>
-        </Pressable>
-
-        {session && (
-          <Text style={{ fontFamily: 'Inter-Regular', fontSize: 12, color: colors.slate, textAlign: 'center', marginTop: 12, lineHeight: 18, letterSpacing: 0.1 }}>
-            First month billed upfront. Return or swap anytime after.
-          </Text>
-        )}
-
         {/* Pending reviews */}
         {pendingReviews.length > 0 && (
           <Animated.View entering={FadeInDown.springify()} style={{ marginTop: 28, gap: 12 }}>
@@ -271,6 +251,31 @@ export default function SuitcaseScreen() {
         )}
 
       </ScrollView>
+
+      {/* Sticky checkout bar — always visible above the tab bar */}
+      <View style={{
+        position: 'absolute', bottom: 0, left: 0, right: 0,
+        backgroundColor: colors.cream,
+        paddingHorizontal: layout.screenPadding,
+        paddingTop: 12,
+        paddingBottom: insets.bottom + 76,
+        borderTopWidth: 1,
+        borderTopColor: colors.sand + '60',
+      }}>
+        <Pressable
+          onPress={() => {
+            if (!session) { router.push('/(auth)/login' as any); return }
+            router.push('/checkout' as any)
+          }}
+          accessibilityLabel={session ? 'Proceed to checkout' : 'Sign in to checkout'}
+          accessibilityRole="button"
+          style={{ backgroundColor: colors.navy, borderRadius: 14, padding: 18, alignItems: 'center' }}
+        >
+          <Text style={{ fontFamily: 'Inter-Medium', fontSize: 17, color: colors.cream, letterSpacing: 0.2 }}>
+            {session ? 'Proceed to Checkout →' : 'Sign In to Checkout →'}
+          </Text>
+        </Pressable>
+      </View>
 
       {reviewTarget && session && (
         <ReviewModal

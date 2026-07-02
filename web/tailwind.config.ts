@@ -5,11 +5,12 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        navy:  '#1B2A4A',
-        cream: '#F5F0E8',
-        sand:  '#E8E0D4',
-        slate: '#6B7280',
-        gold:  '#C4A882',
+        navy:   '#1B2A4A',
+        cream:  '#F5F0E8',
+        sand:   '#E8E0D4',
+        slate:  '#6B7280',
+        gold:   '#C4A882',
+        accent: '#E07B39',
       },
       fontFamily: {
         serif: ['var(--font-playfair)', 'Georgia', 'serif'],

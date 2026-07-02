@@ -3,14 +3,14 @@ import Image from 'next/image'
 import { Navbar } from '@/components/Navbar'
 import { Footer } from '@/components/Footer'
 import { PieceCard } from '@/components/PieceCard'
-import { getFeaturedPieces, getWardrobes } from '@/lib/supabase'
+import { getNewArrivals, getWardrobes } from '@/lib/supabase'
 
 export const revalidate = 300
 
 const APP_STORE_URL = 'https://apps.apple.com/app/davenport/id6778844291'
 
 export default async function HomePage() {
-  const [pieces, wardrobes] = await Promise.all([getFeaturedPieces(), getWardrobes()])
+  const [pieces, wardrobes] = await Promise.all([getNewArrivals(), getWardrobes()])
 
   // Use first 4 featured piece images for hero mosaic
   const heroImages = pieces.slice(0, 4).map(p => p.images?.[0]).filter(Boolean) as string[]
@@ -108,14 +108,14 @@ export default async function HomePage() {
           </div>
         </div>
 
-        {/* ── Featured Pieces ───────────────────────────────────────────── */}
+        {/* ── New Arrivals ──────────────────────────────────────────────── */}
         {pieces.length > 0 && (
           <section className="py-20 px-8 md:px-16 bg-sand/25">
             <div className="max-w-6xl mx-auto">
               <div className="flex items-end justify-between mb-10">
                 <div>
-                  <p className="font-sans text-[11px] uppercase tracking-[0.4em] text-slate/40 mb-3">Available now</p>
-                  <h2 className="font-serif text-3xl md:text-4xl font-bold text-navy">Featured Pieces</h2>
+                  <p className="font-sans text-[11px] uppercase tracking-[0.4em] text-slate/40 mb-3">Just added</p>
+                  <h2 className="font-serif text-3xl md:text-4xl font-bold text-navy">New Arrivals</h2>
                 </div>
                 <Link href="/browse" className="font-sans text-sm text-slate hover:text-navy transition-colors hidden sm:block">
                   Browse all →

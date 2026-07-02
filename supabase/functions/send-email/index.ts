@@ -7,6 +7,7 @@ import { supabaseAdmin } from '../_shared/supabase.ts'
 
 type EmailTemplate =
   | 'order_confirmed'
+  | 'order_shipped'
   | 'billing_receipt'
   | 'return_instructions'
   | 'buyout_confirmed'
@@ -17,6 +18,8 @@ interface EmailPayload {
   to: string
   template: EmailTemplate
   data: Record<string, unknown>
+  // Optional: caller-supplied user_id for logging when using service-role auth
+  user_id?: string
 }
 
 const FROM = Deno.env.get('RESEND_FROM_EMAIL') ?? 'noreply@davenport.rentals'
@@ -25,6 +28,17 @@ const APP_STORE_URL = 'https://apps.apple.com/app/davenport/id6778844291'
 
 function buildEmail(template: EmailTemplate, data: Record<string, unknown>): { subject: string; html: string } {
   switch (template) {
+    case 'order_shipped':
+      return {
+        subject: 'Your Davenport order has shipped',
+        html: `<p>Hi ${data.name ?? 'there'},</p>
+<p>Great news — your order is on its way.</p>
+<p><strong>Carrier:</strong> ${data.carrier}</p>
+<p><strong>Tracking:</strong> ${data.tracking_number}</p>
+<p>Orders typically arrive within 3–7 business days. You can track your order in the Davenport app or at <a href="https://davenport.rentals">davenport.rentals</a>.</p>
+<p>Questions? Email <a href="mailto:support@davenport.rentals">support@davenport.rentals</a></p>
+<p>— The Davenport Team</p>`,
+      }
     case 'order_confirmed':
       return {
         subject: 'Your Davenport order is confirmed',
@@ -86,13 +100,20 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) throw new Error('Missing authorization header')
 
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    )
-    if (authError || !user) throw new Error('Unauthorized')
+    const token = authHeader.replace('Bearer ', '')
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const isServiceRole = !!serviceRoleKey && token === serviceRoleKey
 
-    const { to, template, data }: EmailPayload = await req.json()
+    let resolvedUserId: string | null = null
+    if (!isServiceRole) {
+      const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+      if (authError || !user) throw new Error('Unauthorized')
+      resolvedUserId = user.id
+    }
+
+    const { to, template, data, user_id }: EmailPayload = await req.json()
     if (!to || !template) throw new Error('to and template are required')
+    if (isServiceRole) resolvedUserId = user_id ?? null
 
     const { subject, html } = buildEmail(template, data)
 
@@ -119,7 +140,7 @@ Deno.serve(async (req) => {
 
     // Log to email_log table
     await supabaseAdmin.from('email_log').insert({
-      user_id:   user.id,
+      user_id:   resolvedUserId,
       to_email:  to,
       type:      template,
       subject,

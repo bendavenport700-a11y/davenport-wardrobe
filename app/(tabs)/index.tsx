@@ -226,7 +226,7 @@ export default function HomeScreen() {
           borderColor: colors.sand + '25',
         }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 18, color: colors.cream, letterSpacing: -0.4, marginBottom: 4 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 20, color: colors.cream, letterSpacing: -0.2, marginBottom: 4 }}>
               {profile?.full_name ? `Welcome, ${profile.full_name.split(' ')[0]}.` : 'Welcome to Davenport.'}
             </Text>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.sand, lineHeight: 20 }}>
@@ -249,7 +249,7 @@ export default function HomeScreen() {
       {/* Wardrobes — moved up so clothing is front and center */}
       <View style={{ paddingTop: 28, paddingBottom: 20 }}>
         <View style={{ paddingHorizontal: layout.screenPadding, marginBottom: 16, gap: 4 }}>
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 22, color: colors.cream, letterSpacing: -0.5 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.cream, letterSpacing: -0.3 }}>
             The Wardrobes
           </Text>
           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.sand, lineHeight: 21 }}>
@@ -340,10 +340,10 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Featured Pieces */}
+      {/* New Arrivals */}
       <View style={{ paddingHorizontal: layout.screenPadding, paddingBottom: 28 }}>
-        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 22, color: colors.cream, marginBottom: 16, letterSpacing: -0.5 }}>
-          Featured Pieces
+        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.cream, marginBottom: 16, letterSpacing: -0.3 }}>
+          New Arrivals
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: layout.cardGap }}>
           {featuredError ? (
@@ -376,7 +376,7 @@ export default function HomeScreen() {
         <Text style={{ fontFamily: 'Inter-Medium', fontSize: 10, color: colors.sand, letterSpacing: 3, textTransform: 'uppercase', marginBottom: 10 }}>
           Why rent
         </Text>
-        <Text style={{ fontFamily: 'Inter-Bold', fontSize: 24, color: colors.cream, letterSpacing: -0.6, lineHeight: 30, marginBottom: 24 }}>
+        <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 26, color: colors.cream, letterSpacing: -0.3, lineHeight: 34, marginBottom: 24 }}>
           Clothes built for how{'\n'}life actually works.
         </Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
@@ -419,7 +419,7 @@ export default function HomeScreen() {
           </View>
 
           {/* Headline */}
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 22, color: colors.cream, letterSpacing: -0.5, lineHeight: 28 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 24, color: colors.cream, letterSpacing: -0.3, lineHeight: 32 }}>
             Renting is better{'\n'}for the planet.
           </Text>
 
@@ -460,7 +460,7 @@ export default function HomeScreen() {
           </Text>
 
           {/* Headline */}
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, color: colors.cream, letterSpacing: -0.4, lineHeight: 26 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.cream, letterSpacing: -0.2, lineHeight: 30 }}>
             A small business,{'\n'}built from scratch.
           </Text>
 

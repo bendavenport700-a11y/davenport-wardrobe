@@ -97,11 +97,11 @@ export function HowItWorksStrip() {
             The process
           </Text>
           <Text style={{
-            fontFamily: 'Inter-Bold',
-            fontSize: 24,
+            fontFamily: 'PlayfairDisplay-Bold',
+            fontSize: 26,
             color: colors.cream,
-            letterSpacing: -0.6,
-            lineHeight: 30,
+            letterSpacing: -0.3,
+            lineHeight: 34,
           }}>
             How it works
           </Text>

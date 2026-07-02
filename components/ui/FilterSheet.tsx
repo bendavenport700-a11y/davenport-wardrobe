@@ -159,7 +159,7 @@ export function FilterSheet({
             paddingHorizontal: 22, paddingVertical: 14,
             borderBottomWidth: 1, borderBottomColor: colors.sand + '45',
           }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 17, color: colors.navy, letterSpacing: -0.3 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 19, color: colors.navy, letterSpacing: -0.2 }}>
               Filters
             </Text>
             <Pressable onPress={clearAll} hitSlop={12}>

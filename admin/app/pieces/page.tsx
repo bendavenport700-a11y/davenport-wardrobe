@@ -10,7 +10,6 @@ async function getPieces(filter: string) {
   if (filter === 'available')   q = q.eq('is_available', true).eq('is_draft', false).is('retired_at', null)
   if (filter === 'retired')     q = q.not('retired_at', 'is', null)
   if (filter === 'draft')       q = q.eq('is_draft', true)
-  if (filter === 'featured')    q = q.eq('is_featured', true)
   if (filter === 'unavailable') q = q.eq('is_available', false).eq('is_draft', false).is('retired_at', null)
   const { data } = await q
   return (data ?? []) as Piece[]
@@ -29,7 +28,6 @@ export default async function PiecesPage({
     { key: 'unavailable', label: 'Rented Out' },
     { key: 'retired',     label: 'Retired' },
     { key: 'draft',       label: 'Drafts' },
-    { key: 'featured',    label: 'Featured' },
   ]
 
   return (
@@ -98,7 +96,6 @@ export default async function PiecesPage({
                 <td className="px-4 py-3 text-gray-500">{piece.wear_count}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1">
-                    {piece.is_featured && <span className="bg-amber-100 text-amber-700 text-xs px-1.5 py-0.5 rounded">featured</span>}
                     {piece.is_draft && <span className="bg-gray-100 text-gray-500 text-xs px-1.5 py-0.5 rounded">draft</span>}
                     {piece.retired_at && <span className="bg-red-100 text-red-600 text-xs px-1.5 py-0.5 rounded">retired</span>}
                   </div>

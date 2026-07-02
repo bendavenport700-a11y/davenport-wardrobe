@@ -7,6 +7,7 @@ import { AddToSuitcase } from '@/components/AddToSuitcase'
 import { AddToPlan } from '@/components/AddToPlan'
 import { getPiece } from '@/lib/supabase'
 import { formatCents, formatCentsPerMonth } from '@/lib/format'
+import { DEPOSIT_CENTS } from '@/lib/pricing'
 
 export const revalidate = 300
 
@@ -29,6 +30,18 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
   const effectiveFee = discountedFee ?? piece.rental_fee
   const rental = formatCentsPerMonth(effectiveFee)
   const buyout = formatCents(piece.buyout_price)
+
+  // Per-size stock breakdown from piece_units
+  const availableUnits: { size: string; wear_count: number }[] =
+    ((piece as any).piece_units ?? []).filter((u: any) => u.is_available)
+  type SizeStock = { pristine: number; worn: number; total: number }
+  const unitsBySize = availableUnits.reduce<Record<string, SizeStock>>((acc, u) => {
+    if (!acc[u.size]) acc[u.size] = { pristine: 0, worn: 0, total: 0 }
+    if (u.wear_count === 0) acc[u.size].pristine++
+    else acc[u.size].worn++
+    acc[u.size].total++
+    return acc
+  }, {})
 
   return (
     <>
@@ -90,6 +103,13 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
                 <p className="font-sans text-xs text-slate">Buyout price drops every month you rent.</p>
               </div>
 
+              {/* Out of stock */}
+              {!piece.is_available && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-2">
+                  <p className="font-sans text-sm font-medium text-red-700">Currently rented out — check back soon.</p>
+                </div>
+              )}
+
               {/* Add to suitcase */}
               <AddToSuitcase piece={{
                 id: piece.id,
@@ -100,13 +120,13 @@ export default async function PiecePage({ params }: { params: { id: string } }) 
                 rental_fee: effectiveFee,
                 buyout_price: piece.buyout_price,
                 wear_count: piece.wear_count,
-              }} />
+              }} unitsBySize={unitsBySize} />
               <AddToPlan pieceId={piece.id} sizesAvailable={piece.sizes_available ?? []} />
 
               <div className="grid grid-cols-2 gap-2 mt-6">
                 {[
                   'Ships in 1–2 weeks',
-                  '$75 deposit held, not charged',
+                  `${formatCents(DEPOSIT_CENTS)} deposit held, not charged`,
                   'Professionally cleaned',
                   'Cancel anytime after 30 days',
                 ].map(note => (

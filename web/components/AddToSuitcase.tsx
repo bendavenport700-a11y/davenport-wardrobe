@@ -5,6 +5,27 @@ import { useRouter } from 'next/navigation'
 import { createSupabaseBrowser } from '@/lib/supabase-browser'
 import { useCart, type CartItem } from '@/context/CartContext'
 
+type SizeStock = { pristine: number; worn: number; total: number }
+
+const SIZE_ORDER = [
+  'XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL',
+  '28', '29', '30', '31', '32', '33', '34', '36', '38', '40', '42',
+  'Short', 'Regular', 'Long',
+  '7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '11.5', '12',
+  'One Size',
+]
+
+function sortSizes(sizes: string[]): string[] {
+  return [...sizes].sort((a, b) => {
+    const ai = SIZE_ORDER.indexOf(a)
+    const bi = SIZE_ORDER.indexOf(b)
+    if (ai === -1 && bi === -1) return a.localeCompare(b)
+    if (ai === -1) return 1
+    if (bi === -1) return -1
+    return ai - bi
+  })
+}
+
 interface Props {
   piece: {
     id: string
@@ -16,9 +37,10 @@ interface Props {
     buyout_price: number
     wear_count: number
   }
+  unitsBySize?: Record<string, SizeStock>
 }
 
-export function AddToSuitcase({ piece }: Props) {
+export function AddToSuitcase({ piece, unitsBySize }: Props) {
   const router = useRouter()
   const { addItem, items } = useCart()
   const [selectedSize, setSelectedSize] = useState<string | null>(null)
@@ -69,13 +91,20 @@ export function AddToSuitcase({ piece }: Props) {
       <div>
         <p className="font-sans text-xs uppercase tracking-widest text-slate mb-3">Select size</p>
         <div className="flex gap-2 flex-wrap">
-          {piece.sizes_available.map(s => {
+          {sortSizes(piece.sizes_available).map(s => {
             const inCart = items.some(i => i.piece_id === piece.id && i.size === s)
+            const stock = unitsBySize?.[s]
+            const stockLabel = stock
+              ? stock.pristine > 0 && stock.worn === 0
+                ? `${stock.total} pristine`
+                : `${stock.total} in stock`
+              : null
+            const allPristine = stock ? stock.worn === 0 : false
             return (
               <button
                 key={s}
                 onClick={() => setSelectedSize(s)}
-                className={`font-sans text-sm px-3 py-1.5 rounded-lg border transition-colors ${
+                className={`font-sans text-sm px-3 py-2 rounded-lg border transition-colors flex flex-col items-center gap-0.5 ${
                   selectedSize === s
                     ? 'bg-navy text-cream border-navy'
                     : inCart
@@ -85,7 +114,18 @@ export function AddToSuitcase({ piece }: Props) {
                 disabled={inCart}
                 title={inCart ? 'Already in your suitcase' : undefined}
               >
-                {s}
+                <span>{s}</span>
+                {stockLabel && (
+                  <span className={`text-[10px] leading-none font-sans ${
+                    selectedSize === s
+                      ? 'text-cream/70'
+                      : allPristine
+                      ? 'text-emerald-600'
+                      : 'text-slate/70'
+                  }`}>
+                    {stockLabel}
+                  </span>
+                )}
               </button>
             )
           })}

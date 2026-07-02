@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { label: 'Home',      href: '/(tabs)/',        segment: '/' },
   { label: 'Browse',    href: '/(tabs)/pieces',   segment: '/pieces' },
   { label: 'Suitcase',  href: '/(tabs)/suitcase', segment: '/suitcase' },
+  { label: 'Plans',     href: '/(tabs)/plans',    segment: '/plans' },
   { label: 'Account',   href: '/(tabs)/account',  segment: '/account' },
 ]
 

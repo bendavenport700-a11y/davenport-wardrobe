@@ -49,31 +49,36 @@ function assignWardrobe(brand: string, category: string): string | null {
 
 async function contentPrompts() {
   const today = new Date().toISOString().split('T')[0]
-  const { data: existing } = await supabase.from('content_prompts').select('id').eq('prompt_date', today).limit(1)
+  const { data: existing } = await supabase.from('content_prompts').select('id').eq('prompt_date', today).eq('category', 'social_video').limit(1)
   if (existing && existing.length > 0) {
-    await log('Daily Content Prompts', 'ok', `Prompts already exist for ${today} — skipping`)
+    await log('Daily Content Prompts', 'ok', `Content prompts already exist for ${today} — skipping`)
     return
   }
 
-  const { data: pieces } = await supabase.from('pieces').select('name,brand,category').eq('is_available', true).eq('is_draft', false).limit(12)
-  const inventory = (pieces ?? []).map((p: any) => `${p.brand} ${p.name} (${p.category})`).join(', ')
+  const { data: pieces } = await supabase.from('pieces').select('name,brand,category,rental_fee')
+    .eq('is_available', true).eq('is_draft', false).order('created_at', { ascending: false }).limit(8)
+  const inventory = (pieces ?? []).map((p: any) =>
+    `${p.brand} ${p.name} (${p.category}, $${Math.round((p.rental_fee ?? 0) / 100)}/mo)`
+  ).join(', ')
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 1200,
+    max_tokens: 2000,
     messages: [{
       role: 'user',
-      content: `You are writing social media content for Davenport Wardrobe, a luxury menswear rental in Connecticut. Brands include Vuori, Rhone, Faherty, Peter Millar, Bonobos, Alo Yoga, Katin. Target: professional men 25-45.
+      content: `Generate daily social content for Davenport Wardrobe — luxury menswear rental, Connecticut, men 25-40. Brands: Vuori, Rhone, Faherty, Peter Millar, Bonobos, Alo Yoga. Voice: premium but real, like a stylish friend.
 
-Today's inventory: ${inventory}
+Current inventory: ${inventory}
 
-Write 3 short scripts referencing real piece names. 3-5 sentences each, casual but sharp.
+Generate exactly 5 items — one per slot. For "script" types, write actual spoken words for camera. For "ai_prompt" types, write a detailed, ready-to-paste ChatGPT prompt (include brand voice + audience context in the prompt itself).
 
-Return ONLY a valid JSON array, no other text:
+Return ONLY a valid JSON array with exactly 5 objects:
 [
-  {"platform":"tiktok","theme":"rent-dont-buy","prompt_text":"script here"},
-  {"platform":"instagram_reel","theme":"piece-spotlight","prompt_text":"script here"},
-  {"platform":"instagram_post","theme":"wardrobe-philosophy","prompt_text":"caption here"}
+  {"platform":"tiktok","content_type":"script","theme":"short theme","prompt_text":"30-60 sec TikTok script. Hook in first 3 sec. Reference a specific piece. End: 'Check it out at davenport.rentals'. No hashtags."},
+  {"platform":"instagram_reel","content_type":"script","theme":"short theme","prompt_text":"15-30 sec IG Reel script. Fast, punchy, quick cuts. Reference a specific piece. End: 'Link in bio — davenport.rentals'."},
+  {"platform":"tiktok","content_type":"ai_prompt","theme":"short theme","prompt_text":"Full ChatGPT prompt. Include: brand voice (premium but real, like a friend who dresses well — NOT corporate), specific piece from inventory to spotlight, angle to take, format (30-60 sec TikTok script), target (CT men 25-40). End: 'davenport.rentals'."},
+  {"platform":"instagram_post","content_type":"ai_prompt","theme":"short theme","prompt_text":"Full ChatGPT prompt. Include: brand voice, piece to feature, caption structure (hook + 2-3 sentences + CTA: 'Now available at davenport.rentals'), 3-5 hashtags, max 100 words total."},
+  {"platform":"instagram_carousel","content_type":"ai_prompt","theme":"short theme","prompt_text":"Full ChatGPT prompt for 5-slide carousel. Pick a compelling angle (rent vs buy math, how it works, piece spotlight, value breakdown). Specify: Cover slide + 3 content slides + CTA slide. Each slide: 5-word headline + 1-2 sentence caption. Last slide: 'Available now — davenport.rentals'."}
 ]`
     }]
   })
@@ -83,9 +88,18 @@ Return ONLY a valid JSON array, no other text:
   const jsonEnd = rawText.lastIndexOf(']') + 1
   const prompts = JSON.parse(rawText.slice(jsonStart, jsonEnd))
 
-  const rows = prompts.map((p: any) => ({ platform: p.platform, theme: p.theme, prompt_text: p.prompt_text, prompt_date: today }))
+  const rows = prompts.map((p: any) => ({
+    platform: p.platform,
+    theme: p.theme,
+    prompt_text: p.prompt_text,
+    prompt_date: today,
+    category: 'social_video',
+    content_type: p.content_type,
+  }))
   await supabase.from('content_prompts').insert(rows)
-  await log('Daily Content Prompts', 'ok', `Wrote ${rows.length} content prompts for ${today}`)
+  const scripts = rows.filter((r: any) => r.content_type === 'script').length
+  const aiPrompts = rows.filter((r: any) => r.content_type === 'ai_prompt').length
+  await log('Daily Content Prompts', 'ok', `Wrote ${rows.length} content prompts for ${today} (${scripts} scripts, ${aiPrompts} AI prompts)`)
 }
 
 async function marketingPrompts() {
@@ -127,6 +141,7 @@ platform must be one of: flyer, partnership, email_campaign, local_outreach, soc
     prompt_text: p.prompt_text,
     prompt_date: today,
     category: 'marketing_idea',
+    content_type: 'ai_prompt',
   }))
   await supabase.from('content_prompts').insert(rows)
   await log('Daily Marketing Ideas', 'ok', `Wrote ${rows.length} marketing ideas for ${today}`)
@@ -228,7 +243,7 @@ async function inventoryQA() {
   const issues: string[] = []
   const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: pieces } = await supabase.from('pieces').select('id,name,brand,images,description,is_available,is_draft,is_featured,wardrobe_id,created_at').eq('is_draft', false)
+  const { data: pieces } = await supabase.from('pieces').select('id,name,brand,images,description,is_available,is_draft,wardrobe_id,created_at').eq('is_draft', false)
   const allPieces = pieces ?? []
 
   const noImages = allPieces.filter((p: any) => !p.images || p.images.length === 0)
@@ -245,11 +260,10 @@ async function inventoryQA() {
 
   const total = allPieces.length
   const available = allPieces.filter((p: any) => p.is_available).length
-  const featured = allPieces.filter((p: any) => p.is_featured).length
 
   const summary = issues.length === 0
-    ? `Inventory healthy: ${total} pieces, ${available} available, ${featured} featured — all checks passed`
-    : `${total} pieces (${available} available, ${featured} featured) — issues: ${issues.join('; ')}`
+    ? `Inventory healthy: ${total} pieces, ${available} available — all checks passed`
+    : `${total} pieces (${available} available) — issues: ${issues.join('; ')}`
 
   await log('Inventory QA', issues.length > 0 ? 'warning' : 'ok', summary)
 }
@@ -325,33 +339,8 @@ Return only the description text, nothing else.`
 }
 
 async function featuredRotation() {
-  const { data: featured } = await supabase.from('pieces').select('id,name,brand,category,wear_count').eq('is_featured', true).eq('is_draft', false)
-  const { data: candidates } = await supabase.from('pieces').select('id,name,brand,category,wear_count').eq('is_featured', false).eq('is_draft', false).eq('is_available', true).order('created_at', { ascending: false }).limit(20)
-
-  const currentFeatured = featured ?? []
-  const pool = (candidates ?? []).filter((p: any) => (p.wear_count ?? 0) <= 8)
-
-  if (currentFeatured.length >= 4 && currentFeatured.length <= 6) {
-    await log('Featured Rotation', 'ok', `Featured shelf has ${currentFeatured.length} pieces — within target range of 4-6, no rotation needed`)
-    return
-  }
-
-  if (currentFeatured.length > 6) {
-    const toRemove = currentFeatured.slice(0, currentFeatured.length - 6)
-    for (const p of toRemove) await supabase.from('pieces').update({ is_featured: false }).eq('id', (p as any).id)
-    await log('Featured Rotation', 'ok', `Trimmed featured shelf from ${currentFeatured.length} to 6 pieces, removed ${toRemove.length}`)
-    return
-  }
-
-  const needed = 4 - currentFeatured.length
-  const currentBrands = new Set(currentFeatured.map((p: any) => p.brand))
-  const toAdd = pool.filter((p: any) => !currentBrands.has(p.brand)).slice(0, needed)
-  if (toAdd.length === 0) {
-    await log('Featured Rotation', 'ok', `Featured shelf has ${currentFeatured.length} pieces — no good candidates to add without brand duplication`)
-    return
-  }
-  for (const p of toAdd) await supabase.from('pieces').update({ is_featured: true }).eq('id', (p as any).id)
-  await log('Featured Rotation', 'ok', `Added ${toAdd.length} pieces to featured shelf, now at ${currentFeatured.length + toAdd.length} total`)
+  // Deprecated: homepage now shows New Arrivals (newest pieces by created_at), not a featured shelf
+  await log('Featured Rotation', 'ok', 'Deprecated — homepage now uses New Arrivals (created_at DESC), no featured shelf to manage')
 }
 
 // ── Router ────────────────────────────────────────────────────────────────────

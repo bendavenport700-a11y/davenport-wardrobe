@@ -38,7 +38,7 @@ export default function PlansScreen() {
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
           <View style={{ gap: 4, flex: 1 }}>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 30, color: colors.navy, letterSpacing: -0.7 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 30, color: colors.navy, letterSpacing: -0.5 }}>
               My Plans
             </Text>
             <Text style={{ fontFamily: 'Inter-Regular', fontSize: 14, color: colors.slate, lineHeight: 20 }}>

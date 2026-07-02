@@ -111,7 +111,7 @@ export default function AccountScreen() {
 
         {/* Profile header */}
         <View style={{ gap: 3 }}>
-          <Text style={{ fontFamily: 'Inter-Bold', fontSize: 28, color: colors.navy, letterSpacing: -0.7 }}>
+          <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 30, color: colors.navy, letterSpacing: -0.3 }}>
             {profile?.full_name ?? 'Account'}
           </Text>
           <Text style={{ fontFamily: 'Inter-Regular', fontSize: 13, color: colors.slate, letterSpacing: 0.1 }}>
@@ -375,7 +375,13 @@ export default function AccountScreen() {
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate, letterSpacing: 1.4, textTransform: 'uppercase' }}>
               My Plans{trips && trips.length > 0 ? ` (${trips.length})` : ''}
             </Text>
-            <Pressable onPress={() => router.push('/trips' as any)} hitSlop={12}>
+            <Pressable
+              onPress={() => (trips?.length ?? 0) > 0
+                ? router.push('/(tabs)/plans' as any)
+                : router.push('/trip/new' as any)
+              }
+              hitSlop={12}
+            >
               <Text style={{ fontFamily: 'Inter-Medium', fontSize: 12, color: colors.navy + 'AA' }}>
                 {(trips?.length ?? 0) > 0 ? 'See all →' : 'New Plan →'}
               </Text>

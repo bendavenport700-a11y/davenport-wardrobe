@@ -13,6 +13,9 @@ const LENGTH_OPTS  = ['Short', 'Regular', 'Long', 'XL']
 const SHORTS_SIZES = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '28', '29', '30', '31', '32', '33', '34', '36', '38']
 // Bottoms that support compound sizing (waist+inseam or waist+length)
 const BOTTOM_CATS  = new Set(['pants', 'chinos', 'trousers', 'denim'])
+
+// Default quantities for new tops-category pieces
+const DEFAULT_TOPS_QTY: Record<string, number> = { XS: 5, S: 10, M: 20, L: 20, XL: 10, XXL: 5 }
 const SIZE_SETS: Record<string, string[]> = {
   shirt: TOPS, polo: TOPS, 't-shirt': TOPS, henley: TOPS,
   sweater: TOPS, hoodie: TOPS, sweatshirt: TOPS, cardigan: TOPS, vest: TOPS,
@@ -48,8 +51,11 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
   const [extractError, setExtractError] = useState('')
   const [saveError, setSaveError] = useState('')
 
-  // Quantity per size — how many units we want (new pieces start at 0, edit uses current counts)
-  const [sizeQty, setSizeQty] = useState<Record<string, number>>(unitCounts)
+  // Quantity per size — new pieces default to sensible tops quantities; edit uses actual counts
+  const [sizeQty, setSizeQty] = useState<Record<string, number>>(() => {
+    if (piece) return unitCounts
+    return { ...DEFAULT_TOPS_QTY }
+  })
 
   // Bottoms sizing type — inferred from existing sizes in edit mode
   const [bottomsSizingType, setBottomsSizingType] = useState<BottomsSizingType>(() =>
@@ -72,7 +78,6 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
     wardrobe_id:     piece?.wardrobe_id ?? defaultWardrobeId,
     source_url:      piece?.source_url ?? '',
     source_retailer: piece?.source_retailer ?? '',
-    is_featured:     piece?.is_featured ?? false,
     is_draft:        piece?.is_draft ?? true,
     is_available:    piece?.is_available ?? true,
     wear_count:      piece?.wear_count?.toString() ?? '0',
@@ -159,7 +164,6 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
       wardrobe_id:     fields.wardrobe_id || null,
       source_url:      fields.source_url || null,
       source_retailer: fields.source_retailer || null,
-      is_featured:     fields.is_featured,
       is_draft:        fields.is_draft,
       is_available:    fields.is_available,
       wear_count:      Math.max(0, parseInt(fields.wear_count) || 0),
@@ -532,11 +536,6 @@ export function PieceForm({ piece, wardrobes, defaultWardrobeId = '', unitCounts
             <input type="checkbox" checked={fields.is_draft} onChange={e => set('is_draft', e.target.checked)}
               className="w-4 h-4 accent-navy" />
             <span className="text-sm text-gray-700">Draft (hidden from customers)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={fields.is_featured} onChange={e => set('is_featured', e.target.checked)}
-              className="w-4 h-4 accent-navy" />
-            <span className="text-sm text-gray-700">Featured on home screen</span>
           </label>
           <label className="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" checked={fields.is_available} onChange={e => set('is_available', e.target.checked)}

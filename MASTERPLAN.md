@@ -1,6 +1,6 @@
 # Davenport Wardrobe — Master Plan
 
-> **Last revised:** 2026-06-30 | **Status:** App live on App Store (Build 27), prepping for Build 28. Admin panel fully deployed. Web checkout is now built (auth, cart, Stripe checkout, account) — needs an end-to-end real-order test pass, not net-new construction. Plans (Trips) is live (`trips_enabled = true`). LLC formation is pending review — next major push after Build 28 polish is marketing.
+> **Last revised:** 2026-07-01 | **Status:** App live on App Store (Build 27), prepping for Build 28. Admin panel fully deployed. Web checkout is now built (auth, cart, Stripe checkout, account) — needs an end-to-end real-order test pass, not net-new construction. Plans (Trips) is live (`trips_enabled = true`). LLC formed — **Davenports LLC** accepted by CT Secretary of the State 2026-06-30 (see Phase 19). EIN + business bank account + operating agreement still needed before the next major marketing push.
 
 ---
 
@@ -441,6 +441,29 @@ All original build phases are complete. This section is a record of what was bui
 
 `piece_units` table built and live. Each physical garment is its own row. Rentals are linked to a specific unit. Sizes are tracked per unit. Admin has a Unit Inventory view at `/units` showing which customer has each physical piece, its condition, and wear count. New pieces automatically create unit rows when added.
 
+## Phase 18 — Web Checkout ✅ Built, needs end-to-end real-order verification ⭐ NEXT
+
+**Goal:** Let customers order directly from davenport.rentals without downloading the app.
+
+**Status as of 2026-06-30:** All the pages exist — `web/app/(auth)/login`, `(auth)/signup`, `auth/callback`, `cart`, `checkout`, `checkout/confirmation`, `account` are all built and committed (see commits `f6b3f20 Web checkout: auth, cart, Stripe checkout, account page` and `e5a7e9f Fix web checkout bugs found in post-build review`). This phase is **not net-new construction** — it's a verification and polish pass:
+
+- [ ] Walk the full flow live: sign up → confirm email → browse → add to suitcase → cart → checkout with a real card → confirmation → account shows the rental
+- [ ] Confirm Stripe is in live mode on web (not accidentally test keys) and a real charge succeeds
+- [ ] Confirm returning-customer path (saved payment method) skips card entry correctly
+- [ ] Check mobile-web responsiveness on the checkout/cart pages specifically
+- [ ] Confirm order confirmation email sends (Resend) and admin notification email sends
+- [ ] Cross-check against Phase "App/Web Feature Parity" below — same copy, same flow steps, same pricing display as the app
+
+**Why this is the priority right now:** At early stages, asking someone to download an app is a major barrier to that first order. The infrastructure is done — what's left is making sure it actually works end-to-end for a real paying customer, since it hasn't been confirmed live since the post-build bug-fix pass.
+
+**Existing infrastructure that carries over (no changes needed):**
+- All Stripe edge functions are platform-agnostic — they work from web or mobile
+- Supabase auth supports web OAuth (magic link, Google, Apple) out of the box
+- Brand system, colors, and typography are already shared between web and app
+- Order, piece, and wardrobe data models are unchanged
+
+**Sequencing note:** Start with auth + "Add to suitcase" + cart first. Get a working end-to-end flow before polishing the account page. The account page is nice to have but not required for the first order.
+
 ## Phase 18.5 — Post-Launch Hardening ✅ Done (June 2026)
 
 Critical bugs and business logic gaps addressed before first customer orders:
@@ -472,7 +495,13 @@ Critical bugs and business logic gaps addressed before first customer orders:
 
 **What needs to happen:**
 
-- [ ] **LLC formalization** — confirm the LLC is properly registered with its state, EIN on file, business bank account separate from personal
+- [x] **LLC formation** — ✅ **Davenports LLC** accepted by the CT Secretary of the State 2026-06-30. Filing #0014183905, Business ALEI `US-CT.BER:3470584`, domestic LLC, filed 2026-06-29. Registered agent: Ben Davenport, 93 Sconset Drive, Fairfield, CT 06824. Manager: Ben Davenport.
+  - **Naming note:** the legal entity is named "Davenports LLC," not "Davenport Wardrobe." This is intentional and fine — the LLC name doesn't need to match the consumer brand. "Davenport Wardrobe" is the brand/product; "Davenports LLC" is the legal owner behind it. Optionally file a CT trade name ("doing business as") certificate with the **Fairfield town clerk** (not the Secretary of the State — trade names are filed locally in CT) if a formal DBA record is wanted for banking/contracts.
+  - **Do not** imply a state "verified" badge on the app/website — CT's acceptance notice isn't a public trust seal. Instead, add a line to the site footer / Terms of Service: "Davenport Wardrobe is operated by Davenports LLC, a Connecticut limited liability company."
+- [ ] **EIN** — obtain from the IRS (free, ~10 min at irs.gov/ein) — required before opening a business bank account
+- [ ] **Business bank account** — open once EIN is in hand; keep all Davenport revenue/expenses separate from personal accounts to preserve the liability shield
+- [ ] **Operating Agreement** — draft one even as a single-member LLC; documents the LLC as a genuine separate entity
+- [ ] **CT sales tax registration** — clothing rentals are generally taxable in CT; register with CT Department of Revenue Services to collect/remit sales tax if not already doing so
 - [ ] **Rental agreement review** — have a lawyer review the Rental Terms, specifically: (a) enforceability of buyout-price charges for non-returns, (b) damage charge authorization language, (c) deposit legality in your state (some states regulate security deposits even for goods, not just apartments)
 - [ ] **Collections path** — establish a process for accounts that don't pay after non-return/damage charges: (1) email series, (2) collections referral (services like Upright Law or a local attorney for small claims), (3) credit bureau reporting threshold
 - [ ] **Chargeback policy** — write and document your response procedure for Stripe disputes. Prepare evidence templates: order confirmation email, tracking delivery confirmation, signed rental terms acceptance timestamp (stored in `profiles.terms_accepted_at`)
@@ -526,41 +555,6 @@ Critical bugs and business logic gaps addressed before first customer orders:
 - [ ] Track cleaning costs per item in notes field
 
 ---
-
-## Phase 18 — Web Checkout ✅ Built, needs end-to-end real-order verification ⭐ NEXT
-
-**Goal:** Let customers order directly from davenport.rentals without downloading the app.
-
-**Status as of 2026-06-30:** All the pages exist — `web/app/(auth)/login`, `(auth)/signup`, `auth/callback`, `cart`, `checkout`, `checkout/confirmation`, `account` are all built and committed (see commits `f6b3f20 Web checkout: auth, cart, Stripe checkout, account page` and `e5a7e9f Fix web checkout bugs found in post-build review`). This phase is **not net-new construction** — it's a verification and polish pass:
-
-- [ ] Walk the full flow live: sign up → confirm email → browse → add to suitcase → cart → checkout with a real card → confirmation → account shows the rental
-- [ ] Confirm Stripe is in live mode on web (not accidentally test keys) and a real charge succeeds
-- [ ] Confirm returning-customer path (saved payment method) skips card entry correctly
-- [ ] Check mobile-web responsiveness on the checkout/cart pages specifically
-- [ ] Confirm order confirmation email sends (Resend) and admin notification email sends
-- [ ] Cross-check against Phase "App/Web Feature Parity" below — same copy, same flow steps, same pricing display as the app
-
-**Why this is the priority right now:** At early stages, asking someone to download an app is a major barrier to that first order. The infrastructure is done — what's left is making sure it actually works end-to-end for a real paying customer, since it hasn't been confirmed live since the post-build bug-fix pass.
-
-**Existing infrastructure that carries over (no changes needed):**
-- All Stripe edge functions are platform-agnostic — they work from web or mobile
-- Supabase auth supports web OAuth (magic link, Google, Apple) out of the box
-- Brand system, colors, and typography are already shared between web and app
-- Order, piece, and wardrobe data models are unchanged
-
-**Sequencing note:** Start with auth + "Add to suitcase" + cart first. Get a working end-to-end flow before polishing the account page. The account page is nice to have but not required for the first order.
-
-## Phase 18 — Long-Term Vision
-
-Revisit these once the core business has traction:
-
-- AI wardrobe recommendations based on rental history
-- Career-specific wardrobes (consulting starter kit, finance look, medical rotation)
-- Seasonal and travel wardrobes
-- University and employer partnerships (bulk access)
-- Personal styling tier (stylist picks for you monthly)
-- Wardrobe analytics (cost-per-wear, usage reports)
-- Expand beyond Fairfield County — logistics partner required
 
 ---
 
@@ -643,8 +637,6 @@ This cleaning standard is mentioned on the website and is part of the brand trus
 - Handling fee: $5 per order
 - Damage charges: up to $75 from deposit (capture-deposit); above $75 via charge-damage function
 - Non-return charges: admin charges buyout price via admin-charge-nonreturn, one per unreturned rental
-
----
 
 ---
 
@@ -749,11 +741,23 @@ This cleaning standard is mentioned on the website and is part of the brand trus
 - [ ] Branded content: lifestyle photos for homepage, social, flyers — models wearing the pieces in real settings
 
 **Legal:**
-- [ ] Confirm LLC is registered and in good standing (see Phase 19 for full legal checklist)
+- [x] LLC registered and in good standing — ✅ Davenports LLC accepted by CT 2026-06-30 (see Phase 19 for full legal checklist and remaining items)
 - [ ] Open a dedicated business bank account if not already done
 - [ ] EIN on file — separate from personal taxes
 
 ---
+
+## Phase 27 — Long-Term Vision
+
+Revisit these once the core business has traction:
+
+- AI wardrobe recommendations based on rental history
+- Career-specific wardrobes (consulting starter kit, finance look, medical rotation)
+- Seasonal and travel wardrobes
+- University and employer partnerships (bulk access)
+- Personal styling tier (stylist picks for you monthly)
+- Wardrobe analytics (cost-per-wear, usage reports)
+- Expand beyond Fairfield County — logistics partner required
 
 ---
 

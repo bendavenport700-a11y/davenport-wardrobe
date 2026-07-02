@@ -19,10 +19,11 @@ type TabDef = {
 }
 
 const TABS: TabDef[] = [
-  { name: 'index',    label: 'Home',     icon: 'home',      iconOutline: 'home-outline'      },
-  { name: 'pieces',   label: 'Browse',   icon: 'grid',      iconOutline: 'grid-outline'      },
-  { name: 'suitcase', label: 'Suitcase', icon: 'briefcase', iconOutline: 'briefcase-outline' },
-  { name: 'account',  label: 'Account',  icon: 'person',    iconOutline: 'person-outline'    },
+  { name: 'index',    label: 'Home',     icon: 'home',      iconOutline: 'home-outline'        },
+  { name: 'pieces',   label: 'Browse',   icon: 'grid',      iconOutline: 'grid-outline'        },
+  { name: 'suitcase', label: 'Suitcase', icon: 'briefcase', iconOutline: 'briefcase-outline'   },
+  { name: 'plans',    label: 'Plans',    icon: 'clipboard', iconOutline: 'clipboard-outline'   },
+  { name: 'account',  label: 'Account',  icon: 'person',    iconOutline: 'person-outline'      },
 ]
 
 interface TabBarProps {

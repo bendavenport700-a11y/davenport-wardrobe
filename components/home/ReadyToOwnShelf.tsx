@@ -35,7 +35,7 @@ export function ReadyToOwnShelf() {
                 Deal
               </Text>
             </View>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 20, color: colors.cream, letterSpacing: -0.5 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 22, color: colors.cream, letterSpacing: -0.3 }}>
               Ready to Own
             </Text>
           </View>

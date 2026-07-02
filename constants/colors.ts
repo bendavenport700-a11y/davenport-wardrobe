@@ -9,6 +9,7 @@ export const colors = {
   slate:   '#64748B',
   white:   '#FFFFFF',
   accent:  '#E07B39',   // warm amber — nav bar + wordmark accent
+  gold:    '#D97706',   // amber-600 — event badge
   success: '#22C55E',
   warning: '#F59E0B',
   error:   '#EF4444',

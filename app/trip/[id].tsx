@@ -142,7 +142,7 @@ export default function TripDetailScreen() {
             <Text style={{ fontFamily: 'Inter-Medium', fontSize: 11, color: colors.slate, letterSpacing: 1.4, textTransform: 'uppercase' }}>
               {TRIP_TYPE_LABELS[trip.type] ?? trip.type}
             </Text>
-            <Text style={{ fontFamily: 'Inter-Bold', fontSize: 26, color: colors.navy, letterSpacing: -0.6 }}>
+            <Text style={{ fontFamily: 'PlayfairDisplay-Bold', fontSize: 28, color: colors.navy, letterSpacing: -0.5 }}>
               {trip.name}
             </Text>
             {dateLine.length > 0 && (
