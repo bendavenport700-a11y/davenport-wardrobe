@@ -9,12 +9,17 @@ const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfa
 export const metadata: Metadata = {
   title: 'Davenport — Rent. Wear. Own if you want to.',
   description: 'Rent premium wardrobe pieces monthly. Try before you commit. Buy at a lower price if you love it — or return it. No commitment.',
+  icons: {
+    icon: '/icon.png',
+    apple: '/apple-icon.png',
+  },
   openGraph: {
     title: 'Davenport — Rent. Wear. Own if you want to.',
     description: 'Rent premium menswear monthly. Try before you commit. Buy at a lower price if you love it — or return it.',
     url: 'https://davenport.rentals',
     siteName: 'Davenport',
     type: 'website',
+    images: [{ url: 'https://davenport.rentals/icon.png', width: 1024, height: 1024 }],
   },
 }
 
