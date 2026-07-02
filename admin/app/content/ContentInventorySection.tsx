@@ -8,45 +8,69 @@ interface InventoryPiece {
   brand: string
   images: string[] | null
   rental_fee: number
+  wear_count: number
   category: string
   created_at: string
   announced_at: string | null
 }
 
 function buildPrompt(piece: InventoryPiece): string {
-  const price = `$${(piece.rental_fee / 100).toFixed(0)}/mo`
-  return `You're helping me create an Instagram new-arrival post for Davenport Wardrobe — a premium menswear rental based in Connecticut. We just added this piece.
+  const priceDollars = Math.round(piece.rental_fee / 100)
+  const price = `$${priceDollars}/mo`
+  const isNew = piece.wear_count === 0
+
+  return `You're helping me build a Canva graphic and Instagram caption for a new inventory drop at Davenport Wardrobe — a premium menswear rental in Connecticut.
 
 NEW PIECE:
-• ${piece.brand} ${piece.name}
-• ${piece.category}
-• Rental: ${price}
-• Condition: Pristine — never worn
+• Brand: ${piece.brand}
+• Item: ${piece.name}
+• Category: ${piece.category}
+• Rental rate: ${price}
+• Condition: ${isNew ? 'Brand new — tags still on' : 'Pristine'}
 
-I have a clean product photo. Give me the full post in two clearly labeled sections:
+PHOTO: I'm using the product photo as-is — just the garment on a clean background. Do NOT describe or suggest adding a person. The photo is already chosen.
 
 ---
 
-SECTION 1 — CANVA TEXT OVERLAY
-(This text goes ON TOP of the photo. Minimal. Bold. The photo is the hero.)
+Give me the full post in two labeled sections:
 
-Headline: [4-6 bold words that stop the scroll — make it feel like a drop, not an ad]
-Sub-line: [price or one-line value prop, e.g. "From ${price}" or "Rent it first"]
-Badge: [2-3 words, e.g. "New Drop" or "Now Renting"]
+SECTION 1 — CANVA TEXT OVERLAY
+Use this exact layout structure (I'm building it in Canva):
+
+TOP HEADLINE: NEW INVENTORY (bold, large — or "NEW INVENTORY ALERT", use one or the other)
+
+BRAND LINE (directly below headline): JUST ADDED: ${piece.brand.toUpperCase()}
+
+INFO BOX (two columns, sits below the photo):
+• Left column — Hanger icon + rental line:
+  Line 1: RENT FOR ${price}
+  Line 2: ${isNew ? 'Brand new. Tags on.' : 'Pristine condition.'}
+• Right column — Tag icon + buyout line:
+  Line 1: LOVE IT?
+  Line 2: BUY IT AT A DISCOUNT.
+
+FEATURE STRIP (three short phrases in a row below the info box — write fresh copy each time, keep the 3-column structure):
+• [Benefit about variety/newness, e.g. "New styles every month"]
+• [Benefit about flexibility, e.g. "Swap or cancel anytime"]
+• [Benefit about no commitment, e.g. "No long-term commitments"]
+Change the exact wording to feel fresh — don't reuse the same phrases every post.
+
+CTA BAR (bottom strip, dark background):
+[Punchy 4–5 word tagline — write a new one each time]. LINK IN BIO TO GET STARTED. →
+Example format: "Look good. Spend less." — write a fresh version, same structure.
 
 ---
 
 SECTION 2 — INSTAGRAM CAPTION
-(Goes in the caption field below the photo.)
+Keep it short — 3 lines max, no hashtags.
 
-[Hook sentence — something specific about this piece or a relatable moment]
-[1-2 sentences about what makes it worth renting vs buying]
-[Final line: "Available now at davenport.rentals"]
-[Hashtags on a new line: 4-6 relevant tags]
+Line 1: [Announce the drop — name the brand and item, make it feel like news]
+Line 2: [Price + one key detail — e.g. "${price}. ${isNew ? 'Tags still on.' : 'Pristine.'}  Love it? Buy it at a discount."]
+Line 3: Download Davenport. Link in bio.
 
 ---
 
-Brand voice: Premium but real. Like a stylish friend telling you about a find — not a brand account. Target: men 25-40, Connecticut/Northeast.`
+Brand voice: Direct, premium, real. Like a stylish friend texting you about a find — not a brand account.`
 }
 
 function PieceCard({
