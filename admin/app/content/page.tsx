@@ -91,17 +91,19 @@ export default async function ContentPage() {
 
   return (
     <div className="p-8 max-w-5xl">
-      <div className="mb-10">
-        <h1 className="text-2xl font-bold text-navy">Content Studio</h1>
-        <p className="text-sm text-gray-500 mt-1">
-          Generate scripts and prompts on demand. Hit Refresh on any card to get a fresh one.
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-navy">Content</h1>
+        <p className="text-sm text-gray-400 mt-1">
+          New inventory posts, video scripts, ChatGPT prompts, and marketing ideas — all in one place.
         </p>
       </div>
 
-      {/* ── NEW INVENTORY POSTS ── */}
+      {/* ── NEW INVENTORY ── */}
       <ContentInventorySection pieces={newInventory} onMarkAnnounced={markAnnounced} />
 
-      {/* ── STUDIO (Video Scripts + ChatGPT Prompts + Marketing Ideas) ── */}
+      <div className="border-t border-gray-100 my-8" />
+
+      {/* ── STUDIO ── */}
       <ContentStudio
         initialContent={latestContent}
         initialMarketing={marketingIdeas}
