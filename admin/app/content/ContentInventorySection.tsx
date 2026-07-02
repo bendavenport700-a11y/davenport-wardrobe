@@ -19,55 +19,46 @@ function buildPrompt(piece: InventoryPiece): string {
   const price = `$${priceDollars}/mo`
   const isNew = piece.wear_count === 0
 
-  return `Help me create a Canva graphic and Instagram caption for a new piece that just landed at Davenport Wardrobe — a menswear rental in Connecticut. Rent monthly, buy at a discount if you love it.
+  return `Using the product photo I attached, create a social media graphic for Davenport Wardrobe — a menswear rental in Connecticut.
 
-PIECE:
+PIECE DETAILS:
 • ${piece.brand} ${piece.name}
 • ${piece.category}
-• ${price} to rent
+• ${price}/mo to rent
 • ${isNew ? 'Brand new — tags still on' : 'Pristine'}
 
-The photo is already chosen — just the garment on a clean background. Don't suggest adding a person or changing the photo.
+Build the graphic exactly like this:
 
----
+BACKGROUND: Cream or off-white
 
-SECTION 1 — CANVA LAYOUT
-Here's the structure I'm using in Canva. Fill in each part:
+HEADLINE (top, large bold navy text): NEW INVENTORY
+SUB-LINE (below headline, centered with dashes): — JUST ADDED: ${piece.brand.toUpperCase()} —
 
-HEADLINE: NEW INVENTORY
-(Big, bold, top of the graphic. Always "NEW INVENTORY" — no variations.)
+PHOTO: Use the product photo I attached. Center it. No people added. Keep the clean background.
 
-BRAND LINE: JUST ADDED: ${piece.brand.toUpperCase()}
-(Right below the headline.)
-
-INFO BOX — two columns below the photo:
-Left side (hanger icon):
+INFO BOX (below photo, full-width bordered rectangle, two columns):
+Left column — hanger icon:
   RENT FOR ${price}
   ${isNew ? 'Brand new. Tags on.' : 'Pristine condition.'}
+Right column — tag icon:
+  LOVE IT?
+  BUY IT AT A DISCOUNT.
 
-Right side (tag icon):
-  Write a short 2-line phrase about how you can rent it first and buy it later if you love it — something like "Rent it. Love it. Buy it." or "Try it first. Own it for less." Keep it punchy, 2 lines, conversational. Not corporate. Write a fresh version each time.
+FEATURE STRIP (below info box, three columns with small icons):
+Write 3 short benefit phrases — fresh copy each time, 3–5 words each.
+Examples of the style (don't reuse these): "Fresh finds, always rotating" / "Swap pieces when you want" / "No closet commitment"
 
-FEATURE STRIP — three short phrases in a row:
-Each one should be a quick benefit of renting. Write fresh copy every time, don't repeat the same phrases post to post. Keep it tight — 3–5 words each.
-Examples of the vibe (don't copy these exactly): "New styles every month" / "Swap or cancel anytime" / "No long-term commitment"
-
-BOTTOM BAR:
-A short punchy line — 4 to 6 words — followed by: LINK IN BIO TO GET STARTED →
-The short line should feel like something a real person would say, not an ad slogan. Write a new one each time.
-
----
-
-SECTION 2 — INSTAGRAM CAPTION
-3 lines, no hashtags. Keep it short and real — not polished ad copy.
-
-Line 1: What just dropped and why it's worth looking at (name the brand)
-Line 2: The price, the condition, and the rent-to-own angle in one or two sentences
-Line 3: Download the Davenport app or shop at davenport.rentals — mention both.
+BOTTOM BAR (dark navy background):
+Left side: a punchy 4–6 word tagline — write a new one each time, something someone would actually say
+Right side: LINK IN BIO TO GET STARTED →
 
 ---
 
-Write like a real person, not a marketing team. Short sentences. Nothing that sounds like it came from a template.`
+After the graphic, also give me the INSTAGRAM CAPTION on its own (not in the image):
+3 lines, no hashtags.
+Line 1: What just dropped, name the brand
+Line 2: ${price}/mo. ${isNew ? 'Brand new, tags on.' : 'Pristine.'} Rent it. Love it. Buy it at a discount.
+Line 3: Download the Davenport app or shop at davenport.rentals`
 }
 
 function PieceCard({
