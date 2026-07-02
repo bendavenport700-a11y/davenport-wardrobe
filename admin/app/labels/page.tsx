@@ -44,6 +44,20 @@ export default async function LabelsPage() {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
+      {/* Explainer */}
+      <div className="mb-6 max-w-2xl">
+        <h1 className="text-2xl font-bold text-navy mb-1">QR Labels</h1>
+        <p className="text-sm text-gray-500 leading-relaxed">
+          Print these and stick one on each physical piece (or its bag/hanger tag). Every label has a unique QR code tied to that exact unit —
+          size, condition, wear count, everything. When you scan it, you instantly know which unit you're holding without digging through the system.
+          Use it when packing orders, checking in returns, or doing inventory counts.
+        </p>
+        <div className="mt-3 flex gap-3 text-xs text-gray-400">
+          <span>🟢 Green dot = pristine / never worn</span>
+          <span>🔵 Blue dot = excellent</span>
+          <span>🟡 Amber dot = well-worn</span>
+        </div>
+      </div>
       <LabelsClient units={units} />
     </div>
   )

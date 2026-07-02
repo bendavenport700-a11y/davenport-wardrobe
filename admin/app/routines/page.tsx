@@ -8,15 +8,15 @@ const STATUS_META: Record<string, { label: string; color: string; dot: string }>
 }
 
 const ROUTINE_SCHEDULES: Record<string, string> = {
-  'Wardrobe Sorter':          'Hourly',
+  'Wardrobe Sorter':          'Every 30 min',
   'Description Writer':       'Daily · 7am',
   'Tag & Category Manager':   'Daily · 6am',
   'Inventory QA':             'Daily · 8am',
-  'Error Monitor':            'Hourly',
-  'Featured Rotation':        'Weekly · Mon 10am',
+  'Error Monitor':            'Every hour',
+  'Featured Rotation':        'Deprecated',
   'Daily Content Prompts':    'Daily · 7am',
   'Daily Marketing Ideas':    'Daily · 7:05am',
-  'Sweeper':                  'Hourly',
+  'Sweeper':                  'Every 6 hours',
 }
 
 function timeAgo(iso: string) {

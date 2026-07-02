@@ -16,28 +16,38 @@ interface InventoryPiece {
 
 function buildPrompt(piece: InventoryPiece): string {
   const price = `$${(piece.rental_fee / 100).toFixed(0)}/mo`
-  return `Help me create a new inventory drop post for Davenport Wardrobe on Instagram.
+  return `You're helping me create an Instagram new-arrival post for Davenport Wardrobe — a premium menswear rental based in Connecticut. We just added this piece.
 
-New piece: ${piece.brand} ${piece.name}
-Category: ${piece.category}
-Monthly rental: ${price}
-Condition: Pristine — never rented
+NEW PIECE:
+• ${piece.brand} ${piece.name}
+• ${piece.category}
+• Rental: ${price}
+• Condition: Pristine — never worn
 
-I have a product photo of this piece. I need two things:
+I have a clean product photo. Give me the full post in two clearly labeled sections:
 
-1. CANVA TEXT OVERLAY — what to put on top of the photo (keep it minimal, the photo is the hero):
-   • Headline (4-6 words, bold — make it stop the scroll)
-   • Price or value line (e.g. "${price}/mo" or "Rent before you own")
-   • Badge or accent (e.g. "New Arrival" or "Now Renting")
+---
 
-2. INSTAGRAM CAPTION — to post alongside the image:
-   • 2-3 punchy sentences
-   • Hook in line 1
-   • Mention the rental model naturally
-   • End: "Now available at davenport.rentals"
-   • 3-5 relevant hashtags at the end
+SECTION 1 — CANVA TEXT OVERLAY
+(This text goes ON TOP of the photo. Minimal. Bold. The photo is the hero.)
 
-Brand voice: Premium but real. Confident without being arrogant. Like a stylish friend telling you about a great find. Target: men 25-40, Connecticut.`
+Headline: [4-6 bold words that stop the scroll — make it feel like a drop, not an ad]
+Sub-line: [price or one-line value prop, e.g. "From ${price}" or "Rent it first"]
+Badge: [2-3 words, e.g. "New Drop" or "Now Renting"]
+
+---
+
+SECTION 2 — INSTAGRAM CAPTION
+(Goes in the caption field below the photo.)
+
+[Hook sentence — something specific about this piece or a relatable moment]
+[1-2 sentences about what makes it worth renting vs buying]
+[Final line: "Available now at davenport.rentals"]
+[Hashtags on a new line: 4-6 relevant tags]
+
+---
+
+Brand voice: Premium but real. Like a stylish friend telling you about a find — not a brand account. Target: men 25-40, Connecticut/Northeast.`
 }
 
 function CopyButton({ text, label }: { text: string; label: string }) {
