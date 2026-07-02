@@ -26,9 +26,10 @@ async function markUsed(id: string) {
 
 async function markAnnounced(pieceId: string) {
   'use server'
-  const { data } = await supabaseAdmin.from('pieces').select('announced_at').eq('id', pieceId).single()
-  const value = data?.announced_at ? null : new Date().toISOString()
-  await supabaseAdmin.from('pieces').update({ announced_at: value }).eq('id', pieceId)
+  await supabaseAdmin
+    .from('pieces')
+    .update({ announced_at: new Date().toISOString() })
+    .eq('id', pieceId)
   revalidatePath('/content')
 }
 
@@ -75,7 +76,7 @@ async function getNewInventory() {
     .select('id, name, brand, images, rental_fee, wear_count, category, created_at, announced_at')
     .eq('is_draft', false)
     .gte('created_at', since)
-    .order('announced_at', { ascending: true, nullsFirst: true })
+    .is('announced_at', null)
     .order('created_at', { ascending: false })
   return data ?? []
 }
